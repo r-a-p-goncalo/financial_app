@@ -4,7 +4,7 @@ In this document we specify the developing process of the app.
 
 Design documents follow the snake_case.
 
-Several different designs or informations may have decoupled versioning. For example, `architecture.md` may have its unique versions for different architectures, named `Architecture version X`. When a design component uses another, its versions should show what are the used versions. For example, in the case of the of the app using architecture: `App version Y (Architecture version X)`.
+Several different designs or information may have decoupled versioning. For example, `architecture.md` may have its unique versions for different architectures, named `Architecture version X`. When a design component uses another, its versions should show what are the used versions. For example, in the case of the app using architecture: `App version Y (Architecture version X)`.
 
 # Development methodology
 

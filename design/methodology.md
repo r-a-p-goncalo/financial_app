@@ -223,6 +223,19 @@ concerns where the architecture requires this separation.
 
 # Version control
 
+The repository uses a small number of long-lived branches and short-lived
+branches for individual changes.
+
+The long-lived branches are:
+
+* `main`: contains the latest released and stable version of the
+  application.
+* `development`: contains the integrated state of the next version under
+  development.
+
+Work that is not yet ready to be integrated is developed in short-lived
+branches created from `development`.
+
 ## Commits
 
 Each commit should represent a coherent change.
@@ -235,17 +248,211 @@ A commit should preferably:
 
 Commit messages should briefly describe the change using an imperative form.
 
-## Branches
+## Work branches
 
 Branches are used to isolate work that is not yet ready to be integrated.
 
-Branch names should describe the work being performed.
+Branch names should describe the work being performed rather than the version
+in which the work is expected to be released.
 
 Examples:
 
-- `feature/transaction-import`
-- `feature/tax-calculation`
-- `fix/account-balance`
-- `docs/domain-model`
+* `feature/transaction-import`
+* `feature/tax-calculation`
+* `fix/account-balance`
+* `refactor/transaction-model`
+* `docs/domain-model`
 
-The main branch should contain a coherent and usable state of the project.
+A work branch is created from `development` and is merged back into
+`development` when its work is complete and sufficiently tested.
+
+After merging, the work branch may be deleted. Branch names may be reused for
+later work; the branch name does not represent a permanent feature or version.
+
+A large feature may be divided into several work branches when doing so
+allows smaller changes to be integrated independently.
+
+## Work branches
+
+Branches are used to isolate work that is not yet ready to be integrated.
+
+Branch names should describe the work being performed rather than the version
+in which the work is expected to be released.
+
+Examples:
+
+* `feature/transaction-import`
+* `feature/tax-calculation`
+* `fix/account-balance`
+* `refactor/transaction-model`
+* `docs/domain-model`
+
+A work branch is created from `development` and is merged back into
+`development` when its work is complete and sufficiently tested.
+
+After merging, the work branch may be deleted. Branch names may be reused for
+later work; the branch name does not represent a permanent feature or version.
+
+A large feature may be divided into several work branches when doing so
+allows smaller changes to be integrated independently.
+
+## Development branch
+
+`development` represents the current integrated state of the next version.
+
+Changes should normally enter `development` through work branches.
+
+`development` should remain in a buildable and testable state. It may contain
+functionality that is not yet part of a released version.
+
+The version being developed is determined by the planned scope and release
+process, rather than by the name of the `development` branch.
+
+## Release branches
+
+When the planned functionality for a version has been integrated into
+`development`, a release branch is created from `development` for final
+stabilization.
+
+Release branches are named according to the version being prepared:
+
+* `release/0.1.0`
+* `release/0.2.0`
+* `release/1.0.0`
+
+A release branch is used only for changes necessary to prepare that version
+for release, such as:
+
+* fixing release-blocking bugs;
+* correcting documentation;
+* completing release-specific tests;
+* making necessary compatibility or packaging changes.
+
+New functionality intended for a later version should not be added to a
+release branch.
+
+When the release is ready, the release branch is merged into `main` and the
+released commit is tagged with the corresponding version.
+
+For example:
+
+```text
+development
+    |
+    |  release scope complete
+    v
+release/0.1.0
+    |
+    |  stabilization
+    v
+main
+    |
+    +-- tag: v0.1.0
+```
+
+Release branches are temporary. After the release has been completed, the
+release branch may be deleted.
+
+## Releases
+
+Releases are represented by Git tags rather than permanent branches.
+
+A release tag identifies the exact commit that was released.
+
+Release tags use the form:
+
+```text
+v<major>.<minor>.<patch>
+```
+
+For example:
+
+```text
+v0.1.0
+v0.1.1
+v0.2.0
+v1.0.0
+```
+
+A release should only be tagged after the corresponding release branch has
+passed the required tests and the application is considered ready for
+deployment.
+
+The release process is therefore:
+
+```mermaid
+flowchart LR
+    D[development]
+    F[Work branches]
+    R[release/X.Y.Z]
+    M[main]
+    T[Tag vX.Y.Z]
+
+    D --> F
+    F --> D
+    D --> R
+    R --> M
+    M --> T
+```
+
+## Changes to released versions
+
+After a version has been released, changes to that version are normally made
+in a new work branch based on the corresponding release branch or release
+tag, when maintenance of that version is required.
+
+The resulting fix must also be incorporated into `development` when the fix
+is applicable to future versions.
+
+For example:
+
+```text
+                  +-- fix/critical-bug --+
+                  |                      |
+release/0.1.0 ----+                      +--> main
+                                         |
+development -----------------------------+
+```
+
+This prevents a fix applied to an older released version from being lost in
+the current development version.
+
+Older release lines are maintained only when there is a reason to support
+that version independently. Otherwise, development continues from the latest
+state of `development`.
+
+## Version development and design
+
+A version is a product milestone and is not itself a development branch.
+
+The design and implementation of a version may therefore progress through
+multiple work branches:
+
+```text
+development
+    |
+    +-- design/domain-model --------+
+    |                                |
+    +-- feature/accounts ------------+
+    |                                |
+    +-- feature/transactions -------+--> development
+    |                                |
+    +-- feature/balance ------------+
+                                     |
+                                     v
+                               release/0.1.0
+                                     |
+                                     v
+                                   main
+                                     |
+                                  v0.1.0
+```
+
+Design, implementation and testing of a feature should normally be kept
+together in the work required to complete that feature. Separate branches
+should be used when the work can be meaningfully integrated independently.
+
+The branch structure must not be used as a substitute for the design
+structure. The design documents define the application's concepts,
+requirements and decisions, while Git branches represent temporary units of
+development work.

@@ -24,7 +24,7 @@ This document describes the data we expect to have without making assumptions ab
 
     granted_by : User
 
-    granted_date : Date
+    granted_date : DateTime
 
     role : Role
 
@@ -36,7 +36,7 @@ This document describes the data we expect to have without making assumptions ab
 
 	notes : Collection<str>
 	
-	date_of_creation : Date
+	date_of_creation : DateTime
 	
 	id : str
 
@@ -199,7 +199,7 @@ This document describes the data we expect to have without making assumptions ab
 
     ----------------------------------------
 
-    get_current_amount(date : Date) : MonetaryValue
+    get_current_amount(date : DateTime) : MonetaryValue
 
 
 ### AccountGroup(extends Account)
@@ -218,7 +218,7 @@ This document describes the data we expect to have without making assumptions ab
 
     "Transactions, which are always transfers of money from an account to another, even it the other is unkown or irrelevant"
 
-    date : Date
+    date : DateTime
 
     tags : Collection<Tag>, in the case of composite transactions, it becomes a tag that is added to every sub transaction
 

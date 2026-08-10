@@ -19,9 +19,11 @@ Its features are:
 
     - a graph that shows the evolution of the total value for each account
 
-## Technology used
+## Technology
 
+The server will be programmed in java, using spring.
 
+The client will be made with react.
 
 # App Version 0.2
 

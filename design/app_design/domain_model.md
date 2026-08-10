@@ -112,25 +112,27 @@ This document describes the data we expect to have without making assumptions ab
 
     "for two different units, their conversion value, for each different day"
 	
-### Value (extends Financial Object)
+### MonetaryValue (extends Financial Object)
 
-    "represents a single monetary value, such as the value of a transaction"
+    "represents a static monetary value, such as one found in a transaction"
 
-	unit : Unit
+    unit : Unit
+    value : Float
+
+    get_value() : float, the internal float value that is stored
+
+
+### DynamicValue (extends Financial Object)
+
+    "represents a changeable value, such as the value of any property"
 	
-	get_value() : float, value in unit for each different day
+	get_value() : Collection<Pair<Date, MonetaryValue>>, value in unit for each different day
 
-### DiscreteChangedValue(extends Value)
+    get_value(date : Date) : MonetaryValue, value for specific date
 
-    "represents a value that has registered its initial value and changes at dates to it"
+### DiscreteDynamicValue(extends Value)
 
-### StaticValue (Value)
-
-    "represents a single monetary value wich does not change, such as money. get_value will always return the same number"
-
-	unit : Unit
-	
-    float_value : float, the value returned by get_value()
+    "represents a value that has registered its initial value and changes at dates to it, without using any specific rule to calculate its changes"
 	
 
 # Property

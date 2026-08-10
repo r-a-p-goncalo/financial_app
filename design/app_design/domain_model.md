@@ -104,11 +104,11 @@ This document describes the data we expect to have without making assumptions ab
 # Money
 
 	
-### Unit (extends Financial Onject)
+### Unit (extends Financial Object)
 
     "describes a monetary unit, such as euro"
 	
-### UnitConversion (extends Financial Onject)
+### UnitConversion (extends Financial Object)
 
     "for two different units, their conversion value, for each different day"
 	

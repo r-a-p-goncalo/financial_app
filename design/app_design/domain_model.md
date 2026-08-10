@@ -141,7 +141,7 @@ This document describes the data we expect to have without making assumptions ab
 
     "represents a non liquid asset, such as a stock or a house"
 
-    get_value() : Value
+    get_value() : DynamicValue
 
 
 ### AssetOwnership (extends FinancialObject)
@@ -173,7 +173,7 @@ This document describes the data we expect to have without making assumptions ab
 
     name : str
 
-    get_value() : Value
+    get_value() : DynamicValue
 
     
 
@@ -195,11 +195,11 @@ This document describes the data we expect to have without making assumptions ab
 
     "represents an account"
 
-    initial_amount : Value
+    initial_amount : MonetaryValue
 
     ----------------------------------------
 
-    get_current_amount(date : Date) : Value
+    get_current_amount(date : Date) : MonetaryValue
 
 
 ### AccountGroup(extends Account)
@@ -224,7 +224,7 @@ This document describes the data we expect to have without making assumptions ab
 
     ----------------------------------------
 
-    get_value() : Value
+    get_value() : MonetaryValue
 
 
 ### AtomicTransaction (extends Transaction)
@@ -234,7 +234,7 @@ This document describes the data we expect to have without making assumptions ab
     from_account : Account?
     to_account : Account?
 
-    value : Value
+    value : MonetaryValue
 
 
 ### Composite Transaction (extends Transaction)
@@ -242,6 +242,14 @@ This document describes the data we expect to have without making assumptions ab
     "represents a group of transactions"
 	
     transactions : Collection<Transaction>
+
+    unidentified_value : MonetaryValue
+
+    ----------------------------------------
+
+    get_value() : MonetaryValue, the sum of the values of the transactions and the unidentified value
+    
+    
 
 
 ### Tag (extends FinancialObject)

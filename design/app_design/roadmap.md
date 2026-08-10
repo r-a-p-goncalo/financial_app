@@ -4,6 +4,8 @@
 
 This version is meant to be a prototype. It is only used locally, testing the logic without any of the server-client relation meant to exist later. There is only a single app, which is interactable only through commands in the command-line.
 
+## Features
+
 Its features are:
 - Basic account, account group, expenses, expense category interaction in a financial context.
 
@@ -16,6 +18,8 @@ Its features are:
     - a bar graph that shows, for a single account, for each month, the values for each root tag
 
     - a graph that shows the evolution of the total value for each account
+
+## Technology used
 
 
 

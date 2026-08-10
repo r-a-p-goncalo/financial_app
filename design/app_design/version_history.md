@@ -12,7 +12,7 @@ Its features are:
 - Extending financial contexts and other types of financial entities, with financial views.
 
 - Minimal functionality with rules to creates expenses across time.
-    - transaction creation rule layout wich create an transaction with tags, with targets, with base value, with percentage value change (0% means no change), with an interval of time between each change.
+    - transaction creation rule layout which create a transaction with tags, with targets, with base value, with percentage value change (0% means no change), with an interval of time between each change.
 
 - Generation of statistics and graphs
     - a bar graph that shows, for a single account, for each month, the values for each root tag

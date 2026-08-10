@@ -83,7 +83,7 @@ This document describes the data we expect to have without making assumptions ab
 # Financial Entities
 
 
-### Entity  (extends Financial Onject)
+### Entity  (extends Financial Object)
 
 	"represents an entity that has accounts, may owe another entity money, and so on"
 	
@@ -266,7 +266,7 @@ This document describes the data we expect to have without making assumptions ab
 
 # Rules
 
-### TransactionCreationRule (extends Financil Object)
+### TransactionCreationRule (extends FinancialObject)
 
     "Describes a rule that defines possibly new transactions for each day"
 

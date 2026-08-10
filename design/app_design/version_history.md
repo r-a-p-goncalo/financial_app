@@ -21,9 +21,7 @@ Its features are:
 
 ## Technology
 
-The server will be programmed in java, using spring.
-
-The client will be made with react.
+The server will be programmed in java.
 
 # App Version 0.2
 

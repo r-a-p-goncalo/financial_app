@@ -1,4 +1,5 @@
 
+Here we have a log of previous versions and also a roadmap of future versions.
 
 # App Version 0.1 (Architecture version 0.1)
 
@@ -19,9 +20,42 @@ Its features are:
 
     - a graph that shows the evolution of the total value for each account
 
+## Limitations
+
+We are to implement only the necessary system to achieve the desire features. Any more is over-reach.
+
+Programs, assets, entities are omitted.
+
+There are no loose copies, any clonning of data is deep.
+
+### General usage
+
+* Only a single user is supported. Authentication, authorization, roles, and permissions are omitted.
+
+* The application is local-only. There is no server, API, networking, or client-server communication.
+
+* Persistence is not a requirement for this version. Data may exist only for the duration of the application process.
+
+### Transactions
+
+* Composite transactions are omitted.
+
+* Account groups are omitted.
+
+* Currency conversion is omitted. Transactions involving monetary values must use compatible currencies.
+
+* Programs, assets, multiple entities
+
+* Transaction creation rules support only the minimal recurring transaction functionality defined for this version.
+
+
 ## Technology
 
-The server will be programmed in java.
+The application will be implemented in Java.
+
+The database will be implemented in sqlite.
 
 # App Version 0.2
+
+
 

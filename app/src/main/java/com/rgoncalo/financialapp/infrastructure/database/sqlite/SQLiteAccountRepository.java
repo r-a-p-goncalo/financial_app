@@ -11,6 +11,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
+/**
+ * SQLite implementation of {@link AccountRepository}.
+ *
+ * <p>This class translates account persistence operations into SQLite
+ * operations</p>
+ */
 public class SQLiteAccountRepository implements AccountRepository {
 
     private final Connection connection;

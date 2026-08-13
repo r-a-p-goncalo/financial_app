@@ -2,6 +2,12 @@ package com.rgoncalo.financialapp.domain.money;
 
 import java.math.BigDecimal;
 
+/**
+ * Represents a monetary amount expressed in a specific monetary unit.
+ *
+ * <p>A monetary value is static: it represents a value at a particular
+ * point in the financial model rather than a value that changes over time.</p>
+ */
 public class MonetaryValue {
 
     Unit unit;
@@ -15,6 +21,11 @@ public class MonetaryValue {
         value = BigDecimal.valueOf(newValue);
     }
 
+    /**
+     * Returns the numeric amount represented by this monetary value.
+     *
+     * @return the amount in this value's {@link Unit}
+     */
     public BigDecimal getValue(){
         return value;
     }
@@ -23,4 +34,5 @@ public class MonetaryValue {
     public String toString() {
         return value.toString();
     }
+
 }

@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
+import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
@@ -9,6 +10,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -58,6 +62,37 @@ public class SQLiteAccountRepository implements AccountRepository {
                     exception
             );
         }
+    }
+
+    @Override
+    public Collection<AccountRecord> listAccountsSummary() {
+
+        String sql =
+                """
+                SELECT id, name FROM account
+                """;
+
+        List<AccountRecord> accounts = new ArrayList<>();
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String id = resultSet.getString("id");
+                String name = resultSet.getString("name");
+
+                accounts.add(new AccountRecord(id, name, null));
+            }
+
+        } catch (SQLException exception) {
+            throw new RuntimeException(
+                    "Could not list accounts",
+                    exception
+            );
+        }
+
+        return accounts;
     }
 
     @Override

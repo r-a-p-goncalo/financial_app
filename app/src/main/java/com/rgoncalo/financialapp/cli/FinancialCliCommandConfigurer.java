@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.application.Application;
+import com.rgoncalo.financialapp.cli.commands.AccountsSummaryCommand;
 import com.rgoncalo.financialapp.cli.commands.Command;
 import com.rgoncalo.financialapp.cli.commands.CreateAccountCommand;
 
@@ -14,6 +15,7 @@ public class FinancialCliCommandConfigurer {
         List<Command> commands = new ArrayList<Command>();
 
         commands.add( new CreateAccountCommand(app.createAccount()));
+        commands.add( new AccountsSummaryCommand(app.accountSummary()));
 
         return commands;
     }

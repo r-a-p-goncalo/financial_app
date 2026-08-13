@@ -34,7 +34,7 @@ There are no loose copies, any clonning of data is deep.
 
 * The application is local-only. There is no server, API, networking, or client-server communication.
 
-* Persistence is not a requirement for this version. Data may exist only for the duration of the application process.
+* Persistence is not a requirement for this version. Data may exist only for the duration of the application process. If a database is used, it is populated at start and cleaned at the end of the application lifecycle.
 
 ### Transactions
 

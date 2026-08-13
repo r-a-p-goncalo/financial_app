@@ -1,15 +1,28 @@
 package com.rgoncalo.financialapp.domain.account;
 
-public class Account {
+import com.rgoncalo.financialapp.domain.financialobject.FinancialObject;
+import com.rgoncalo.financialapp.domain.money.MonetaryValue;
 
-    private String name;
+public class Account extends FinancialObject {
 
-    public Account(String new_name){
-        name = new_name;
+    private final String name;
+    private final MonetaryValue initialAmount;
+
+    public Account(
+            String id,
+            String name,
+            MonetaryValue initialAmount
+    ) {
+        super(id);
+        this.name = name;
+        this.initialAmount = initialAmount;
     }
 
-    public String getName(){
+    public String getName() {
         return name;
     }
 
+    public MonetaryValue getInitialAmount() {
+        return initialAmount;
+    }
 }

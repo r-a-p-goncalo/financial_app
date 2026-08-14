@@ -1,6 +1,5 @@
 package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
 import org.junit.jupiter.api.AfterEach;
@@ -177,17 +176,17 @@ class SQLiteAccountRepositoryTest {
                 )
         );
 
-        Collection<AccountRecord> result =
+        Collection<Account> result =
                 repository.listAccountsSummary();
 
         assertEquals(
                 Set.of(
-                        new AccountRecord(
+                        new Account(
                                 "account-1",
                                 "Checking",
                                 null
                         ),
-                        new AccountRecord(
+                        new Account(
                                 "account-2",
                                 "Savings",
                                 null

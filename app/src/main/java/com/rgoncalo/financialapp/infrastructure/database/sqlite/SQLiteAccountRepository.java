@@ -1,6 +1,5 @@
 package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
@@ -65,14 +64,14 @@ public class SQLiteAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Collection<AccountRecord> listAccountsSummary() {
+    public Collection<Account> listAccountsSummary() {
 
         String sql =
                 """
                 SELECT id, name FROM account
                 """;
 
-        List<AccountRecord> accounts = new ArrayList<>();
+        List<Account> accounts = new ArrayList<>();
 
         try (PreparedStatement statement =
                      connection.prepareStatement(sql);
@@ -82,7 +81,7 @@ public class SQLiteAccountRepository implements AccountRepository {
                 String id = resultSet.getString("id");
                 String name = resultSet.getString("name");
 
-                accounts.add(new AccountRecord(id, name, null));
+                accounts.add(new Account(id, name, null));
             }
 
         } catch (SQLException exception) {

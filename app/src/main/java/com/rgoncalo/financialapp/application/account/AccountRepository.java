@@ -5,6 +5,8 @@ import com.rgoncalo.financialapp.domain.account.Account;
 import java.util.Collection;
 import java.util.Optional;
 
+// TODO: if this gets too complex, separate the logic of queries and saving data
+
 /**
  * Provides persistence operations for {@link Account} objects.
  *

@@ -48,7 +48,7 @@ public class FinancialCli {
                         Command  command = this.commands.get(commandString);
 
                         if (command == null) {
-                            System.out.println("Unknown command: " + command);
+                            System.out.println("Unknown command: " + commandString);
                         }
                         else{
                             command.execute(scanner);

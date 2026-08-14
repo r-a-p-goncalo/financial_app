@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class SQLiteConnection {
 
-    private final static boolean DELETE_DATABASE_IF_EXISTS = false;
+    private final static boolean DELETE_DATABASE_IF_EXISTS = true;
 
     private final Connection connection;
 

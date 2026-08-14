@@ -1,8 +1,9 @@
-package com.rgoncalo.financialapp.cli.commands;
+package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.application.account.CreateAccount;
+import com.rgoncalo.financialapp.cli.commands.CreateAccountCommand;
 import com.rgoncalo.financialapp.domain.account.Account;
-import com.rgoncalo.financialapp.support.InMemoryAccountRepository;
+import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

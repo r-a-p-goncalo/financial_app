@@ -2,7 +2,7 @@ package com.rgoncalo.financialapp.application.account;
 
 import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
-import com.rgoncalo.financialapp.support.InMemoryAccountRepository;
+import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

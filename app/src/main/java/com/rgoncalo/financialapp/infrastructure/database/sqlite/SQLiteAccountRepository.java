@@ -102,7 +102,7 @@ public class SQLiteAccountRepository implements AccountRepository {
                 SELECT
                     id,
                     name,
-                    initial_amount_value,
+                    initial_amount_value
                 FROM account
                 WHERE id = ?
                 """;

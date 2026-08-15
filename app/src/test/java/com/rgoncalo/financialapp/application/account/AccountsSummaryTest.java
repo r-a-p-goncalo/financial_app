@@ -42,19 +42,19 @@ class AccountsSummaryTest {
         AccountsSummary accountsSummary =
                 new AccountsSummary(repository);
 
-        Collection<Account> result =
+        Collection<AccountRecord> result =
                 accountsSummary.execute(
                         new AccountsSummaryRequest()
                 );
 
         assertEquals(
                 Set.of(
-                        new Account(
+                        new AccountRecord(
                                 "account-1",
                                 "Checking",
                                 null
                         ),
-                        new Account(
+                        new AccountRecord(
                                 "account-2",
                                 "Savings",
                                 null

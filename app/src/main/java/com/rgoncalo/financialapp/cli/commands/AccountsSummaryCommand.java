@@ -1,8 +1,8 @@
 package com.rgoncalo.financialapp.cli.commands;
 
+import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountsSummary;
 import com.rgoncalo.financialapp.application.account.AccountsSummaryRequest;
-import com.rgoncalo.financialapp.domain.account.Account;
 
 import java.util.Collection;
 import java.util.Scanner;
@@ -36,13 +36,13 @@ public class AccountsSummaryCommand implements Command {
 
         try {
 
-            Collection<Account> accounts = accountsSummaryApp.execute(new AccountsSummaryRequest());
+            Collection<AccountRecord> accounts = accountsSummaryApp.execute(new AccountsSummaryRequest());
 
-            for(Account account : accounts){
+            for(AccountRecord account : accounts){
                 System.out.println("---");
-                printIfNotNull("    Id: ", account.getId());
-                printIfNotNull("    Name: ", account.getName());
-                printIfNotNull("    Initial amount: ", account.getInitialAmount());
+                printIfNotNull("    Id: ", account.id());
+                printIfNotNull("    Name: ", account.name());
+                printIfNotNull("    Initial amount: ", account.initial_value());
             }
 
             System.out.println();

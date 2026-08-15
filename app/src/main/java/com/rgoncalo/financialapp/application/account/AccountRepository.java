@@ -27,7 +27,7 @@ public interface AccountRepository {
      *
      * @return the partial information for accounts available
      */
-    Collection<Account> listAccountsSummary();
+    Collection<AccountRecord> listAccountsSummary();
 
     /**
      *

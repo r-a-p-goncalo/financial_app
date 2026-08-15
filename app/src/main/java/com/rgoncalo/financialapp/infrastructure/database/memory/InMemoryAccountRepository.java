@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.database.memory;
 
+import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.domain.account.Account;
 
@@ -20,10 +21,10 @@ public class InMemoryAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Collection<Account> listAccountsSummary() {
+    public Collection<AccountRecord> listAccountsSummary() {
         return accounts.values()
                 .stream()
-                .map(account -> new Account(
+                .map(account -> new AccountRecord(
                         account.getId(),
                         account.getName(),
                         null

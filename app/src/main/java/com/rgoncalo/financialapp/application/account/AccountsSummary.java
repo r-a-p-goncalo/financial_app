@@ -1,7 +1,5 @@
 package com.rgoncalo.financialapp.application.account;
 
-import com.rgoncalo.financialapp.domain.account.Account;
-
 import java.util.Collection;
 
 /**
@@ -23,7 +21,7 @@ public class AccountsSummary {
      * @param request, defines which accounts to return
      * @return a collection of accounts
      */
-    public Collection<Account> execute(AccountsSummaryRequest request) {
+    public Collection<AccountRecord> execute(AccountsSummaryRequest request) {
 
         return accountRepository.listAccountsSummary();
     }

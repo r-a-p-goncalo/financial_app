@@ -25,9 +25,4 @@ public class Account extends FinancialObject {
     public MonetaryValue getInitialAmount() {
         return initialAmount;
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Account && ((Account) obj).getId().equals(this.getId());
-    }
 }

@@ -1,33 +1,33 @@
 package com.rgoncalo.financialapp.cli;
 
-import com.rgoncalo.financialapp.application.Application;
-import com.rgoncalo.financialapp.cli.commands.Command;
+import com.rgoncalo.financialapp.client.ClientApplication;
 
 import java.util.*;
 
-public class FinancialCli {
+public abstract class CLI implements  CLIInterface {
 
     private final Scanner scanner;
 
-    private final HashMap<String, Command> commands;
+    private final HashMap<String, CliCommandInter> commands;
 
-    public FinancialCli(
+    public CLI(
             Scanner scanner,
-            Application app
+            ClientApplication app
     ) {
         this.scanner = scanner;
 
-        this.commands = new HashMap<String, Command>();
+        this.commands = new HashMap<String, CliCommandInter>();
 
-        for(Command command : FinancialCliCommandConfigurer.configureCommands(app))
+        for(CliCommandInter command : this.configureCommands(app))
             this.commands.put(command.commandString(), command);
 
     }
 
+
+
     public void runCliLoop() {
         boolean toRun = true;
 
-        System.out.println("Financial App");
         System.out.println("Type 'help' to see available commands.");
 
         while (toRun) {
@@ -45,14 +45,14 @@ public class FinancialCli {
 
                 default ->{
 
-                        Command  command = this.commands.get(commandString);
+                    CliCommandInter command = this.commands.get(commandString);
 
-                        if (command == null) {
-                            System.out.println("Unknown command: " + commandString);
-                        }
-                        else{
-                            command.execute(scanner);
-                        }
+                    if (command == null) {
+                        System.out.println("Unknown command: " + commandString);
+                    }
+                    else{
+                        command.execute(scanner);
+                    }
                 }
             }
         }
@@ -67,7 +67,7 @@ public class FinancialCli {
         System.out.println("  exit            Exit the application");
 
         for(String commandString : this.commands.keySet()){
-            Command command = this.commands.get(commandString);
+            CliCommandInter command = this.commands.get(commandString);
             System.out.println("  " + commandString + "\n                  " + command.help());
         }
 

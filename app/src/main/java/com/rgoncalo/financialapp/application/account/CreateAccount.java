@@ -23,14 +23,15 @@ public class CreateAccount {
      * @param request data required to create the account
      * @return the newly created account
      */
-    public Account execute(CreateAccountRequest request) {
+    public AccountRecord execute(CreateAccountRequest request) {
 
         String accountId = UUID.randomUUID().toString(); // TODO: decide on the ID generation technique
 
-        Account account = new Account(
+        AccountRecord account = new AccountRecord(
                 accountId,
                 request.name(),
-                request.initialAmount()
+                request.initialAmount(),
+                request.financialContextId()
         );
 
         return accountRepository.save(account);

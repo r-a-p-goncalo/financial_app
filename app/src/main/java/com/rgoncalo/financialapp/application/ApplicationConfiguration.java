@@ -1,16 +1,9 @@
 package com.rgoncalo.financialapp.application;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 
-public class ApplicationConfiguration {
+public record ApplicationConfiguration(AccountRepository accountRepository,
+                                       FinancialContextRepository financialContextRepository) {
 
-    private final AccountRepository accountRepository;
-
-    public ApplicationConfiguration(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
-
-    public AccountRepository accountRepository() {
-        return accountRepository;
-    }
 }

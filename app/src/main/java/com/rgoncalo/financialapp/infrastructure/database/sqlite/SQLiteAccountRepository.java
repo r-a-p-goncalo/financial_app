@@ -2,7 +2,6 @@ package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
 import com.rgoncalo.financialapp.application.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
-import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
 
 import java.math.BigDecimal;
@@ -12,14 +11,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 /**
  * SQLite implementation of {@link AccountRepository}.
  *
  * <p>This class translates account persistence operations into SQLite
- * operations</p>
+ * operations.</p>
  */
 public class SQLiteAccountRepository implements AccountRepository {
 
@@ -30,27 +28,35 @@ public class SQLiteAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Account save(Account account) {
+    public AccountRecord save(AccountRecord account) {
 
         String sql = """
-                INSERT INTO account (
-                    id,
-                    name,
-                    initial_amount_value
+                INSERT INTO %s (
+                    %s,
+                    %s,
+                    %s,
+                    %s
                 )
                 
-                VALUES (?, ?, ?)
-                """;
+                VALUES (?, ?, ?, ?)
+                """.formatted(
+                SQLiteSchema.ACCOUNT_TABLE_NAME,
+                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.NAME_COLUMN_NAME,
+                SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME,
+                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
+        );
 
         try (PreparedStatement statement =
                      connection.prepareStatement(sql)) {
 
-            statement.setString(1, account.getId());
-            statement.setString(2, account.getName());
+            statement.setString(1, account.id());
+            statement.setString(2, account.name());
             statement.setBigDecimal(
                     3,
-                    account.getInitialAmount().getValue()
+                    account.initial_value().getValue()
             );
+            statement.setString(4, account.financialContextId());
 
             statement.executeUpdate();
 
@@ -58,36 +64,61 @@ public class SQLiteAccountRepository implements AccountRepository {
 
         } catch (SQLException exception) {
             throw new RuntimeException(
-                    "Could not save account: " + account.getId(),
+                    "Could not save account: " + account.id(),
                     exception
             );
         }
     }
 
     @Override
-    public Collection<AccountRecord> listAccountsSummary() {
+    public Collection<AccountRecord> listAccountsSummary(
+            String financialContextId) {
 
-        String sql =
-                """
-                SELECT id, name FROM account
-                """;
+        String sql = """
+                SELECT %s, %s
+                FROM %s
+                WHERE %s = ?
+                """.formatted(
+                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.NAME_COLUMN_NAME,
+                SQLiteSchema.ACCOUNT_TABLE_NAME,
+                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
+        );
 
-        List<AccountRecord> accounts = new ArrayList<>();
+        Collection<AccountRecord> accounts = new ArrayList<>();
 
         try (PreparedStatement statement =
-                     connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+                     connection.prepareStatement(sql)) {
 
-            while (resultSet.next()) {
-                String id = resultSet.getString("id");
-                String name = resultSet.getString("name");
+            statement.setString(1, financialContextId);
 
-                accounts.add(new AccountRecord(id, name, null));
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                while (resultSet.next()) {
+
+                    String id = resultSet.getString(
+                            SQLiteSchema.ID_COLUMN_NAME
+                    );
+
+                    String name = resultSet.getString(
+                            SQLiteSchema.NAME_COLUMN_NAME
+                    );
+
+                    accounts.add(
+                            new AccountRecord(
+                                    id,
+                                    name,
+                                    null,
+                                    financialContextId
+                            )
+                    );
+                }
             }
 
         } catch (SQLException exception) {
             throw new RuntimeException(
-                    "Could not list accounts",
+                    "Could not list accounts for financial context: "
+                            + financialContextId,
                     exception
             );
         }
@@ -96,16 +127,24 @@ public class SQLiteAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Optional<Account> findById(String id) {
+    public Optional<AccountRecord> findById(String id) {
 
         String sql = """
                 SELECT
-                    id,
-                    name,
-                    initial_amount_value
-                FROM account
-                WHERE id = ?
-                """;
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                FROM %s
+                WHERE %s = ?
+                """.formatted(
+                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.NAME_COLUMN_NAME,
+                SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME,
+                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                SQLiteSchema.ACCOUNT_TABLE_NAME,
+                SQLiteSchema.ID_COLUMN_NAME
+        );
 
         try (PreparedStatement statement =
                      connection.prepareStatement(sql)) {
@@ -118,27 +157,31 @@ public class SQLiteAccountRepository implements AccountRepository {
                     return Optional.empty();
                 }
 
-                String accountId =
-                        resultSet.getString("id");
+                String accountId = resultSet.getString(
+                        SQLiteSchema.ID_COLUMN_NAME
+                );
 
-                String name =
-                        resultSet.getString("name");
+                String name = resultSet.getString(
+                        SQLiteSchema.NAME_COLUMN_NAME
+                );
 
-                BigDecimal value =
-                        resultSet.getBigDecimal(
-                                "initial_amount_value"
-                        );
+                BigDecimal value = resultSet.getBigDecimal(
+                        SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME
+                );
 
                 MonetaryValue initialAmount =
-                        new MonetaryValue(
-                                value
-                        );
+                        new MonetaryValue(value);
 
-                Account account =
-                        new Account(
+                String financialContextId = resultSet.getString(
+                        SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
+                );
+
+                AccountRecord account =
+                        new AccountRecord(
                                 accountId,
                                 name,
-                                initialAmount
+                                initialAmount,
+                                financialContextId
                         );
 
                 return Optional.of(account);

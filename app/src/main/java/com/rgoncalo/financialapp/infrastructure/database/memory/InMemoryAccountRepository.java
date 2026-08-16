@@ -12,28 +12,36 @@ import java.util.Optional;
 
 public class InMemoryAccountRepository implements AccountRepository {
 
-    private final Map<String, Account> accounts = new LinkedHashMap<>();
+    private final Map<String, AccountRecord> accounts = new LinkedHashMap<>();
 
     @Override
-    public Account save(Account account) {
-        accounts.put(account.getId(), account);
+    public AccountRecord save(AccountRecord account) {
+        accounts.put(account.id(), account);
         return account;
     }
 
     @Override
-    public Collection<AccountRecord> listAccountsSummary() {
+    public Collection<AccountRecord> listAccountsSummary(String financialContextId) {
         return accounts.values()
                 .stream()
+                .filter(account ->
+                        java.util.Objects.equals(
+                                account.financialContextId(),
+                                financialContextId
+                        ))
                 .map(account -> new AccountRecord(
-                        account.getId(),
-                        account.getName(),
-                        null
+                        account.id(),
+                        account.name(),
+                        null,
+                        account.financialContextId()
                 ))
                 .toList();
     }
 
+
+
     @Override
-    public Optional<Account> findById(String id) {
+    public Optional<AccountRecord> findById(String id) {
         return Optional.ofNullable(accounts.get(id));
     }
 
@@ -41,7 +49,7 @@ public class InMemoryAccountRepository implements AccountRepository {
         return accounts.size();
     }
 
-    public Collection<Account> accounts() {
+    public Collection<AccountRecord> accounts() {
         return List.copyOf(accounts.values());
     }
 }

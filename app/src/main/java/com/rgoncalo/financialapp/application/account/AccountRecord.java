@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.application.account;
 
-import java.math.BigDecimal;
+import com.rgoncalo.financialapp.domain.money.MonetaryValue;
 
 /**
  * Represents the possibly partial data of an account.
@@ -12,5 +12,6 @@ import java.math.BigDecimal;
 public record AccountRecord(
         String id,
         String name,
-        BigDecimal initial_value
+        MonetaryValue initial_value,
+        String financialContextId
 ) {}

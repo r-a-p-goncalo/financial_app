@@ -1,8 +1,8 @@
-package com.rgoncalo.financialapp.cli.commands;
+package com.rgoncalo.financialapp.cli;
 
 import java.util.Scanner;
 
-public interface Command {
+public interface CliCommandInter {
 
     void execute(Scanner scanner);
     String commandString();

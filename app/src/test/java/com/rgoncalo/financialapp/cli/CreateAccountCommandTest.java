@@ -1,7 +1,7 @@
 package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.application.account.CreateAccount;
-import com.rgoncalo.financialapp.cli.commands.CreateAccountCommand;
+import com.rgoncalo.financialapp.cli.financialcontext.CommandCreateAccountCommand;
 import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CreateAccountCommandTest {
 
     private InMemoryAccountRepository repository;
-    private CreateAccountCommand command;
+    private CommandCreateAccountCommand command;
 
     @BeforeEach
     void setUp() {
@@ -27,7 +27,7 @@ class CreateAccountCommandTest {
                 new CreateAccount(repository);
 
         command =
-                new CreateAccountCommand(createAccount);
+                new CommandCreateAccountCommand(createAccount);
     }
 
     @Test

@@ -7,23 +7,71 @@ import java.sql.Statement;
 
 public class SQLiteSchema {
 
-    public static void initialize(Connection connection){
+    static final String ACCOUNT_TABLE_NAME = "account";
+    static final String FINANCIAL_CONTEXT_TABLE_NAME = "financial_context";
+
+    static final String ID_COLUMN_NAME = "id";
+    static final String NAME_COLUMN_NAME = "name";
+    static final String INITIAL_AMOUNT_VALUE_COLUMN_NAME = "initial_amount_value";
+    static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financial_context_id";
+
+    public static void initAccountRep(Connection connection) {
 
         String accountTable = """
-                CREATE TABLE IF NOT EXISTS account (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    initial_amount_value DECIMAL NOT NULL
+                CREATE TABLE IF NOT EXISTS %s (
+                    %s TEXT PRIMARY KEY,
+                    %s TEXT NOT NULL,
+                    %s DECIMAL NOT NULL,
+                    %s TEXT NOT NULL,
+                    FOREIGN KEY (%s)
+                        REFERENCES %s(%s)
                 )
-                """;
+                """.formatted(
+                ACCOUNT_TABLE_NAME,
+                ID_COLUMN_NAME,
+                NAME_COLUMN_NAME,
+                INITIAL_AMOUNT_VALUE_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_TABLE_NAME,
+                ID_COLUMN_NAME
+        );
 
         try (Statement statement = connection.createStatement()) {
             statement.execute(accountTable);
         } catch (SQLException exception) {
             throw new RuntimeException(
-                    "Could not initialize database schema.",
+                    "Could not initialize table for account.",
                     exception
             );
         }
+    }
+
+    public static void initFinancialContextRep(Connection connection) {
+
+        String financialContextTable = """
+                CREATE TABLE IF NOT EXISTS %s (
+                    %s TEXT PRIMARY KEY,
+                    %s TEXT NOT NULL
+                )
+                """.formatted(
+                FINANCIAL_CONTEXT_TABLE_NAME,
+                ID_COLUMN_NAME,
+                NAME_COLUMN_NAME
+        );
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(financialContextTable);
+        } catch (SQLException exception) {
+            throw new RuntimeException(
+                    "Could not initialize table for financial context.",
+                    exception
+            );
+        }
+    }
+
+    public static void initialize(Connection connection) {
+        initFinancialContextRep(connection);
+        initAccountRep(connection);
     }
 }

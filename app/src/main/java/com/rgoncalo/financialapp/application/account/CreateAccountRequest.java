@@ -4,5 +4,6 @@ import com.rgoncalo.financialapp.domain.money.MonetaryValue;
 
 public record CreateAccountRequest(
         String name,
-        MonetaryValue initialAmount
+        MonetaryValue initialAmount,
+        String financialContextId
 ) {}

@@ -23,7 +23,7 @@ public class AccountsSummary {
      */
     public Collection<AccountRecord> execute(AccountsSummaryRequest request) {
 
-        return accountRepository.listAccountsSummary();
+        return accountRepository.listAccountsSummary(request.financialContextId());
     }
 
 }

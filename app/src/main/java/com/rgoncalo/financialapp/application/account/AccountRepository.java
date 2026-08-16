@@ -21,13 +21,13 @@ public interface AccountRepository {
      *
      * @param account, account to persist
      */
-    Account save(Account account);
+    AccountRecord save(AccountRecord account);
 
     /**
      *
      * @return the partial information for accounts available
      */
-    Collection<AccountRecord> listAccountsSummary();
+    Collection<AccountRecord> listAccountsSummary(String financialContextId);
 
     /**
      *
@@ -36,6 +36,6 @@ public interface AccountRepository {
      * @param id, the id of the account
      * @return the account with the id, possibly null
      */
-    Optional<Account> findById(String id);
+    Optional<AccountRecord> findById(String id);
 }
 

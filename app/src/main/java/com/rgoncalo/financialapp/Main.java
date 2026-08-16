@@ -3,9 +3,13 @@ package com.rgoncalo.financialapp;
 import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
-import com.rgoncalo.financialapp.cli.FinancialCli;
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.cli.financialcontext.FinancialCli;
+import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
+import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteAccountRepository;
 import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteConnection;
+import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteSchema;
 
 import java.sql.Connection;
@@ -29,8 +33,9 @@ public class Main {
         AccountRepository accountRepository =
                 new SQLiteAccountRepository(connection);
 
+        FinancialContextRepository financialContextRepository = new SQLiteFinancialContextRepository(connection);
 
-        return new ApplicationConfiguration(accountRepository);
+        return new ApplicationConfiguration(accountRepository, financialContextRepository);
 
     }
 
@@ -41,15 +46,13 @@ public class Main {
     public static void main(String[] args) {
 
 
-        ApplicationConfiguration appConfig = configureApplication();
-        Application app = createApplication(appConfig);
+        ApplicationConfiguration serverAppConfig = configureApplication();
+        Application serverApp = createApplication(serverAppConfig);
 
-        FinancialCli cli =
-                new FinancialCli(
-                        new Scanner(System.in),
-                        app
-                );
+        ClientApplication clientApplication = new ClientApplication(serverApp);
 
-        cli.runCliLoop();
+        UserContextCli userContextCli = new UserContextCli(new Scanner(System.in), clientApplication);
+
+        userContextCli.runCliLoop();
     }
 }

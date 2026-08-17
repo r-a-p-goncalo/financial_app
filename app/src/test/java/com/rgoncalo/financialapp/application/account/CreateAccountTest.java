@@ -1,83 +1,42 @@
 package com.rgoncalo.financialapp.application.account;
 
-import com.rgoncalo.financialapp.domain.account.Account;
 import com.rgoncalo.financialapp.domain.money.MonetaryValue;
-import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.rgoncalo.financialapp.support.RecordingAccountRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class CreateAccountTest {
 
-    private InMemoryAccountRepository repository;
-    private CreateAccount createAccount;
-
-    @BeforeEach
-    void setUp() {
-        repository = new InMemoryAccountRepository();
-        createAccount = new CreateAccount(repository);
-    }
-
     @Test
-    void createsAccountWithRequestedValues() {
+    void createsAndPersistsAccountFromRequest() {
+        RecordingAccountRepository repository = new RecordingAccountRepository();
+        CreateAccount useCase = new CreateAccount(repository);
+        MonetaryValue initialAmount = new MonetaryValue(new BigDecimal("125.50"));
 
-        MonetaryValue initialAmount =
-                new MonetaryValue(new BigDecimal("125.50"));
-
-        CreateAccountRequest request =
+        AccountRecord result = useCase.execute(
                 new CreateAccountRequest(
-                        "Checking account",
-                        initialAmount
-                );
-
-        Account account = createAccount.execute(request);
-
-        assertEquals(
-                "Checking account",
-                account.getName()
+                        "Checking",
+                        initialAmount,
+                        "context-1"
+                )
         );
 
-        assertEquals(
-                new BigDecimal("125.50"),
-                account.getInitialAmount().getValue()
-        );
+        assertEquals(1, repository.saveCalls());
 
-        assertNotNull(account.getId());
-        assertFalse(account.getId().isBlank());
-    }
+        AccountRecord saved = repository.savedAccount();
+        assertNotNull(saved);
+        assertNotNull(saved.id());
+        assertFalse(saved.id().isBlank());
+        assertEquals("Checking", saved.name());
+        assertSame(initialAmount, saved.initial_value());
+        assertEquals("context-1", saved.financialContextId());
 
-    @Test
-    void persistsCreatedAccount() {
-
-        CreateAccountRequest request =
-                new CreateAccountRequest(
-                        "Savings",
-                        new MonetaryValue(
-                                new BigDecimal("500.00")
-                        )
-                );
-
-        Account created = createAccount.execute(request);
-
-        assertEquals(1, repository.size());
-
-        Account stored = repository
-                .findById(created.getId())
-                .orElseThrow();
-
-        assertEquals(created.getId(), stored.getId());
-        assertEquals(created.getName(), stored.getName());
-
-        assertEquals(
-                0,
-                created.getInitialAmount()
-                        .getValue()
-                        .compareTo(
-                                stored.getInitialAmount().getValue()
-                        )
-        );
+        assertSame(saved, result);
     }
 }

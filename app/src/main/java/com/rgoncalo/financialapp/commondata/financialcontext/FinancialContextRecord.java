@@ -1,7 +1,4 @@
-package com.rgoncalo.financialapp.application.financialcontext;
-
-import java.math.BigDecimal;
-import java.util.Collection;
+package com.rgoncalo.financialapp.commondata.financialcontext;
 
 
 /**

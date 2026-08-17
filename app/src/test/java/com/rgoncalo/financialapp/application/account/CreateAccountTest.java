@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.application.account;
 
-import com.rgoncalo.financialapp.domain.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.support.RecordingAccountRepository;
 import org.junit.jupiter.api.Test;
 

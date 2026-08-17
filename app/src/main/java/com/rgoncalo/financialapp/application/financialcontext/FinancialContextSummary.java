@@ -1,5 +1,7 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+
 import java.util.Collection;
 
 public class FinancialContextSummary {

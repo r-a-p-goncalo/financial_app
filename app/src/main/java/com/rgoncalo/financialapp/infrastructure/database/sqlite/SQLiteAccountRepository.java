@@ -1,8 +1,8 @@
 package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
-import com.rgoncalo.financialapp.domain.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 
 import java.math.BigDecimal;
 import java.sql.Connection;

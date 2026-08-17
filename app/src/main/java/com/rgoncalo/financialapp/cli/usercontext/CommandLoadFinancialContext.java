@@ -1,14 +1,11 @@
 package com.rgoncalo.financialapp.cli.usercontext;
 
-import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.cli.CLICommand;
 import com.rgoncalo.financialapp.cli.financialcontext.FinancialCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
 
-import java.util.Collection;
 import java.util.Scanner;
-
-import static com.rgoncalo.financialapp.utils.StringUtils.printIfNotNull;
 
 public class CommandLoadFinancialContext extends CLICommand {
 

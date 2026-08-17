@@ -2,7 +2,7 @@
 
 Version `0.1` is a local Java prototype of the financial application.
 
-The application currently runs as a single process and is interacted with through a command-line interface. The code already separates client-side interaction, application logic, domain concepts, and persistence, even though there is no real client/server communication yet.
+The application currently runs as a single process and is interacted with through a command-line interface. The code already separates client-side interaction, application logic, and persistence, even though there is no real client/server communication yet.
 
 The main goal of the current implementation is to establish the application's architectural boundaries while supporting basic financial-context and account operations.
 
@@ -23,23 +23,14 @@ com.rgoncalo.financialapp
 ├── application
 ├── cli
 ├── client
-├── domain
+├── commondata
 ├── infrastructure
 └── utils
 ```
 
-### `domain`
+### `commondata`
 
-Contains the financial domain model.
-
-Currently this includes concepts such as:
-
-* financial contexts;
-* accounts;
-* monetary values;
-* common financial-object identity.
-
-The domain model is still limited in version `0.1`. Most application operations currently exchange record objects rather than operating extensively on domain entities.
+Contains the common data for the client and server apps.
 
 ---
 
@@ -128,12 +119,6 @@ SQLite Database
 ```
 
 An in-memory account repository also exists as an alternative implementation.
-
----
-
-### `utils`
-
-Contains small shared utilities that do not belong to one of the main architectural areas.
 
 ---
 
@@ -255,21 +240,9 @@ Infrastructure
 SQLite
 ```
 
-The domain model exists alongside these layers, but it is not yet the central mechanism through which application behavior is implemented.
-
-At the moment, records such as account and financial-context records carry most data between use cases and repositories.
-
-This is appropriate for the current prototype, but the relationship between the application layer and the domain model is expected to become more important as additional financial behavior is introduced.
-
 ---
 
 ## Current Limitations
 
-Version `0.1` intentionally makes several simplifications:
-
 * client and application layers run inside the same Java process;
-* the domain model currently contains limited behavior;
-* application use cases mostly operate using records;
-* SQLite is currently configured as prototype storage rather than permanent application persistence;
 * monetary values exist, but currency/unit behavior is not yet implemented;
-* the loaded financial context is maintained as client-side session state.

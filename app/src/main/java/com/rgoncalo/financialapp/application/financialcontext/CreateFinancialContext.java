@@ -1,8 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
-import com.rgoncalo.financialapp.application.account.AccountRepository;
-import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 
 import java.util.UUID;
 

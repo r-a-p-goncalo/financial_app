@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
-import com.rgoncalo.financialapp.domain.financialcontext.FinancialContext;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 
 import java.util.Collection;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.support;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 
 import java.util.Collection;

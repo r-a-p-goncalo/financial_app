@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.database.sqlite;
 
-import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 
 import java.sql.Connection;

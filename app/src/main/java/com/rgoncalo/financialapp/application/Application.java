@@ -3,7 +3,6 @@ package com.rgoncalo.financialapp.application;
 import com.rgoncalo.financialapp.application.account.AccountsSummary;
 import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.financialcontext.*;
-import com.rgoncalo.financialapp.domain.financialcontext.FinancialContext;
 
 /**
  * Server side app

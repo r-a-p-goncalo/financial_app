@@ -1,12 +1,12 @@
 package com.rgoncalo.financialapp.client;
 
 import com.rgoncalo.financialapp.application.Application;
-import com.rgoncalo.financialapp.application.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.*;
-import com.rgoncalo.financialapp.domain.financialcontext.FinancialContext;
-import com.rgoncalo.financialapp.domain.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 
 import java.util.Collection;
 import java.util.Optional;

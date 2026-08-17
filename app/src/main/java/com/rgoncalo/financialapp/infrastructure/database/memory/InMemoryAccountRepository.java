@@ -1,8 +1,7 @@
 package com.rgoncalo.financialapp.infrastructure.database.memory;
 
-import com.rgoncalo.financialapp.application.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
-import com.rgoncalo.financialapp.domain.account.Account;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.domain.money;
+package com.rgoncalo.financialapp.commondata.money;
 
 import java.math.BigDecimal;
 

@@ -1,6 +1,6 @@
-package com.rgoncalo.financialapp.application.account;
+package com.rgoncalo.financialapp.commondata.account;
 
-import com.rgoncalo.financialapp.domain.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 
 /**
  * Represents the possibly partial data of an account.

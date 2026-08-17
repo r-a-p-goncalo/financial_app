@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.application.account;
 
-import com.rgoncalo.financialapp.domain.account.Account;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 
 import java.util.Collection;
 import java.util.Optional;

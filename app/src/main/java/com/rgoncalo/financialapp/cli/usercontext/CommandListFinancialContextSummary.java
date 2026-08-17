@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.cli.usercontext;
 
-import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.cli.CLICommand;
 import com.rgoncalo.financialapp.client.ClientApplication;
 

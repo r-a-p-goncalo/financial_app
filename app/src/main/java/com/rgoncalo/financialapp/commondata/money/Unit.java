@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.domain.money;
+package com.rgoncalo.financialapp.commondata.money;
 
 //TODO: this should be akin to an enumerator
 public final class Unit {

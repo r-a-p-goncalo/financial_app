@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
 import org.junit.jupiter.api.Test;
 

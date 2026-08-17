@@ -7,6 +7,11 @@ The application currently runs as a single process and is interacted with throug
 The main goal of the current implementation is to establish the application's architectural boundaries while supporting basic financial-context and account operations.
 
 ---
+## Next steps
+
+- Make tests parametarizable for application configurations, and then run them for each of some predefined configurations. For example, running them all for InMemoryRepositories and then running them for sqlite repositories.
+
+---
 
 ## Package Overview
 

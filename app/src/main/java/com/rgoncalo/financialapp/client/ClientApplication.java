@@ -20,10 +20,10 @@ import java.util.Optional;
 public class ClientApplication {
 
     private final Application serverApp;
-    private FinancialContextRecord currentFinancialContext;
+    private final FinancialContextSession financialContextSession;
 
     public ClientApplication(Application serverApp){
-        this.currentFinancialContext = null;
+        this.financialContextSession = new FinancialContextSession();
         this.serverApp = serverApp;
     }
 
@@ -32,7 +32,7 @@ public class ClientApplication {
     }
 
     public FinancialContextRecord getCurrentFinancialContext(){
-        return this.currentFinancialContext;
+        return this.financialContextSession.requireCurrentContext();
     }
 
     public Collection<FinancialContextRecord> getFinancialContexts(){
@@ -45,30 +45,22 @@ public class ClientApplication {
         if (newFinancialContext.isEmpty())
             throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);
 
-        this.currentFinancialContext = newFinancialContext.get();
+        this.financialContextSession.load(newFinancialContext.get());
 
     }
 
     public void unloadFinancialContext() throws ClientRuntimeException {
-        if(this.currentFinancialContext == null)
-            throw new ClientRuntimeException("There was no financial context loaded to unload");
+        this.financialContextSession.clear();
 
-        this.currentFinancialContext = null;
     }
 
     public AccountRecord createAccount(String accountName, MonetaryValue initialAmount)  throws ClientRuntimeException {
 
-        if(this.currentFinancialContext == null)
-            throw new ClientRuntimeException("There is financial context loaded to create an account in");
-
-        return serverApp.createAccount().execute(new CreateAccountRequest(accountName, initialAmount, this.currentFinancialContext.id()));
+        return serverApp.createAccount().execute(new CreateAccountRequest(accountName, initialAmount, this.financialContextSession.requireCurrentContext().id()));
     }
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
-        if(this.currentFinancialContext == null)
-            throw new ClientRuntimeException("There is financial context loaded to create an account in");
-
-        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.currentFinancialContext.id()));
+        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().id()));
     }
 }

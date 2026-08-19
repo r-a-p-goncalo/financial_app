@@ -2,7 +2,7 @@ package com.rgoncalo.financialapp.client;
 
 import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
-import com.rgoncalo.financialapp.application.account.AccountsSummaryRequest;
+import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.*;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
@@ -69,6 +69,6 @@ public class ClientApplication {
         if(this.currentFinancialContext == null)
             throw new ClientRuntimeException("There is financial context loaded to create an account in");
 
-        return serverApp.accountSummary().execute(new AccountsSummaryRequest(this.currentFinancialContext.id()));
+        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.currentFinancialContext.id()));
     }
 }

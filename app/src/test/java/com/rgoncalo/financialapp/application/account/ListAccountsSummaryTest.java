@@ -5,7 +5,6 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.support.RecordingAccountRepository;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(RepositoryTestExtension.class)
-class AccountsSummaryTest {
+class ListAccountsSummaryTest {
 
     @TestTemplate
     void requestsSummariesForSpecifiedFinancialContext(RepositoryTestConfiguration configuration){
@@ -30,9 +29,9 @@ class AccountsSummaryTest {
             repository.save(accountRecord); //directly save in account record to skip the ID generation
         }
 
-        AccountsSummary useCase = new AccountsSummary(repository);
+        ListAccountsSummary useCase = new ListAccountsSummary(repository);
 
-        var result = useCase.execute(new AccountsSummaryRequest("context-1"));
+        var result = useCase.execute(new ListAccountsSummaryRequest("context-1"));
 
         assertEquals(1, repository.summaryCalls());
         assertEquals(expected.size(), result.size());

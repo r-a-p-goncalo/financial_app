@@ -5,8 +5,6 @@ import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
-import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -17,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(RepositoryTestExtension.class)
-class AccountsSummaryIsolationTest {
+class ListAccountsSummaryIsolationTest {
 
     @TestTemplate
     void accountsFromAnotherFinancialContextAreNotVisible(RepositoryTestConfiguration configuration) {
         AccountRepository repository = configuration.createAccountRepository();
 
         CreateAccount createAccount = new CreateAccount(repository);
-        AccountsSummary accountsSummary = new AccountsSummary(repository);
+        ListAccountsSummary listAccountsSummary = new ListAccountsSummary(repository);
 
         createAccount.execute(new CreateAccountRequest(
                 "Personal Checking",
@@ -45,13 +43,13 @@ class AccountsSummaryIsolationTest {
         ));
 
         Collection<AccountRecord> personalAccounts =
-                accountsSummary.execute(
-                        new AccountsSummaryRequest("personal")
+                listAccountsSummary.execute(
+                        new ListAccountsSummaryRequest("personal")
                 );
 
         Collection<AccountRecord> businessAccounts =
-                accountsSummary.execute(
-                        new AccountsSummaryRequest("business")
+                listAccountsSummary.execute(
+                        new ListAccountsSummaryRequest("business")
                 );
 
         assertEquals(2, personalAccounts.size());

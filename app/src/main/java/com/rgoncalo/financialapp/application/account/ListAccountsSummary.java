@@ -9,11 +9,11 @@ import java.util.Collection;
  *
  * <p></p>
  */
-public class AccountsSummary {
+public class ListAccountsSummary {
 
     private final AccountRepository accountRepository;
 
-    public AccountsSummary(AccountRepository accountRepository) {
+    public ListAccountsSummary(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
 
@@ -23,7 +23,7 @@ public class AccountsSummary {
      * @param request, defines which accounts to return
      * @return a collection of accounts
      */
-    public Collection<AccountRecord> execute(AccountsSummaryRequest request) {
+    public Collection<AccountRecord> execute(ListAccountsSummaryRequest request) {
 
         return accountRepository.listAccountsSummary(request.financialContextId());
     }

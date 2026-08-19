@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.application.account;
 
 
-public record AccountsSummaryRequest(
+public record ListAccountsSummaryRequest(
         String financialContextId
 ) {}

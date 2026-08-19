@@ -1,6 +1,6 @@
 package com.rgoncalo.financialapp.application;
 
-import com.rgoncalo.financialapp.application.account.AccountsSummary;
+import com.rgoncalo.financialapp.application.account.ListAccountsSummary;
 import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.financialcontext.*;
 
@@ -19,8 +19,8 @@ public class Application {
         return new CreateAccount(this.appConfig.accountRepository());
     }
 
-    public AccountsSummary accountSummary(){
-        return new AccountsSummary(this.appConfig.accountRepository());
+    public ListAccountsSummary accountSummary(){
+        return new ListAccountsSummary(this.appConfig.accountRepository());
     }
 
     public CreateFinancialContext createFinancialContext(){

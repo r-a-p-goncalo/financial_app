@@ -3,6 +3,7 @@ package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -63,7 +64,7 @@ public class SQLiteAccountRepository implements AccountRepository {
             return account;
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not save account: " + account.id(),
                     exception
             );
@@ -116,7 +117,7 @@ public class SQLiteAccountRepository implements AccountRepository {
             }
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not list accounts for financial context: "
                             + financialContextId,
                     exception
@@ -188,7 +189,7 @@ public class SQLiteAccountRepository implements AccountRepository {
             }
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not find account: " + id,
                     exception
             );

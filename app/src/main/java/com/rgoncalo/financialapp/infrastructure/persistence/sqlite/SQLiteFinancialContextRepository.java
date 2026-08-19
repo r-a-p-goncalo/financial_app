@@ -2,6 +2,7 @@ package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,7 +62,7 @@ public class SQLiteFinancialContextRepository
             return financialContext;
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not save financial context: "
                             + financialContext.id(),
                     exception
@@ -113,7 +114,7 @@ public class SQLiteFinancialContextRepository
             }
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not list financial contexts",
                     exception
             );
@@ -170,7 +171,7 @@ public class SQLiteFinancialContextRepository
             }
 
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not find financial context: " + id,
                     exception
             );

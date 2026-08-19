@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 
 public class SQLiteSchema {
 
@@ -40,7 +41,7 @@ public class SQLiteSchema {
         try (Statement statement = connection.createStatement()) {
             statement.execute(accountTable);
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not initialize table for account.",
                     exception
             );
@@ -63,7 +64,7 @@ public class SQLiteSchema {
         try (Statement statement = connection.createStatement()) {
             statement.execute(financialContextTable);
         } catch (SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not initialize table for financial context.",
                     exception
             );

@@ -1,5 +1,7 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +35,7 @@ public class SQLiteConnection {
             );
 
         } catch (IOException | SQLException exception) {
-            throw new RuntimeException(
+            throw new PersistenceException(
                     "Could not connect to SQLite database.",
                     exception
             );

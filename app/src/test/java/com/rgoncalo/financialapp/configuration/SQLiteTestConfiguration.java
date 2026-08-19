@@ -2,6 +2,7 @@ package com.rgoncalo.financialapp.configuration;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccountRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
@@ -31,7 +32,7 @@ public class SQLiteTestConfiguration implements RepositoryTestConfiguration{
             return new SQLiteAccountRepository(connection);
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new PersistenceException(e);
         }
     }
 
@@ -48,7 +49,7 @@ public class SQLiteTestConfiguration implements RepositoryTestConfiguration{
             return new SQLiteFinancialContextRepository(connection);
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new PersistenceException(e);
         }
     }
 

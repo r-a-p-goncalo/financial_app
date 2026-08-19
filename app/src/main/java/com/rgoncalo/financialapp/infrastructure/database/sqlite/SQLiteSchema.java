@@ -8,12 +8,12 @@ import java.sql.Statement;
 public class SQLiteSchema {
 
     static final String ACCOUNT_TABLE_NAME = "account";
-    static final String FINANCIAL_CONTEXT_TABLE_NAME = "financial_context";
+    static final String FINANCIAL_CONTEXT_TABLE_NAME = "financialContext";
 
     static final String ID_COLUMN_NAME = "id";
     static final String NAME_COLUMN_NAME = "name";
-    static final String INITIAL_AMOUNT_VALUE_COLUMN_NAME = "initial_amount_value";
-    static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financial_context_id";
+    static final String INITIAL_AMOUNT_VALUE_COLUMN_NAME = "initialAmount";
+    static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financialContextId";
 
     public static void initAccountRep(Connection connection) {
 

@@ -195,7 +195,7 @@ This document describes the data we expect to have without making assumptions ab
 
     "represents an account"
 
-    initial_amount : MonetaryValue
+    initialAmount : MonetaryValue
 
     ----------------------------------------
 

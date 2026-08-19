@@ -35,4 +35,9 @@ public class MonetaryValue {
         return value.toString();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof MonetaryValue
+                && (this.value.compareTo(((MonetaryValue) obj).getValue()) == 0);
+    }
 }

@@ -9,44 +9,35 @@ import java.util.Optional;
 
 public final class RecordingFinancialContextRepository implements FinancialContextRepository {
 
-    private FinancialContextRecord savedFinancialContext;
     private int saveCalls;
-    private String requestedId;
     private int findCalls;
     private int summaryCalls;
-    private Optional<FinancialContextRecord> findResult = Optional.empty();
-    private Collection<FinancialContextRecord> summaryResult = List.of();
+    private FinancialContextRepository financialContextRepository;
+
+    public RecordingFinancialContextRepository(FinancialContextRepository financialContextRepository){
+        this.financialContextRepository = financialContextRepository;
+    }
 
     @Override
     public FinancialContextRecord save(FinancialContextRecord financialContext) {
-        savedFinancialContext = financialContext;
         saveCalls++;
-        return financialContext;
+        return financialContextRepository.save(financialContext);
     }
 
     @Override
     public Collection<FinancialContextRecord> listFinancialContextsSummary() {
         summaryCalls++;
-        return summaryResult;
+        return financialContextRepository.listFinancialContextsSummary();
     }
 
     @Override
     public Optional<FinancialContextRecord> findById(String id) {
-        requestedId = id;
         findCalls++;
-        return findResult;
-    }
-
-    public FinancialContextRecord savedFinancialContext() {
-        return savedFinancialContext;
+        return financialContextRepository.findById(id);
     }
 
     public int saveCalls() {
         return saveCalls;
-    }
-
-    public String requestedId() {
-        return requestedId;
     }
 
     public int findCalls() {
@@ -55,13 +46,5 @@ public final class RecordingFinancialContextRepository implements FinancialConte
 
     public int summaryCalls() {
         return summaryCalls;
-    }
-
-    public void setFindResult(Optional<FinancialContextRecord> findResult) {
-        this.findResult = findResult;
-    }
-
-    public void setSummaryResult(Collection<FinancialContextRecord> summaryResult) {
-        this.summaryResult = summaryResult;
     }
 }

@@ -1,13 +1,14 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
-import com.rgoncalo.financialapp.application.account.AccountsSummary;
-import com.rgoncalo.financialapp.application.account.AccountsSummaryRequest;
-import com.rgoncalo.financialapp.application.account.CreateAccount;
-import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
+import com.rgoncalo.financialapp.application.account.*;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
+import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.infrastructure.database.memory.InMemoryAccountRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -15,12 +16,12 @@ import java.util.Collection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(RepositoryTestExtension.class)
 class AccountsSummaryIsolationTest {
 
-    @Test
-    void accountsFromAnotherFinancialContextAreNotVisible() {
-        InMemoryAccountRepository repository =
-                new InMemoryAccountRepository();
+    @TestTemplate
+    void accountsFromAnotherFinancialContextAreNotVisible(RepositoryTestConfiguration configuration) {
+        AccountRepository repository = configuration.createAccountRepository();
 
         CreateAccount createAccount = new CreateAccount(repository);
         AccountsSummary accountsSummary = new AccountsSummary(repository);

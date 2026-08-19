@@ -1,34 +1,43 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
+import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(RepositoryTestExtension.class)
 class CreateFinancialContextTest {
 
-    @Test
-    void createsAndPersistsFinancialContextFromRequest() {
-        RecordingFinancialContextRepository repository =
-                new RecordingFinancialContextRepository();
+    @TestTemplate
+    void createsAndPersistsFinancialContextFromRequest(RepositoryTestConfiguration configuration) {
+
+        RecordingFinancialContextRepository repository = new RecordingFinancialContextRepository(configuration.createFinancialContextRepository());
         CreateFinancialContext useCase = new CreateFinancialContext(repository);
 
+        String name = "Personal";
+
         FinancialContextRecord result = useCase.execute(
-                new CreateFinancialContextRequest("Personal")
+                new CreateFinancialContextRequest(name)
         );
 
         assertEquals(1, repository.saveCalls());
 
-        FinancialContextRecord saved = repository.savedFinancialContext();
-        assertNotNull(saved);
-        assertNotNull(saved.id());
-        assertFalse(saved.id().isBlank());
-        assertEquals("Personal", saved.name());
+        Optional<FinancialContextRecord> saved = repository.findById(result.id());
+        assertFalse(saved.isEmpty());
 
-        assertSame(saved, result);
+        FinancialContextRecord savedContext = saved.get();
+
+        assertNotNull(savedContext.id());
+        assertFalse(savedContext.id().isBlank());
+        assertEquals(name, savedContext.name());
+
+        assertTrue(saved.get().equalsIdentity(result));
     }
 }

@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.database.sqlite;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import java.io.IOException;
 import java.nio.file.Files;

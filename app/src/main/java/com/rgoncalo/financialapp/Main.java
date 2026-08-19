@@ -4,13 +4,12 @@ import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
-import com.rgoncalo.financialapp.cli.financialcontext.FinancialCli;
 import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteAccountRepository;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteConnection;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteFinancialContextRepository;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteSchema;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccountRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteConnection;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
 
 import java.sql.Connection;
 import java.util.Scanner;

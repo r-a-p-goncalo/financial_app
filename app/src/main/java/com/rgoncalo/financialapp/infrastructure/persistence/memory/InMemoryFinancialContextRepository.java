@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.database.memory;
+package com.rgoncalo.financialapp.infrastructure.persistence.memory;
 
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;

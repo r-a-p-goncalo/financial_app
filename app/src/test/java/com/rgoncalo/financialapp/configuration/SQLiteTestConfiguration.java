@@ -2,9 +2,9 @@ package com.rgoncalo.financialapp.configuration;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteAccountRepository;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteFinancialContextRepository;
-import com.rgoncalo.financialapp.infrastructure.database.sqlite.SQLiteSchema;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccountRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

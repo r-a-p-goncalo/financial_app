@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.database.sqlite;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;

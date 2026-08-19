@@ -4,7 +4,6 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRec
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -13,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(RepositoryTestExtension.class)
-class FinancialContextSummaryTest {
+class ListFinancialContextSummaryTest {
 
     @TestTemplate
     void requestsSummariesFromRepository(
@@ -33,11 +32,11 @@ class FinancialContextSummaryTest {
             repository.save(context);
         }
 
-        FinancialContextSummary useCase =
-                new FinancialContextSummary(repository);
+        ListFinancialContextSummary useCase =
+                new ListFinancialContextSummary(repository);
 
         var result = useCase.execute(
-                new FinancialContextSummaryRequest()
+                new ListFinancialContextSummaryRequest()
         );
 
         assertEquals(1, repository.summaryCalls());

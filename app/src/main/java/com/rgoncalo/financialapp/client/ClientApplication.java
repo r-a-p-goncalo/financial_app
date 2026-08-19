@@ -36,7 +36,7 @@ public class ClientApplication {
     }
 
     public Collection<FinancialContextRecord> getFinancialContexts(){
-        return this.serverApp.listFinancialContextSummary().execute(new FinancialContextSummaryRequest());
+        return this.serverApp.listFinancialContextSummary().execute(new ListFinancialContextSummaryRequest());
     }
 
     public void loadIntoFinancialContext(String financialContextId) throws  ClientRuntimeException{

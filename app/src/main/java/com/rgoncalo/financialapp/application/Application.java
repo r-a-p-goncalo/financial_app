@@ -31,7 +31,7 @@ public class Application {
         return new GetFinancialContext(this.appConfig.financialContextRepository());
     }
 
-    public FinancialContextSummary listFinancialContextSummary(){
-        return new FinancialContextSummary(this.appConfig.financialContextRepository());
+    public ListFinancialContextSummary listFinancialContextSummary(){
+        return new ListFinancialContextSummary(this.appConfig.financialContextRepository());
     }
 }

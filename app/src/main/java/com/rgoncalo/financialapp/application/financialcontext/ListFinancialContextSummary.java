@@ -4,16 +4,16 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRec
 
 import java.util.Collection;
 
-public class FinancialContextSummary {
+public class ListFinancialContextSummary {
 
 
     private final FinancialContextRepository financialContextRepository;
 
-    public FinancialContextSummary(FinancialContextRepository financialContextRepository) {
+    public ListFinancialContextSummary(FinancialContextRepository financialContextRepository) {
         this.financialContextRepository = financialContextRepository;
     }
 
-    public Collection<FinancialContextRecord> execute(FinancialContextSummaryRequest request) {
+    public Collection<FinancialContextRecord> execute(ListFinancialContextSummaryRequest request) {
 
         return financialContextRepository.listFinancialContextsSummary();
     }

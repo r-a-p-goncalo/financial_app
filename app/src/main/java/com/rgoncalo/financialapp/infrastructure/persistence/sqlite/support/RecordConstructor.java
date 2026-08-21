@@ -85,7 +85,7 @@ public class RecordConstructor {
                     arguments[index] =
                             construct(
                                     componentType,
-                                    "",
+                                    columnName,
                                     resultSet
                             );
 

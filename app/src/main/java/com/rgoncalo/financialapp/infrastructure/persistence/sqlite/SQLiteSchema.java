@@ -16,13 +16,15 @@ public class SQLiteSchema {
     static final String NAME_COLUMN_NAME = "name";
     static final String INITIAL_AMOUNT_VALUE_COLUMN_NAME = "initialAmount";
 
+    static final String FINANCIAL_CONTEXT_ID_IN_REFERENCES = "financialContextId_financialContextId";
+
     static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financialContextId"; //this has to match FinancialContextId
 
     static final String TRANSACTION_ID = "transactionId";
     static final String TRANSACTION_VALUE = "transactionValue";
     static final String TRANSACTION_DATE_TIME_COLUMN_NAME = "dateTime";
-    static final String TRANSACTION_ORIGIN_ACCOUNT_ID = "originAccountId";
-    static final String TRANSACTION_TARGET_ACCOUNT_ID = "targetAccountId";
+    static final String TRANSACTION_ORIGIN_ACCOUNT_ID = "originAccountId_accountId";
+    static final String TRANSACTION_TARGET_ACCOUNT_ID = "targetAccountId_accountId";
 
     public static void initAccountRep(Connection connection) {
 
@@ -44,12 +46,12 @@ public class SQLiteSchema {
                 ACCOUNT_ID_COLUMN_NAME,
                 NAME_COLUMN_NAME,
                 INITIAL_AMOUNT_VALUE_COLUMN_NAME,
-                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_IN_REFERENCES,
 
                 ACCOUNT_ID_COLUMN_NAME,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME,
 
-                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_IN_REFERENCES,
                 FINANCIAL_CONTEXT_TABLE_NAME,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME
         );
@@ -94,7 +96,7 @@ public class SQLiteSchema {
                 TRANSACTION_TABLE_NAME,
 
                 TRANSACTION_ID,
-                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_IN_REFERENCES,
                 TRANSACTION_ORIGIN_ACCOUNT_ID,
                 TRANSACTION_TARGET_ACCOUNT_ID,
                 TRANSACTION_DATE_TIME_COLUMN_NAME,
@@ -103,7 +105,7 @@ public class SQLiteSchema {
                 TRANSACTION_ID,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME,
 
-                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_IN_REFERENCES,
                 FINANCIAL_CONTEXT_TABLE_NAME,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME,
 

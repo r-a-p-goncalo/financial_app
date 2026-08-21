@@ -67,7 +67,7 @@ public final class RecordFlattener {
 
                     flatten(
                             valueOfRecordAttribute,
-                            "",
+                            nameOfRecordAttribute,
                             currentRecordAttributeValues
                     );
 

@@ -7,12 +7,12 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
  * Is used to support queries with partial information or hidden information mechanisms.
  *
  * @param name
- * @param initial_value
+ * @param initialAmount
  */
 public record AccountRecord(
         AccountRecordId id,
         String name,
-        MonetaryValue initial_value
+        MonetaryValue initialAmount
 ) {
 
     /**

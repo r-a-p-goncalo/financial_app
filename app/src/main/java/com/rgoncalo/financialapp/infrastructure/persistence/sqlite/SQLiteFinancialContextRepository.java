@@ -41,7 +41,7 @@ public class SQLiteFinancialContextRepository
                 VALUES (?, ?)
                 """.formatted(
                 SQLiteSchema.FINANCIAL_CONTEXT_TABLE_NAME,
-                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME,
                 SQLiteSchema.NAME_COLUMN_NAME
         );
 
@@ -81,7 +81,7 @@ public class SQLiteFinancialContextRepository
                     %s
                 FROM %s
                 """.formatted(
-                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME,
                 SQLiteSchema.NAME_COLUMN_NAME,
                 SQLiteSchema.FINANCIAL_CONTEXT_TABLE_NAME
         );
@@ -98,7 +98,7 @@ public class SQLiteFinancialContextRepository
 
                 String id =
                         resultSet.getString(
-                                SQLiteSchema.ID_COLUMN_NAME
+                                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME
                         );
 
                 String name =
@@ -135,10 +135,10 @@ public class SQLiteFinancialContextRepository
                 FROM %s
                 WHERE %s = ?
                 """.formatted(
-                SQLiteSchema.ID_COLUMN_NAME,
+                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME,
                 SQLiteSchema.NAME_COLUMN_NAME,
                 SQLiteSchema.FINANCIAL_CONTEXT_TABLE_NAME,
-                SQLiteSchema.ID_COLUMN_NAME
+                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME
         );
 
         try (PreparedStatement statement =
@@ -155,7 +155,7 @@ public class SQLiteFinancialContextRepository
 
                 String financialContextId =
                         resultSet.getString(
-                                SQLiteSchema.ID_COLUMN_NAME
+                                SQLiteSchema.ACCOUNT_ID_COLUMN_NAME
                         );
 
                 String name =

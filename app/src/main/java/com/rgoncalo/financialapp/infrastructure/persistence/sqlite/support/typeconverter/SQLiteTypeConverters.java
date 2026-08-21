@@ -33,6 +33,9 @@ public class SQLiteTypeConverters {
                 new DoubleSQLiteTypeConverter()
         );
 
+        register(
+                new MonetaryValueSQLiteTypeConverter()
+        );
     }
 
     public <T> void register(

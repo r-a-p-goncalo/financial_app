@@ -32,7 +32,7 @@ public class CommandAccountsSummaryCommand extends CLICommand {
             System.out.println("---");
             printIfNotNull("    Id: ", account.id());
             printIfNotNull("    Name: ", account.name());
-            printIfNotNull("    Initial amount: ", account.initial_value());
+            printIfNotNull("    Initial amount: ", account.initialAmount());
         }
 
         System.out.println();

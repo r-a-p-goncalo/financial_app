@@ -40,4 +40,8 @@ public class MonetaryValue {
         return obj instanceof MonetaryValue
                 && (this.value.compareTo(((MonetaryValue) obj).getValue()) == 0);
     }
+
+    public static MonetaryValue parse(String string){
+        return new MonetaryValue(new BigDecimal(string));
+    }
 }

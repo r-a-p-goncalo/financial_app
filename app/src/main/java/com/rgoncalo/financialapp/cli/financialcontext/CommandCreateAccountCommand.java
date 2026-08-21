@@ -42,7 +42,7 @@ public class CommandCreateAccountCommand extends CLICommand {
         System.out.println("Account created.");
         System.out.println("Id: " + accountRecord.id());
         System.out.println("Name: " + accountRecord.name());
-        System.out.println("Initial amount: " + accountRecord.initial_value());
+        System.out.println("Initial amount: " + accountRecord.initialAmount());
         System.out.println();
 
     }

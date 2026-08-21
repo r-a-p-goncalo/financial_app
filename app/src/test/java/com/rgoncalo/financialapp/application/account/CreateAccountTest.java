@@ -51,7 +51,7 @@ class CreateAccountTest {
         assertNotNull(saved);
         assertNotNull(saved.id());
         assertEquals(name, saved.name());
-        assertEquals(initialAmount, saved.initial_value());
+        assertEquals(initialAmount, saved.initialAmount());
         assertEquals(context1, saved.id().financialContextId());
 
         assertEquals(saved, result);

@@ -11,10 +11,10 @@ public class SQLiteSchema {
     static final String ACCOUNT_TABLE_NAME = "account";
     static final String FINANCIAL_CONTEXT_TABLE_NAME = "financialContext";
 
-    static final String ID_COLUMN_NAME = "id";
+    static final String ACCOUNT_ID_COLUMN_NAME = "accountId"; //this has to match AccountRecordId
     static final String NAME_COLUMN_NAME = "name";
     static final String INITIAL_AMOUNT_VALUE_COLUMN_NAME = "initialAmount";
-    static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financialContextId";
+    static final String FINANCIAL_CONTEXT_ID_COLUMN_NAME = "financialContextId"; //this has to match FinancialContextId
 
     public static void initAccountRep(Connection connection) {
 
@@ -29,13 +29,13 @@ public class SQLiteSchema {
                 )
                 """.formatted(
                 ACCOUNT_TABLE_NAME,
-                ID_COLUMN_NAME,
+                ACCOUNT_ID_COLUMN_NAME,
                 NAME_COLUMN_NAME,
                 INITIAL_AMOUNT_VALUE_COLUMN_NAME,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME,
                 FINANCIAL_CONTEXT_ID_COLUMN_NAME,
                 FINANCIAL_CONTEXT_TABLE_NAME,
-                ID_COLUMN_NAME
+                ACCOUNT_ID_COLUMN_NAME
         );
 
         try (Statement statement = connection.createStatement()) {
@@ -57,7 +57,7 @@ public class SQLiteSchema {
                 )
                 """.formatted(
                 FINANCIAL_CONTEXT_TABLE_NAME,
-                ID_COLUMN_NAME,
+                ACCOUNT_ID_COLUMN_NAME,
                 NAME_COLUMN_NAME
         );
 

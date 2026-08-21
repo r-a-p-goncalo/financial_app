@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.support;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 
@@ -31,7 +32,7 @@ public final class RecordingFinancialContextRepository implements FinancialConte
     }
 
     @Override
-    public Optional<FinancialContextRecord> findById(String id) {
+    public Optional<FinancialContextRecord> findById(FinancialContextId id) {
         findCalls++;
         return financialContextRepository.findById(id);
     }

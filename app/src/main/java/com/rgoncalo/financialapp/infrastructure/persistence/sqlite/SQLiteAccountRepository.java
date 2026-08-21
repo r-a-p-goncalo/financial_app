@@ -2,8 +2,13 @@ package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteQueryCondition;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -14,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
+import static com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema.ACCOUNT_TABLE_NAME;
+
 /**
  * SQLite implementation of {@link AccountRepository}.
  *
@@ -22,177 +29,40 @@ import java.util.Optional;
  */
 public class SQLiteAccountRepository implements AccountRepository {
 
-    private final Connection connection;
+    private final SQLiteRepository<AccountRecord> sqliteRepository;
 
     public SQLiteAccountRepository(Connection connection) {
-        this.connection = connection;
+        this.sqliteRepository = new SQLiteRepository<AccountRecord>(connection, AccountRecord.class, ACCOUNT_TABLE_NAME, new SQLiteTypeConverters());
     }
 
     @Override
     public AccountRecord save(AccountRecord account) {
 
-        String sql = """
-                INSERT INTO %s (
-                    %s,
-                    %s,
-                    %s,
-                    %s
-                )
-                
-                VALUES (?, ?, ?, ?)
-                """.formatted(
-                SQLiteSchema.ACCOUNT_TABLE_NAME,
-                SQLiteSchema.ID_COLUMN_NAME,
-                SQLiteSchema.NAME_COLUMN_NAME,
-                SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME,
-                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
-        );
+        return sqliteRepository.save(account);
 
-        try (PreparedStatement statement =
-                     connection.prepareStatement(sql)) {
-
-            statement.setString(1, account.id());
-            statement.setString(2, account.name());
-            statement.setBigDecimal(
-                    3,
-                    account.initial_value().getValue()
-            );
-            statement.setString(4, account.financialContextId());
-
-            statement.executeUpdate();
-
-            return account;
-
-        } catch (SQLException exception) {
-            throw new PersistenceException(
-                    "Could not save account: " + account.id(),
-                    exception
-            );
-        }
     }
 
     @Override
     public Collection<AccountRecord> listAccountsSummary(
-            String financialContextId) {
+            FinancialContextId financialContextId) {
 
-        String sql = """
-                SELECT %s, %s
-                FROM %s
-                WHERE %s = ?
-                """.formatted(
-                SQLiteSchema.ID_COLUMN_NAME,
-                SQLiteSchema.NAME_COLUMN_NAME,
-                SQLiteSchema.ACCOUNT_TABLE_NAME,
-                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
-        );
+        return sqliteRepository.findByRecordValues(financialContextId);
 
-        Collection<AccountRecord> accounts = new ArrayList<>();
-
-        try (PreparedStatement statement =
-                     connection.prepareStatement(sql)) {
-
-            statement.setString(1, financialContextId);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-
-                while (resultSet.next()) {
-
-                    String id = resultSet.getString(
-                            SQLiteSchema.ID_COLUMN_NAME
-                    );
-
-                    String name = resultSet.getString(
-                            SQLiteSchema.NAME_COLUMN_NAME
-                    );
-
-                    accounts.add(
-                            new AccountRecord(
-                                    id,
-                                    name,
-                                    null,
-                                    financialContextId
-                            )
-                    );
-                }
-            }
-
-        } catch (SQLException exception) {
-            throw new PersistenceException(
-                    "Could not list accounts for financial context: "
-                            + financialContextId,
-                    exception
-            );
-        }
-
-        return accounts;
     }
 
     @Override
-    public Optional<AccountRecord> findById(String id) {
+    public Optional<AccountRecord> findById(AccountRecordId id) {
 
-        String sql = """
-                SELECT
-                    %s,
-                    %s,
-                    %s,
-                    %s
-                FROM %s
-                WHERE %s = ?
-                """.formatted(
-                SQLiteSchema.ID_COLUMN_NAME,
-                SQLiteSchema.NAME_COLUMN_NAME,
-                SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME,
-                SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME,
-                SQLiteSchema.ACCOUNT_TABLE_NAME,
-                SQLiteSchema.ID_COLUMN_NAME
-        );
+        Collection<AccountRecord> accountRecordsWithId = sqliteRepository.findByRecordValues(id);
 
-        try (PreparedStatement statement =
-                     connection.prepareStatement(sql)) {
-
-            statement.setString(1, id);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-
-                if (!resultSet.next()) {
-                    return Optional.empty();
-                }
-
-                String accountId = resultSet.getString(
-                        SQLiteSchema.ID_COLUMN_NAME
-                );
-
-                String name = resultSet.getString(
-                        SQLiteSchema.NAME_COLUMN_NAME
-                );
-
-                BigDecimal value = resultSet.getBigDecimal(
-                        SQLiteSchema.INITIAL_AMOUNT_VALUE_COLUMN_NAME
-                );
-
-                MonetaryValue initialAmount =
-                        new MonetaryValue(value);
-
-                String financialContextId = resultSet.getString(
-                        SQLiteSchema.FINANCIAL_CONTEXT_ID_COLUMN_NAME
-                );
-
-                AccountRecord account =
-                        new AccountRecord(
-                                accountId,
-                                name,
-                                initialAmount,
-                                financialContextId
-                        );
-
-                return Optional.of(account);
-            }
-
-        } catch (SQLException exception) {
-            throw new PersistenceException(
-                    "Could not find account: " + id,
-                    exception
-            );
+        if (accountRecordsWithId.size() > 1) {
+            throw new PersistenceException("Multiple account records were gotten with ID");
+        } else if (accountRecordsWithId.size() == 1) {
+            return Optional.of(accountRecordsWithId.iterator().next());
+        } else {
+            return Optional.empty();
         }
+
     }
+
 }

@@ -1,6 +1,8 @@
 package com.rgoncalo.financialapp.application.account;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -27,7 +29,7 @@ public interface AccountRepository {
      *
      * @return the partial information for accounts available
      */
-    Collection<AccountRecord> listAccountsSummary(String financialContextId);
+    Collection<AccountRecord> listAccountsSummary(FinancialContextId financialContextId);
 
     /**
      *
@@ -36,6 +38,7 @@ public interface AccountRepository {
      * @param id, the id of the account
      * @return the account with the id, possibly null
      */
-    Optional<AccountRecord> findById(String id);
+    Optional<AccountRecord> findById(AccountRecordId id);
+
 }
 

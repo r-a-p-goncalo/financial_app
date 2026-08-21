@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 
 import java.util.Collection;
@@ -27,6 +28,6 @@ public interface FinancialContextRepository {
      * @param id, the id of the financial context
      * @return the financial context with the id, possibly null
      */
-    Optional<FinancialContextRecord> findById(String id);
+    Optional<FinancialContextRecord> findById(FinancialContextId id);
 
 }

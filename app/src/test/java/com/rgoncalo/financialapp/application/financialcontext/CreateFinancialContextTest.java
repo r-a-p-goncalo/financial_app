@@ -34,7 +34,6 @@ class CreateFinancialContextTest {
         FinancialContextRecord savedContext = saved.get();
 
         assertNotNull(savedContext.id());
-        assertFalse(savedContext.id().isBlank());
         assertEquals(name, savedContext.name());
 
         assertTrue(saved.get().equalsIdentity(result));

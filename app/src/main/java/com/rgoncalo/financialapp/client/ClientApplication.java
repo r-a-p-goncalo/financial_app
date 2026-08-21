@@ -5,6 +5,7 @@ import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.*;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 
@@ -40,7 +41,7 @@ public class ClientApplication {
     }
 
     public void loadIntoFinancialContext(String financialContextId) throws  ClientRuntimeException{
-        Optional<FinancialContextRecord> newFinancialContext = serverApp.getFinancialContextById().execute(new GetFinancialContextRequest(financialContextId));
+        Optional<FinancialContextRecord> newFinancialContext = serverApp.getFinancialContextById().execute(new GetFinancialContextRequest(new FinancialContextId(financialContextId)));
 
         if (newFinancialContext.isEmpty())
             throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);

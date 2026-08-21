@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
@@ -23,9 +24,12 @@ class ListFinancialContextSummaryTest {
                         configuration.createFinancialContextRepository()
                 );
 
+        FinancialContextId context1 = new FinancialContextId("context-1");
+        FinancialContextId context2 = new FinancialContextId("context-2");
+
         List<FinancialContextRecord> expected = List.of(
-                new FinancialContextRecord("context-1", "Personal"),
-                new FinancialContextRecord("context-2", "Household")
+                new FinancialContextRecord(context1, "Personal"),
+                new FinancialContextRecord(context2, "Household")
         );
 
         for (FinancialContextRecord context : expected) {

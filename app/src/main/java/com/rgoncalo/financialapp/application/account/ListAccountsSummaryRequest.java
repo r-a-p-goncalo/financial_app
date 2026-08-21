@@ -1,6 +1,8 @@
 package com.rgoncalo.financialapp.application.account;
 
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
+
 public record ListAccountsSummaryRequest(
-        String financialContextId
+        FinancialContextId financialContextId
 ) {}

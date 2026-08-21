@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.application.account;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
@@ -29,13 +30,13 @@ class CreateAccountTest {
 
         String name = "Account";
         MonetaryValue initialAmount = new MonetaryValue(new BigDecimal("125.5"));
-        String financialContextId = "context-1";
+        FinancialContextId context1 = new FinancialContextId("context-1");
 
         AccountRecord result = useCase.execute(
                 new CreateAccountRequest(
                         name,
                         initialAmount,
-                        financialContextId
+                        context1
                 )
         );
 
@@ -49,10 +50,9 @@ class CreateAccountTest {
 
         assertNotNull(saved);
         assertNotNull(saved.id());
-        assertFalse(saved.id().isBlank());
         assertEquals(name, saved.name());
         assertEquals(initialAmount, saved.initial_value());
-        assertEquals(financialContextId, saved.financialContextId());
+        assertEquals(context1, saved.id().financialContextId());
 
         assertEquals(saved, result);
     }

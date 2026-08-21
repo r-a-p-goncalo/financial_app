@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.application.account;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 
 import java.util.UUID;
 
@@ -28,10 +29,9 @@ public class CreateAccount {
         String accountId = UUID.randomUUID().toString(); // TODO: decide on the ID generation technique
 
         AccountRecord account = new AccountRecord(
-                accountId,
+                new AccountRecordId(accountId, request.financialContextId()),
                 request.name(),
-                request.initialAmount(),
-                request.financialContextId()
+                request.initialAmount()
         );
 
         return accountRepository.save(account);

@@ -1,6 +1,8 @@
 package com.rgoncalo.financialapp.application.account;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
@@ -20,9 +22,15 @@ class ListAccountsSummaryTest {
 
         RecordingAccountRepository repository = new RecordingAccountRepository(configuration.createAccountRepository());
 
+        FinancialContextId context1 = new FinancialContextId("context-1");
+
+        AccountRecordId account1Id = new AccountRecordId("account-1", context1);
+        AccountRecordId account2Id = new AccountRecordId("account-2", context1);
+
+
         List<AccountRecord> expected = List.of(
-                new AccountRecord("account-1", "Checking", new MonetaryValue(0.0), "context-1"),
-                new AccountRecord("account-2", "Savings", new MonetaryValue(0.0), "context-1")
+                new AccountRecord(account1Id, "Checking", new MonetaryValue(0.0)),
+                new AccountRecord(account2Id, "Savings", new MonetaryValue(0.0))
         );
 
         for( AccountRecord accountRecord : expected){
@@ -31,7 +39,7 @@ class ListAccountsSummaryTest {
 
         ListAccountsSummary useCase = new ListAccountsSummary(repository);
 
-        var result = useCase.execute(new ListAccountsSummaryRequest("context-1"));
+        var result = useCase.execute(new ListAccountsSummaryRequest(context1));
 
         assertEquals(1, repository.summaryCalls());
         assertEquals(expected.size(), result.size());

@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
@@ -21,7 +22,7 @@ class GetFinancialContextTest {
         RecordingFinancialContextRepository repository =
                 new RecordingFinancialContextRepository(configuration.createFinancialContextRepository());
 
-        String contextId = "context-1";
+        FinancialContextId contextId = new FinancialContextId("context-1");
 
         FinancialContextRecord expected =
                 new FinancialContextRecord(contextId, "Personal");
@@ -52,7 +53,7 @@ class GetFinancialContextTest {
         GetFinancialContext useCase = new GetFinancialContext(repository);
 
         Optional<FinancialContextRecord> result = useCase.execute(
-                new GetFinancialContextRequest("missing-context")
+                new GetFinancialContextRequest(new FinancialContextId("missing-context"))
         );
 
         assertTrue(result.isEmpty());

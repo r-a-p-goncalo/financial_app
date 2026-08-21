@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class CreateFinancialContext {
         String financialContextId = UUID.randomUUID().toString(); // TODO: decide on the ID generation technique
 
         FinancialContextRecord financialContextRecord = new FinancialContextRecord(
-                financialContextId,
+                new FinancialContextId(financialContextId),
                 request.name()
         );
 

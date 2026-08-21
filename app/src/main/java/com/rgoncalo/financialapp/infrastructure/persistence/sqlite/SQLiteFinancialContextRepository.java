@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
@@ -49,7 +50,7 @@ public class SQLiteFinancialContextRepository
 
             statement.setString(
                     1,
-                    financialContext.id()
+                    financialContext.id().financialContextId()
             );
 
             statement.setString(
@@ -107,7 +108,7 @@ public class SQLiteFinancialContextRepository
 
                 financialContexts.add(
                         new FinancialContextRecord(
-                                id,
+                                new FinancialContextId(id),
                                 name
                         )
                 );
@@ -125,7 +126,7 @@ public class SQLiteFinancialContextRepository
 
     @Override
     public Optional<FinancialContextRecord> findById(
-            String id) {
+            FinancialContextId id) {
 
         String sql = """
                 SELECT
@@ -143,7 +144,7 @@ public class SQLiteFinancialContextRepository
         try (PreparedStatement statement =
                      connection.prepareStatement(sql)) {
 
-            statement.setString(1, id);
+            statement.setString(1, id.financialContextId());
 
             try (ResultSet resultSet =
                          statement.executeQuery()) {
@@ -164,7 +165,7 @@ public class SQLiteFinancialContextRepository
 
                 return Optional.of(
                         new FinancialContextRecord(
-                                financialContextId,
+                                new FinancialContextId(financialContextId),
                                 name
                         )
                 );

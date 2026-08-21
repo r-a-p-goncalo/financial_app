@@ -2,6 +2,8 @@ package com.rgoncalo.financialapp.infrastructure.persistence.memory;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -11,7 +13,7 @@ import java.util.Optional;
 
 public class InMemoryAccountRepository implements AccountRepository {
 
-    private final Map<String, AccountRecord> accounts = new LinkedHashMap<>();
+    private final Map<AccountRecordId, AccountRecord> accounts = new LinkedHashMap<>();
 
     @Override
     public AccountRecord save(AccountRecord account) {
@@ -20,19 +22,18 @@ public class InMemoryAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Collection<AccountRecord> listAccountsSummary(String financialContextId) {
+    public Collection<AccountRecord> listAccountsSummary(FinancialContextId financialContextId) {
         return accounts.values()
                 .stream()
                 .filter(account ->
                         java.util.Objects.equals(
-                                account.financialContextId(),
+                                account.id().financialContextId(),
                                 financialContextId
                         ))
                 .map(account -> new AccountRecord(
                         account.id(),
                         account.name(),
-                        null,
-                        account.financialContextId()
+                        null
                 ))
                 .toList();
     }
@@ -40,7 +41,7 @@ public class InMemoryAccountRepository implements AccountRepository {
 
 
     @Override
-    public Optional<AccountRecord> findById(String id) {
+    public Optional<AccountRecord> findById(AccountRecordId id) {
         return Optional.ofNullable(accounts.get(id));
     }
 

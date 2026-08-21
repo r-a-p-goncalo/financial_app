@@ -53,15 +53,7 @@ public class SQLiteAccountRepository implements AccountRepository {
     @Override
     public Optional<AccountRecord> findById(AccountRecordId id) {
 
-        Collection<AccountRecord> accountRecordsWithId = sqliteRepository.findByRecordValues(id);
-
-        if (accountRecordsWithId.size() > 1) {
-            throw new PersistenceException("Multiple account records were gotten with ID");
-        } else if (accountRecordsWithId.size() == 1) {
-            return Optional.of(accountRecordsWithId.iterator().next());
-        } else {
-            return Optional.empty();
-        }
+        return sqliteRepository.findSingleByRecordValue(id);
 
     }
 

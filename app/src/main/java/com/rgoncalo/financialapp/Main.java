@@ -10,6 +10,7 @@ import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccount
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteConnection;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
 
 import java.sql.Connection;
 import java.util.Scanner;

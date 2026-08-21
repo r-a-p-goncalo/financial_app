@@ -57,7 +57,7 @@ public class SQLiteSchema {
                 )
                 """.formatted(
                 FINANCIAL_CONTEXT_TABLE_NAME,
-                ACCOUNT_ID_COLUMN_NAME,
+                FINANCIAL_CONTEXT_ID_COLUMN_NAME,
                 NAME_COLUMN_NAME
         );
 

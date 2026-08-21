@@ -1,5 +1,8 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support;
 
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
 
 import java.sql.Connection;
@@ -96,6 +99,33 @@ public class SQLiteRepository<T> {
                     exception
             );
         }
+    }
+
+    public Optional<T> findSingleByRecordValue(Object id) {
+
+        Collection<T> accountRecordsWithId = findByRecordValues(id);
+
+        if (accountRecordsWithId.size() > 1) {
+            throw new PersistenceException("Multiple records were gotten with ID");
+
+        } else if (accountRecordsWithId.size() == 1) {
+            return Optional.of(accountRecordsWithId.iterator().next());
+
+        } else {
+            return Optional.empty();
+        }
+
+    }
+
+    public Collection<T> getAllRecords(){
+        SQLiteQueryBuilder builder =
+                new SQLiteQueryBuilder();
+        builder.build();
+
+        SQLiteQuery query =
+                builder.build();
+
+        return find(query);
     }
 
     public Collection<T> findByRecordValues(

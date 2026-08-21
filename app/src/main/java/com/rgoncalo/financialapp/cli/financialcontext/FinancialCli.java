@@ -2,6 +2,8 @@ package com.rgoncalo.financialapp.cli.financialcontext;
 
 import com.rgoncalo.financialapp.cli.CLI;
 import com.rgoncalo.financialapp.cli.CliCommandInter;
+import com.rgoncalo.financialapp.cli.transaction.CommandCreateTransactionCommand;
+import com.rgoncalo.financialapp.cli.transaction.CommandListTransactionSummaries;
 import com.rgoncalo.financialapp.cli.usercontext.CommandCreateFinancialContext;
 import com.rgoncalo.financialapp.cli.usercontext.CommandListFinancialContextSummary;
 import com.rgoncalo.financialapp.client.ClientApplication;
@@ -25,6 +27,8 @@ public class FinancialCli extends CLI {
 
         commands.add(new CommandAccountsSummaryCommand(app));
         commands.add(new CommandCreateAccountCommand(app));
+        commands.add(new CommandCreateTransactionCommand(app));
+        commands.add(new CommandListTransactionSummaries(app));
 
         return commands;
     }

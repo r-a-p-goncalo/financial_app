@@ -4,12 +4,10 @@ import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccountRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteConnection;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
 
 import java.sql.Connection;
@@ -35,7 +33,9 @@ public class Main {
 
         FinancialContextRepository financialContextRepository = new SQLiteFinancialContextRepository(connection);
 
-        return new ApplicationConfiguration(accountRepository, financialContextRepository);
+        TransactionRepository transactionRepository = new SQLiteTransactionRepository(connection);
+
+        return new ApplicationConfiguration(accountRepository, financialContextRepository, transactionRepository);
 
     }
 

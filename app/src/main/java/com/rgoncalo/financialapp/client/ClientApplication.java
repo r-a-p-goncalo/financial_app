@@ -1,14 +1,19 @@
 package com.rgoncalo.financialapp.client;
 
 import com.rgoncalo.financialapp.application.Application;
+import com.rgoncalo.financialapp.application.transaction.CreateTransactionRequest;
+import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryRequest;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.*;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -63,5 +68,66 @@ public class ClientApplication {
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
         return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().id()));
+    }
+
+    /**
+     *
+     * Creates a transaction. The IDs can use null as a placeholder for financial context, as this function will use the financial context in the current session
+     *
+     * @param originAccountId
+     * @param targetAccountId
+     * @param dateTime
+     * @param value
+     *
+     * @return
+     *
+     * @throws ClientRuntimeException
+     */
+    public TransactionRecord createTransaction(
+            AccountRecordId originAccountId,
+            AccountRecordId targetAccountId,
+            Instant dateTime,
+            MonetaryValue value
+    ) throws ClientRuntimeException {
+
+        FinancialContextId financialContextId =
+                financialContextSession
+                        .requireCurrentContext()
+                        .id();
+
+        if(originAccountId != null)
+            originAccountId = new AccountRecordId(originAccountId.accountId(), financialContextSession.requireCurrentContext().id());
+
+        if(targetAccountId != null)
+            targetAccountId = new AccountRecordId(targetAccountId.accountId(), financialContextSession.requireCurrentContext().id());
+
+        return serverApp
+                .createTransaction()
+                .execute(
+                        new CreateTransactionRequest(
+                                financialContextId,
+                                originAccountId,
+                                targetAccountId,
+                                dateTime,
+                                value
+                        )
+                );
+    }
+
+    public Collection<TransactionRecord> listTransactionsSummary()
+            throws ClientRuntimeException {
+
+        FinancialContextId financialContextId =
+                financialContextSession
+                        .requireCurrentContext()
+                        .id();
+
+        return serverApp
+                .transactionsSummary()
+                .execute(
+                        new ListTransactionsSummaryRequest(
+                                financialContextId
+                        )
+                );
     }
 }

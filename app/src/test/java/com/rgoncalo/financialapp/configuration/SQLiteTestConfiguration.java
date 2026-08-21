@@ -2,67 +2,75 @@ package com.rgoncalo.financialapp.configuration;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteAccountRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteTransactionRepository;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class SQLiteTestConfiguration implements RepositoryTestConfiguration{
+public class SQLiteTestConfiguration
+        implements RepositoryTestConfiguration {
 
-        private Connection connection;
+    private final Connection connection;
 
-        @Override
-        public String name() {
-            return "SQLite";
+    public SQLiteTestConfiguration() {
+
+        try {
+
+            connection =
+                    DriverManager.getConnection(
+                            "jdbc:sqlite::memory:"
+                    );
+
+            SQLiteSchema.initialize(connection);
+
+        } catch (SQLException exception) {
+
+            throw new PersistenceException(
+                    exception
+            );
         }
+    }
+
+    @Override
+    public String name() {
+        return "SQLite";
+    }
 
     @Override
     public AccountRepository createAccountRepository() {
-        try {
-            connection = DriverManager.getConnection(
-                    "jdbc:sqlite::memory:"
-            );
 
-            initializeDatabase(connection);
-
-            return new SQLiteAccountRepository(connection);
-
-        } catch (SQLException e) {
-            throw new PersistenceException(e);
-        }
+        return new SQLiteAccountRepository(
+                connection
+        );
     }
 
     @Override
-    public FinancialContextRepository createFinancialContextRepository() {
+    public FinancialContextRepository
+    createFinancialContextRepository() {
 
-        try {
-            connection = DriverManager.getConnection(
-                    "jdbc:sqlite::memory:"
-            );
-
-            initializeDatabase(connection);
-
-            return new SQLiteFinancialContextRepository(connection);
-
-        } catch (SQLException e) {
-            throw new PersistenceException(e);
-        }
+        return new SQLiteFinancialContextRepository(
+                connection
+        );
     }
 
+    @Override
+    public TransactionRepository
+    createTransactionRepository() {
 
-    private void initializeDatabase(Connection connection)
-                throws SQLException {
-
-        SQLiteSchema.initialize(connection);}
+        return new SQLiteTransactionRepository(
+                connection
+        );
+    }
 
     @Override
     public void close() throws SQLException {
-            if (connection != null) {
-                connection.close();
-            }
-        }
+
+        connection.close();
     }
+}

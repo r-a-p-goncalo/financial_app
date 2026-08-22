@@ -5,6 +5,8 @@ import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLite
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLiteTableDefinition;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLiteTableDefinitionFactory;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,6 +18,11 @@ public final class SQLiteSchema {
 
     private SQLiteSchema() {
     }
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    SQLiteSchema.class
+            );
 
     public static void initialize(
             Connection connection,
@@ -64,6 +71,8 @@ public final class SQLiteSchema {
                         table,
                         primaryKeys
                 );
+
+        logger.info("Executing table creation statement: {}", sql);
 
         try (
                 Statement statement =

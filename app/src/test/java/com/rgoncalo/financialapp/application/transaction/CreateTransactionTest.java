@@ -8,6 +8,7 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
+import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingTransactionRepository;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,8 +19,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(RepositoryTestExtension.class)
-class CreateTransactionTest {
+@ExtendWith({
+        RepositoryTestExtension.class,
+        TestLoggingExtension.class // TODO: This should be in an outside configuration that extends automatically all test classes
+})class CreateTransactionTest {
 
     @TestTemplate
     void canCreateTransaction(

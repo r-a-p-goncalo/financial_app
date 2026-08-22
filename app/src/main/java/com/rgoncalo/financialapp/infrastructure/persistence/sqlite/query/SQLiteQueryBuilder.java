@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query;
 
 import java.util.ArrayList;
 import java.util.List;

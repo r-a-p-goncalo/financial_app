@@ -7,10 +7,15 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRe
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
 
 import java.sql.Connection;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -26,7 +31,12 @@ public class Main {
         Connection connection =
                 sqliteConnection.getConnection();
 
-        SQLiteSchema.initialize(connection);
+        SQLiteSchema.initialize(
+                connection,
+                new AbstractMap.SimpleEntry<>(FinancialContextRecord.class, List.of("financialContextKey_financialContextKey")),
+                new AbstractMap.SimpleEntry<>(AccountRecord.class, List.of("financialContextKey_financialContextKey", "accountRecordId_accountRecordId")),
+                new AbstractMap.SimpleEntry<>(TransactionRecord.class, List.of("transactionRecordId_transactionRecordId", "transactionRecordId_transactionRecordId"))
+        );
 
         AccountRepository accountRepository =
                 new SQLiteAccountRepository(connection);

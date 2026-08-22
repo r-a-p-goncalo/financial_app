@@ -1,19 +1,11 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
-
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.DoubleSQLiteTypeConverter;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.IntegerSQLiteTypeConverter;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverter;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.StringSQLiteTypeConverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SQLiteTypeConverters {
 
-    private final Map<
-            Class<?>,
-            SQLiteTypeConverter<?>
-            > converters;
+    private final Map<Class<?>, SQLiteTypeConverter<?>> converters;
 
     public SQLiteTypeConverters() {
 
@@ -95,4 +87,14 @@ public class SQLiteTypeConverters {
 
         return converter.fromDatabase(value);
     }
+
+    public String sqliteType(
+            Class<?> type
+    ) {
+
+        return converters.get(type)
+                .sqliteType();
+    }
+
+
 }

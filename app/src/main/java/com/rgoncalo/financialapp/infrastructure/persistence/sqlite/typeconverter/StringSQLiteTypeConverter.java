@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 public class StringSQLiteTypeConverter
         implements SQLiteTypeConverter<String> {
@@ -13,6 +13,11 @@ public class StringSQLiteTypeConverter
             String value
     ) {
         return value;
+    }
+
+    @Override
+    public String sqliteType() {
+        return "TEXT";
     }
 
     @Override

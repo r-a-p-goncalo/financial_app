@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 import java.time.Instant;
 
@@ -15,6 +15,11 @@ public class InstantSQLiteTypeConverter
             Instant value
     ) {
         return value.toString();
+    }
+
+    @Override
+    public String sqliteType() {
+        return "TEXT";
     }
 
     @Override

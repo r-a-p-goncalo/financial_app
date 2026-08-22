@@ -1,8 +1,6 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
-
-import java.time.Instant;
 
 public class MonetaryValueSQLiteTypeConverter implements  SQLiteTypeConverter<MonetaryValue> {
 
@@ -16,6 +14,11 @@ public class MonetaryValueSQLiteTypeConverter implements  SQLiteTypeConverter<Mo
             MonetaryValue value
     ) {
         return value.toString();
+    }
+
+    @Override
+    public String sqliteType() {
+        return "TEXT";
     }
 
     @Override

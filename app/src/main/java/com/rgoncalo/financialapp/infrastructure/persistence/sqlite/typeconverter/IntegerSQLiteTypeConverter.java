@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 
 public class IntegerSQLiteTypeConverter
@@ -15,6 +15,12 @@ public class IntegerSQLiteTypeConverter
     ) {
         return value;
     }
+
+    @Override
+    public String sqliteType() {
+        return "INTEGER";
+    }
+
 
     @Override
     public Integer fromDatabase(

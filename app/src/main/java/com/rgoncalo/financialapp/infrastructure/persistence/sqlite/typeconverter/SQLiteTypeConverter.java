@@ -1,8 +1,10 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 public interface SQLiteTypeConverter<T> {
 
     Class<T> type();
+
+    String sqliteType();
 
     Object toDatabase(
             T value

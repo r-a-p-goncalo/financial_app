@@ -1,11 +1,11 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.RecordComponent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
 public class RecordConstructor {
 

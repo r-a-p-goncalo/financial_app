@@ -4,8 +4,7 @@ import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
 import java.sql.Connection;
 import java.util.Collection;

@@ -4,18 +4,9 @@ import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
-import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
-import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteQueryCondition;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record;
 
 import java.lang.reflect.RecordComponent;
 import java.util.LinkedHashMap;

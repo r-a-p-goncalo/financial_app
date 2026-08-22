@@ -3,15 +3,9 @@ package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.SQLiteRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 

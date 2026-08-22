@@ -1,4 +1,4 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter;
 
 public class DoubleSQLiteTypeConverter
         implements SQLiteTypeConverter<Double> {
@@ -14,6 +14,12 @@ public class DoubleSQLiteTypeConverter
     ) {
         return value;
     }
+
+    @Override
+    public String sqliteType() {
+        return "REAL";
+    }
+
 
     @Override
     public Double fromDatabase(

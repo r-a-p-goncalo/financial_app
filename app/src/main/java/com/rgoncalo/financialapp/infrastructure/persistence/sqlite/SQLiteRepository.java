@@ -1,9 +1,13 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support;
+package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
-import com.rgoncalo.financialapp.commondata.account.AccountRecord;
-import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.support.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQuery;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryBuilder;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryCondition;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryGenerator;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordConstructor;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordFlattener;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

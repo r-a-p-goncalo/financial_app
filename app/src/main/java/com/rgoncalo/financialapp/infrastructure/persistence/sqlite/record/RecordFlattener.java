@@ -6,11 +6,22 @@ import java.util.Map;
 
 public final class RecordFlattener {
 
+    private static  final  boolean DEFAULT_IGNORE_NULLS = false;
+
     private RecordFlattener() {
     }
 
     public static Map<String, Object> flatten(
             Object object
+    ) {
+
+        return flatten(object, DEFAULT_IGNORE_NULLS);
+    }
+
+
+    public static Map<String, Object> flatten(
+            Object object,
+            boolean ignoreNulls
     ) {
 
         if (object == null) {
@@ -25,7 +36,8 @@ public final class RecordFlattener {
         flatten(
                 object,
                 "",
-                values
+                values,
+                ignoreNulls
         );
 
         return values;
@@ -34,7 +46,8 @@ public final class RecordFlattener {
     private static void flatten(
             Object object,
             String prefix,
-            Map<String, Object> currentRecordAttributeValues
+            Map<String, Object> currentRecordAttributeValues,
+            boolean ignoreNulls
     ) {
 
         Class<?> type =
@@ -68,10 +81,11 @@ public final class RecordFlattener {
                     flatten(
                             valueOfRecordAttribute,
                             nameOfRecordAttribute,
-                            currentRecordAttributeValues
+                            currentRecordAttributeValues,
+                            ignoreNulls
                     );
 
-                } else {
+                } else if (valueOfRecordAttribute != null || !ignoreNulls){
 
                     currentRecordAttributeValues.put(
                             nameOfRecordAttribute,

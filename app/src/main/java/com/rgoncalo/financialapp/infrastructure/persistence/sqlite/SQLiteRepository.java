@@ -77,7 +77,8 @@ public class SQLiteRepository<T> {
 
         Map<String, Object> values =
                 RecordFlattener.flatten(
-                        record
+                        record,
+                        true
                 );
 
         String sql =
@@ -147,7 +148,8 @@ public class SQLiteRepository<T> {
 
         Map<String, Object> idValues =
                 RecordFlattener.flatten(
-                        recordValue
+                        recordValue,
+                        true
                 );
 
         SQLiteQueryBuilder builder =
@@ -231,7 +233,8 @@ public class SQLiteRepository<T> {
 
         Map<String, Object> idValues =
                 RecordFlattener.flatten(
-                        id
+                        id,
+                        true
                 );
 
         SQLiteQueryBuilder builder =

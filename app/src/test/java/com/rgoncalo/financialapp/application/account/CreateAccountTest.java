@@ -45,17 +45,17 @@ class CreateAccountTest {
 
         assertEquals(1, repository.saveCalls());
 
-        Optional<AccountRecord> getResult = repository.findById(result.id());
+        Optional<AccountRecord> getResult = repository.findById(result.accountRecordId());
 
         assertFalse(getResult.isEmpty());
 
         AccountRecord saved = getResult.get();
 
         assertNotNull(saved);
-        assertNotNull(saved.id());
+        assertNotNull(saved.accountRecordId());
         assertEquals(name, saved.name());
         assertEquals(initialAmount, saved.initialAmount());
-        assertEquals(context1, saved.id().financialContextId());
+        assertEquals(context1, saved.accountRecordId().financialContextId());
 
         assertEquals(saved, result);
     }

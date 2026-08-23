@@ -1,34 +1,23 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.Optional;
-
-import static com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema.TRANSACTION_TABLE_NAME;
 
 public class SQLiteTransactionRepository
         implements TransactionRepository {
 
-    private final SQLiteRepository<TransactionRecord>
-            sqliteRepository;
+    private final SQLiteRepository<TransactionRecord> sqliteRepository;
 
-    public SQLiteTransactionRepository(
-            Connection connection
-    ) {
-
-        this.sqliteRepository =
-                new SQLiteRepository<>(
-                        connection,
-                        TransactionRecord.class,
-                        TRANSACTION_TABLE_NAME,
-                        new SQLiteTypeConverters()
-                );
+    public SQLiteTransactionRepository(SQLiteRepository<TransactionRecord> sqliteRepository) {
+        this.sqliteRepository = sqliteRepository;
     }
 
     @Override
@@ -46,9 +35,8 @@ public class SQLiteTransactionRepository
             FinancialContextId financialContextId
     ) {
 
-        return sqliteRepository.findByRecordValues(
-                financialContextId
-        );
+        return sqliteRepository.findByRecordValues(new TransactionRecord(new TransactionRecordId(null, financialContextId), null, null, null, null));
+
     }
 
     @Override
@@ -57,7 +45,7 @@ public class SQLiteTransactionRepository
     ) {
 
         return sqliteRepository.findSingleByRecordValue(
-                id
+                new TransactionRecord(id, null, null, null, null)
         );
     }
 }

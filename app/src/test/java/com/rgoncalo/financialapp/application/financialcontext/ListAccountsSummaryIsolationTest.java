@@ -62,12 +62,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         assertEquals(2, personalAccounts.size());
         assertTrue(personalAccounts.stream()
                 .allMatch(account ->
-                        account.id().financialContextId().equals(personalFinancialContextId)));
+                        account.accountRecordId().financialContextId().equals(personalFinancialContextId)));
 
         assertEquals(1, businessAccounts.size());
         assertTrue(businessAccounts.stream()
                 .allMatch(account ->
-                        account.id().financialContextId().equals(businessFinancialContextId)));
+                        account.accountRecordId().financialContextId().equals(businessFinancialContextId)));
 
         assertTrue(personalAccounts.stream()
                 .noneMatch(account ->

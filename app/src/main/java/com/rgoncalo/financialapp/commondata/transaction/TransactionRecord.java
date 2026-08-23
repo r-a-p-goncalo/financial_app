@@ -5,7 +5,7 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 
 import java.time.Instant;
 
-public record TransactionRecord (TransactionRecordId id,
+public record TransactionRecord (TransactionRecordId transactionRecordId,
                                  AccountRecordId originAccountId,
                                  AccountRecordId targetAccountId,
                                  Instant dateTime,
@@ -21,7 +21,7 @@ public record TransactionRecord (TransactionRecordId id,
      */
     public boolean equalsIdentity(Object obj) {
         if(obj instanceof TransactionRecord otherRecord)
-            return this.id.equals(otherRecord.id);
+            return this.transactionRecordId.equals(otherRecord.transactionRecordId);
 
         else
             return false;

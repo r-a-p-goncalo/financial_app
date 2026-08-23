@@ -11,6 +11,7 @@ import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
+import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 
 import java.sql.Connection;
 import java.util.AbstractMap;
@@ -19,6 +20,13 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
+
+    public static final String FINANCIAL_CONTEXT_ID_STRING = "financialContextId_financialContextId";
+    public static final String ACCOUNT_FINANCIAL_CONTEXT_ID_STRING = "accountRecordId_" + FINANCIAL_CONTEXT_ID_STRING;
+    public static final String ACCOUNT_ID_STRING = "accountRecordId_accountRecordId";
+    public static final String TRANSACTION_FINANCIAL_CONTEXT_ID_STRING = "transactionRecordId_" + FINANCIAL_CONTEXT_ID_STRING;
+    public static final String TRANSACTION_ID_STRING = "transactionRecordId_transactionRecordId";
+
 
     public static ApplicationConfiguration configureApplication(){
 
@@ -33,17 +41,22 @@ public class Main {
 
         SQLiteSchema.initialize(
                 connection,
-                new AbstractMap.SimpleEntry<>(FinancialContextRecord.class, List.of("financialContextKey_financialContextKey")),
-                new AbstractMap.SimpleEntry<>(AccountRecord.class, List.of("financialContextKey_financialContextKey", "accountRecordId_accountRecordId")),
-                new AbstractMap.SimpleEntry<>(TransactionRecord.class, List.of("transactionRecordId_transactionRecordId", "transactionRecordId_transactionRecordId"))
+                new AbstractMap.SimpleEntry<>(FinancialContextRecord.class, List.of(FINANCIAL_CONTEXT_ID_STRING)),
+                new AbstractMap.SimpleEntry<>(AccountRecord.class, List.of(ACCOUNT_FINANCIAL_CONTEXT_ID_STRING, ACCOUNT_ID_STRING)),
+                new AbstractMap.SimpleEntry<>(TransactionRecord.class, List.of(TRANSACTION_FINANCIAL_CONTEXT_ID_STRING, TRANSACTION_ID_STRING))
         );
 
-        AccountRepository accountRepository =
-                new SQLiteAccountRepository(connection);
+        AccountRepository accountRepository = new SQLiteAccountRepository(
+                new SQLiteRepositoryFactory<AccountRecord>().sqLiteRepositoryOfType(connection, AccountRecord.class)
+        );
 
-        FinancialContextRepository financialContextRepository = new SQLiteFinancialContextRepository(connection);
+        FinancialContextRepository financialContextRepository = new SQLiteFinancialContextRepository(
+                new SQLiteRepositoryFactory<FinancialContextRecord>().sqLiteRepositoryOfType(connection, FinancialContextRecord.class)
+        );
 
-        TransactionRepository transactionRepository = new SQLiteTransactionRepository(connection);
+        TransactionRepository transactionRepository = new SQLiteTransactionRepository(
+                new SQLiteRepositoryFactory<TransactionRecord>().sqLiteRepositoryOfType(connection, TransactionRecord.class)
+        );
 
         return new ApplicationConfiguration(accountRepository, financialContextRepository, transactionRepository);
 
@@ -54,7 +67,6 @@ public class Main {
     }
 
     public static void main(String[] args) {
-
 
         ApplicationConfiguration serverAppConfig = configureApplication();
         Application serverApp = createApplication(serverAppConfig);

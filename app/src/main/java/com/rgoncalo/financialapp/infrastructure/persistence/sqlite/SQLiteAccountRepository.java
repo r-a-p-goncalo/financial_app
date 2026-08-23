@@ -4,13 +4,10 @@ import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.Optional;
-
-import static com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema.ACCOUNT_TABLE_NAME;
 
 /**
  * SQLite implementation of {@link AccountRepository}.
@@ -22,8 +19,8 @@ public class SQLiteAccountRepository implements AccountRepository {
 
     private final SQLiteRepository<AccountRecord> sqliteRepository;
 
-    public SQLiteAccountRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<AccountRecord>(connection, AccountRecord.class, ACCOUNT_TABLE_NAME, new SQLiteTypeConverters());
+    public SQLiteAccountRepository(SQLiteRepository<AccountRecord> sqliteRepository) {
+        this.sqliteRepository = sqliteRepository;
     }
 
     @Override
@@ -37,14 +34,16 @@ public class SQLiteAccountRepository implements AccountRepository {
     public Collection<AccountRecord> listAccountsSummary(
             FinancialContextId financialContextId) {
 
-        return sqliteRepository.findByRecordValues(financialContextId);
+        return sqliteRepository.findByRecordValues(new AccountRecord(new AccountRecordId(null, financialContextId), null, null));
 
     }
 
     @Override
     public Optional<AccountRecord> findById(AccountRecordId id) {
 
-        return sqliteRepository.findSingleByRecordValue(id);
+        return sqliteRepository.findSingleByRecordValue(
+                new AccountRecord(id, null, null)
+        );
 
     }
 

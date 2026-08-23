@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
@@ -8,8 +9,6 @@ import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.Optional;
-
-import static com.rgoncalo.financialapp.infrastructure.persistence.sqlite.SQLiteSchema.FINANCIAL_CONTEXT_TABLE_NAME;
 
 /**
  * SQLite implementation of {@link FinancialContextRepository}.
@@ -22,13 +21,8 @@ public class SQLiteFinancialContextRepository
 
     private final SQLiteRepository<FinancialContextRecord> sqLiteRepository;
 
-    public SQLiteFinancialContextRepository(Connection connection) {
-        this.sqLiteRepository = new SQLiteRepository<FinancialContextRecord>(
-                connection,
-                FinancialContextRecord.class,
-                FINANCIAL_CONTEXT_TABLE_NAME,
-                new SQLiteTypeConverters()
-        );
+    public SQLiteFinancialContextRepository(SQLiteRepository<FinancialContextRecord> sqliteRepository) {
+        this.sqLiteRepository = sqliteRepository;
     }
 
     @Override
@@ -49,7 +43,9 @@ public class SQLiteFinancialContextRepository
     public Optional<FinancialContextRecord> findById(
             FinancialContextId id) {
 
-        return sqLiteRepository.findSingleByRecordValue(id);
+        return sqLiteRepository.findSingleByRecordValue(
+                new FinancialContextRecord(id, null)
+        );
 
 }
 }

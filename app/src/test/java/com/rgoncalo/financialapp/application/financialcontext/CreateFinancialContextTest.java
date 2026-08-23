@@ -31,12 +31,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
         assertEquals(1, repository.saveCalls());
 
-        Optional<FinancialContextRecord> saved = repository.findById(result.id());
+        Optional<FinancialContextRecord> saved = repository.findById(result.financialContextId());
         assertFalse(saved.isEmpty());
 
         FinancialContextRecord savedContext = saved.get();
 
-        assertNotNull(savedContext.id());
+        assertNotNull(savedContext.financialContextId());
         assertEquals(name, savedContext.name());
 
         assertTrue(saved.get().equalsIdentity(result));

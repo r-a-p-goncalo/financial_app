@@ -47,7 +47,7 @@ public class CommandListTransactionSummaries
 
             System.out.println(
                     "Id: " +
-                            transaction.id().transactionId()
+                            transaction.transactionRecordId().transactionRecordId()
             );
 
             System.out.println(

@@ -17,7 +17,7 @@ public class InMemoryAccountRepository implements AccountRepository {
 
     @Override
     public AccountRecord save(AccountRecord account) {
-        accounts.put(account.id(), account);
+        accounts.put(account.accountRecordId(), account);
         return account;
     }
 
@@ -27,11 +27,11 @@ public class InMemoryAccountRepository implements AccountRepository {
                 .stream()
                 .filter(account ->
                         java.util.Objects.equals(
-                                account.id().financialContextId(),
+                                account.accountRecordId().financialContextId(),
                                 financialContextId
                         ))
                 .map(account -> new AccountRecord(
-                        account.id(),
+                        account.accountRecordId(),
                         account.name(),
                         null
                 ))

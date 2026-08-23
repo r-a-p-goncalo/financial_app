@@ -62,12 +62,12 @@ public class ClientApplication {
 
     public AccountRecord createAccount(String accountName, MonetaryValue initialAmount)  throws ClientRuntimeException {
 
-        return serverApp.createAccount().execute(new CreateAccountRequest(accountName, initialAmount, this.financialContextSession.requireCurrentContext().id()));
+        return serverApp.createAccount().execute(new CreateAccountRequest(accountName, initialAmount, this.financialContextSession.requireCurrentContext().financialContextId()));
     }
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
-        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().id()));
+        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
     }
 
     /**
@@ -93,13 +93,13 @@ public class ClientApplication {
         FinancialContextId financialContextId =
                 financialContextSession
                         .requireCurrentContext()
-                        .id();
+                        .financialContextId();
 
         if(originAccountId != null)
-            originAccountId = new AccountRecordId(originAccountId.accountId(), financialContextSession.requireCurrentContext().id());
+            originAccountId = new AccountRecordId(originAccountId.accountRecordId(), financialContextSession.requireCurrentContext().financialContextId());
 
         if(targetAccountId != null)
-            targetAccountId = new AccountRecordId(targetAccountId.accountId(), financialContextSession.requireCurrentContext().id());
+            targetAccountId = new AccountRecordId(targetAccountId.accountRecordId(), financialContextSession.requireCurrentContext().financialContextId());
 
         return serverApp
                 .createTransaction()
@@ -120,7 +120,7 @@ public class ClientApplication {
         FinancialContextId financialContextId =
                 financialContextSession
                         .requireCurrentContext()
-                        .id();
+                        .financialContextId();
 
         return serverApp
                 .transactionsSummary()

@@ -7,7 +7,7 @@ package com.rgoncalo.financialapp.commondata.financialcontext;
  * @param name
  */
 public record FinancialContextRecord(
-        FinancialContextId id,
+        FinancialContextId financialContextId,
         String name
 ) {
 
@@ -21,7 +21,7 @@ public record FinancialContextRecord(
      */
     public boolean equalsIdentity(Object obj) {
         if(obj instanceof FinancialContextRecord otherRecord)
-            return this.id.equals(otherRecord.id);
+            return this.financialContextId.equals(otherRecord.financialContextId);
 
         else
             return false;

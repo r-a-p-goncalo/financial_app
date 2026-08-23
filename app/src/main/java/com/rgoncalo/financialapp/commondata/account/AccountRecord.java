@@ -10,7 +10,7 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
  * @param initialAmount
  */
 public record AccountRecord(
-        AccountRecordId id,
+        AccountRecordId accountRecordId,
         String name,
         MonetaryValue initialAmount
 ) {
@@ -25,7 +25,7 @@ public record AccountRecord(
      */
     public boolean equalsIdentity(Object obj) {
         if(obj instanceof AccountRecord otherRecord)
-            return this.id.equals(otherRecord.id);
+            return this.accountRecordId.equals(otherRecord.accountRecordId);
 
         else
             return false;

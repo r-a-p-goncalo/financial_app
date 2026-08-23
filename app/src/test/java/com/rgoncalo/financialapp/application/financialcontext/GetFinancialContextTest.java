@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
         assertFalse(result.isEmpty());
 
-        assertEquals(contextId, result.get().id());
+        assertEquals(contextId, result.get().financialContextId());
 
         assertEquals(expected, result.get());
     }

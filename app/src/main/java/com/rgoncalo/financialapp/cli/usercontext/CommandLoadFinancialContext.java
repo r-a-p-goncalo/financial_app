@@ -26,7 +26,7 @@ public class CommandLoadFinancialContext extends CLICommand {
         FinancialContextRecord loadedFinancialContext = this.app.getCurrentFinancialContext();
 
         System.out.println();
-        System.out.println("Loaded financial context with name " + loadedFinancialContext.name() + " and id " + loadedFinancialContext.id());
+        System.out.println("Loaded financial context with name " + loadedFinancialContext.name() + " and id " + loadedFinancialContext.financialContextId());
 
         FinancialCli financialCli = new FinancialCli(scanner, this.app);
         financialCli.runCliLoop();

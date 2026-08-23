@@ -13,6 +13,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class SQLiteSchema {
 
@@ -23,6 +25,8 @@ public final class SQLiteSchema {
             LoggerFactory.getLogger(
                     SQLiteSchema.class
             );
+
+    private static final Map<Class<?>, SQLiteTableDefinition> initializedTables = new HashMap<Class<?>, SQLiteTableDefinition>();
 
     public static void initialize(
             Connection connection,
@@ -54,6 +58,10 @@ public final class SQLiteSchema {
         }
     }
 
+    public static SQLiteTableDefinition getInitializedTable(Class<?> recordType){
+        return initializedTables.get(recordType);
+    }
+
     private static void createTable(
             Connection connection,
             Class<?> recordType,
@@ -66,13 +74,15 @@ public final class SQLiteSchema {
                         recordType
                 );
 
+        initializedTables.put(recordType, table);
+
         String sql =
                 generator.generate(
                         table,
                         primaryKeys
                 );
 
-        logger.info("Executing table creation statement: {}", sql);
+        logger.info("Executing table creation statement: \n\n{}", sql);
 
         try (
                 Statement statement =

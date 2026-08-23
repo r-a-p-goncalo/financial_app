@@ -89,8 +89,8 @@ import static org.junit.jupiter.api.Assertions.*;
                 useCase.execute(
                         new CreateTransactionRequest(
                                 context,
-                                origin.id(),
-                                target.id(),
+                                origin.accountRecordId(),
+                                target.accountRecordId(),
                                 dateTime,
                                 value
                         )
@@ -103,24 +103,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
         assertNotNull(result);
 
-        assertNotNull(result.id());
+        assertNotNull(result.transactionRecordId());
 
         assertNotNull(
-                result.id().transactionId()
+                result.transactionRecordId().transactionRecordId()
         );
 
         assertEquals(
                 context,
-                result.id().financialContextId()
+                result.transactionRecordId().financialContextId()
         );
 
         assertEquals(
-                origin.id().accountId(),
+                origin.accountRecordId().accountRecordId(),
                 result.originAccountId()
         );
 
         assertEquals(
-                target.id().accountId(),
+                target.accountRecordId().accountRecordId(),
                 result.targetAccountId()
         );
 
@@ -136,7 +136,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
         Optional<TransactionRecord> saved =
                 transactionRepository.findById(
-                        result.id()
+                        result.transactionRecordId()
                 );
 
         assertTrue(saved.isPresent());

@@ -23,7 +23,7 @@ public class CommandListFinancialContextSummary extends CLICommand {
 
         for(FinancialContextRecord financialContextRecord : financialContextRecords){
                 System.out.println("---");
-                printIfNotNull("    Id: ", financialContextRecord.id());
+                printIfNotNull("    Id: ", financialContextRecord.financialContextId());
                 printIfNotNull("    Name: ", financialContextRecord.name());
         }
 

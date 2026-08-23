@@ -28,6 +28,11 @@ public class SQLiteTypeConverters {
         register(
                 new MonetaryValueSQLiteTypeConverter()
         );
+
+        register(
+                new InstantSQLiteTypeConverter()
+        );
+
     }
 
     public <T> void register(
@@ -92,8 +97,13 @@ public class SQLiteTypeConverters {
             Class<?> type
     ) {
 
-        return converters.get(type)
-                .sqliteType();
+        SQLiteTypeConverter<?> converterOfType = converters.get(type);
+
+        if(converterOfType == null)
+            throw new IllegalArgumentException("There is no defined type converter for type " + type.toString());
+
+        return converterOfType.sqliteType();
+
     }
 
 

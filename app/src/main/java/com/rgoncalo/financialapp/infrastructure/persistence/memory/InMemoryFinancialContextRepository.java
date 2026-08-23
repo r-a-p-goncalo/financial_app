@@ -12,7 +12,7 @@ public class InMemoryFinancialContextRepository implements FinancialContextRepos
 
     @Override
     public FinancialContextRecord save(FinancialContextRecord financialContext) {
-        financialContexts.put(financialContext.id(), financialContext);
+        financialContexts.put(financialContext.financialContextId(), financialContext);
         return financialContext;
     }
 

@@ -8,6 +8,8 @@ import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQ
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordConstructor;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordFlattener;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +37,11 @@ public class SQLiteRepository<T> {
 
     private final RecordConstructor
             recordConstructor;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    SQLiteRepository.class
+            );
 
     public SQLiteRepository(
             Connection connection,
@@ -78,6 +85,8 @@ public class SQLiteRepository<T> {
                         tableName,
                         values.keySet()
                 );
+
+        logger.info("Executing save query:\n{}", sql);
 
         try (
                 PreparedStatement statement =
@@ -170,6 +179,8 @@ public class SQLiteRepository<T> {
                         tableName,
                         query
                 );
+
+        logger.info("Executing find query:\n{}", sql);
 
         try (
                 PreparedStatement statement =

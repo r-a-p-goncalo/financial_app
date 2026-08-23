@@ -23,7 +23,7 @@ public class InMemoryTransactionRepository
     ) {
 
         transactions.put(
-                transaction.id(),
+                transaction.transactionRecordId(),
                 transaction
         );
 
@@ -40,7 +40,7 @@ public class InMemoryTransactionRepository
                 .stream()
                 .filter(transaction ->
                         transaction
-                                .id()
+                                .transactionRecordId()
                                 .financialContextId()
                                 .equals(financialContextId)
                 )

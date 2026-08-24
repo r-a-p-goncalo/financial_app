@@ -15,7 +15,10 @@ import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Optional;
+
+//TODO: This maybe could be changed into a global state and then applications for each window
 
 /**
  * Describes the app that a client interacts with, doing internal processing before requests for a server are made
@@ -27,6 +30,8 @@ public class ClientApplication {
 
     private final Application serverApp;
     private final FinancialContextSession financialContextSession;
+    private Collection<FinancialContextRecord> listedFinancialContexts;
+    private Collection<AccountRecord> listedAccountRecords;
 
     public ClientApplication(Application serverApp){
         this.financialContextSession = new FinancialContextSession();
@@ -42,11 +47,34 @@ public class ClientApplication {
     }
 
     public Collection<FinancialContextRecord> getFinancialContexts(){
-        return this.serverApp.listFinancialContextSummary().execute(new ListFinancialContextSummaryRequest());
+        listedFinancialContexts = this.serverApp.listFinancialContextSummary().execute(new ListFinancialContextSummaryRequest());
+
+        return listedFinancialContexts;
     }
 
-    public void loadIntoFinancialContext(String financialContextId) throws  ClientRuntimeException{
-        Optional<FinancialContextRecord> newFinancialContext = serverApp.getFinancialContextById().execute(new GetFinancialContextRequest(new FinancialContextId(financialContextId)));
+    public FinancialContextId getFinancialContextIdFrom(String financialContextIdString){
+
+        if (listedFinancialContexts == null)
+            return new FinancialContextId(financialContextIdString);
+
+        Iterator<FinancialContextRecord> financialContextRecordIterator = listedFinancialContexts.iterator();
+        FinancialContextRecord next;
+
+        while (financialContextRecordIterator.hasNext()){
+
+            next = financialContextRecordIterator.next();
+
+            if (next.name().equals(financialContextIdString))
+                financialContextIdString = next.financialContextId().financialContextId();
+        }
+
+        return new FinancialContextId(financialContextIdString);
+
+    }
+
+    public void loadIntoFinancialContext(FinancialContextId financialContextId) throws  ClientRuntimeException{
+
+        Optional<FinancialContextRecord> newFinancialContext = serverApp.getFinancialContextById().execute(new GetFinancialContextRequest(financialContextId));
 
         if (newFinancialContext.isEmpty())
             throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);
@@ -67,7 +95,29 @@ public class ClientApplication {
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
-        return serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
+        listedAccountRecords = serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
+
+        return listedAccountRecords;
+    }
+
+    public AccountRecordId getAccountRecordIdIdFrom(String accountRecordIdString){
+
+        if (listedAccountRecords == null)
+            return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());
+
+        Iterator<AccountRecord> accountRecordIterator = listedAccountRecords.iterator();
+        AccountRecord next;
+
+        while (accountRecordIterator.hasNext()){
+
+            next = accountRecordIterator.next();
+
+            if (next.name().equals(accountRecordIdString))
+                return next.accountRecordId();
+        }
+
+        return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());
+
     }
 
     /**

@@ -34,7 +34,7 @@ public class CommandCreateTransactionCommand
                 scanner.nextLine().trim();
 
         if(!originAccountIdString.isEmpty())
-            originAccountId = new AccountRecordId(originAccountIdString, null);
+            originAccountId =  app.getAccountRecordIdIdFrom(originAccountIdString);
 
         AccountRecordId targetAccountId = null;
         System.out.print("Target account id: ");
@@ -42,7 +42,7 @@ public class CommandCreateTransactionCommand
                 scanner.nextLine().trim();
 
         if(!targetAccountIdString.isEmpty())
-            targetAccountId = new AccountRecordId(targetAccountIdString, null);
+            targetAccountId = app.getAccountRecordIdIdFrom(targetAccountIdString);
 
         System.out.print("Amount: ");
         String amount =

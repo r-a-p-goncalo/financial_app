@@ -21,7 +21,7 @@ public class CommandLoadFinancialContext extends CLICommand {
         System.out.print("Financial context id: ");
         String id = scanner.nextLine().trim();
 
-        this.app.loadIntoFinancialContext(id);
+        this.app.loadIntoFinancialContext(app.getFinancialContextIdFrom(id));
 
         FinancialContextRecord loadedFinancialContext = this.app.getCurrentFinancialContext();
 

@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.client.ClientApplication;
+import com.rgoncalo.financialapp.client.ClientRuntimeException;
 
 import java.util.*;
 
@@ -51,7 +52,11 @@ public abstract class CLI implements  CLIInterface {
                         System.out.println("Unknown command: " + commandString);
                     }
                     else{
-                        command.execute(scanner);
+                        try {
+                            command.execute(scanner);
+                        } catch (ClientRuntimeException e){
+                            System.out.println("Error when executing command: " + e.getMessage());
+                        }
                     }
                 }
             }

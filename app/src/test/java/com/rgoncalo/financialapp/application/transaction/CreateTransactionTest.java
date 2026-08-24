@@ -115,12 +115,12 @@ import static org.junit.jupiter.api.Assertions.*;
         );
 
         assertEquals(
-                origin.accountRecordId().accountRecordId(),
+                origin.accountRecordId(),
                 result.originAccountId()
         );
 
         assertEquals(
-                target.accountRecordId().accountRecordId(),
+                target.accountRecordId(),
                 result.targetAccountId()
         );
 

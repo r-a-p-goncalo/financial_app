@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.support;
 
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
@@ -41,6 +42,16 @@ public class RecordingTransactionRepository
 
         return delegate.listTransactionsSummary(
                 financialContextId
+        );
+    }
+
+    @Override
+    public Collection<TransactionRecord> listTransactionsSummaryForAccount(
+            AccountRecordId accountRecordId
+    ) {
+
+        return delegate.listTransactionsSummaryForAccount(
+                accountRecordId
         );
     }
 

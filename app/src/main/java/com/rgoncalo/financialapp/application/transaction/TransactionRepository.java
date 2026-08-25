@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application.transaction;
 
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
@@ -25,6 +26,16 @@ public interface TransactionRepository {
      */
     Collection<TransactionRecord> listTransactionsSummary(
             FinancialContextId financialContextId
+    );
+
+    /**
+     * Returns transactions where the account is either the origin or target.
+     *
+     * @param accountRecordId the account affected by the transactions
+     * @return transactions affecting that account
+     */
+    Collection<TransactionRecord> listTransactionsSummaryForAccount(
+            AccountRecordId accountRecordId
     );
 
     /**

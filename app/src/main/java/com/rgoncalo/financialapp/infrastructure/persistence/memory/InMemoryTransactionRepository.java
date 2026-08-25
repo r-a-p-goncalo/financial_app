@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.memory;
 
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
@@ -43,6 +44,25 @@ public class InMemoryTransactionRepository
                                 .transactionRecordId()
                                 .financialContextId()
                                 .equals(financialContextId)
+                )
+                .toList();
+    }
+
+    @Override
+    public Collection<TransactionRecord> listTransactionsSummaryForAccount(
+            AccountRecordId accountRecordId
+    ) {
+
+        return transactions
+                .values()
+                .stream()
+                .filter(transaction ->
+                        accountRecordId.equals(
+                                transaction.originAccountId()
+                        )
+                                || accountRecordId.equals(
+                                transaction.targetAccountId()
+                        )
                 )
                 .toList();
     }

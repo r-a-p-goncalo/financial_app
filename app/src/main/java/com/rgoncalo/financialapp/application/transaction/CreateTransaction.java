@@ -28,7 +28,10 @@ public class CreateTransaction {
      */
     public TransactionRecord execute(CreateTransactionRequest request) {
 
-        if (request.originAccountId().equals(request.targetAccountId())) {
+        if (request.originAccountId() != null
+                && request.originAccountId().equals(
+                request.targetAccountId()
+        )) {
             throw new IllegalArgumentException(
                     "Origin and target accounts cannot be the same."
             );

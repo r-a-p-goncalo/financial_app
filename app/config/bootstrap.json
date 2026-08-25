@@ -1,0 +1,32 @@
+{
+  "mode": "if-empty",
+  "commands": [
+    {
+      "type": "create-financial-context",
+      "ref": "personal",
+      "name": "Personal finances"
+    },
+    {
+      "type": "create-account",
+      "context": "personal",
+      "ref": "checking",
+      "name": "Checking",
+      "initialAmount": "1000.00"
+    },
+    {
+      "type": "create-account",
+      "context": "personal",
+      "ref": "savings",
+      "name": "Savings",
+      "initialAmount": "500.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "personal",
+      "origin": "checking",
+      "target": "savings",
+      "dateTime": "2026-08-25T09:00:00Z",
+      "value": "100.00"
+    }
+  ]
+}

@@ -140,6 +140,27 @@ CLI
 
 The application layer therefore does not need to know which persistence implementation is being used.
 
+## Bootstrap data
+
+Before opening the CLI, `Main` looks for `config/bootstrap.json` and, when
+present, executes its commands through the server-side application use cases.
+The supplied file uses `"mode": "if-empty"`, so its sample data is only added
+to a new database.
+
+Commands are executed in file order. The `ref` fields are configuration-local
+aliases that let later account and transaction commands refer to generated
+financial-context and account IDs.
+
+Start the app with one of these options when needed:
+
+```text
+--bootstrap path/to/bootstrap.json   Use a specific bootstrap file
+--no-bootstrap                       Skip all bootstrap data
+```
+
+Supported modes are `never`, `if-empty`, and `always`. `always` creates new
+records every time the application starts, so use it only for disposable data.
+
 ---
 
 ## Request Flow

@@ -128,6 +128,8 @@ public class Main {
             BootstrapConfiguration configuration
     ) {
 
+        System.out.println("Running bootstrap configuration required: " + configuration.required + ", file: " + configuration.file);
+
         if (!Files.isRegularFile(configuration.file())) {
             if (configuration.required()) {
                 throw new IllegalArgumentException(
@@ -135,6 +137,8 @@ public class Main {
                                 + configuration.file().toAbsolutePath()
                 );
             }
+
+            System.out.println("Bootstrap configuration was not found and was not required, in path " + configuration.file());
 
             return;
         }

@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SQLiteQueryGenerator {
@@ -52,22 +53,9 @@ public class SQLiteQueryGenerator {
             sql.append(" WHERE ");
 
             String conditions =
-                    query.conditions()
-                            .stream()
-                            .map(
-                                    condition ->
-                                            condition.column()
-                                                    + " "
-                                                    + condition
-                                                    .operator()
-                                                    .sql()
-                                                    + " ?"
-                            )
-                            .collect(
-                                    Collectors.joining(
-                                            " AND "
-                                    )
-                            );
+                    createConditionsSql(
+                            query.conditions()
+                    );
 
             sql.append(conditions);
         }
@@ -88,22 +76,9 @@ public class SQLiteQueryGenerator {
         }
 
         String conditions =
-                query.conditions()
-                        .stream()
-                        .map(
-                                condition ->
-                                        condition.column()
-                                                + " "
-                                                + condition
-                                                .operator()
-                                                .sql()
-                                                + " ?"
-                        )
-                        .collect(
-                                Collectors.joining(
-                                        " AND "
-                                )
-                        );
+                createConditionsSql(
+                        query.conditions()
+                );
 
         return """
                 DELETE FROM %s
@@ -112,5 +87,30 @@ public class SQLiteQueryGenerator {
                 tableName,
                 conditions
         );
+    }
+
+    private String createConditionsSql(
+            List<SQLiteQueryCondition> conditions
+    ) {
+
+        StringBuilder sql = new StringBuilder();
+
+        for (int index = 0; index < conditions.size(); index++) {
+
+            SQLiteQueryCondition condition = conditions.get(index);
+
+            if (index > 0) {
+                sql.append(" ")
+                        .append(condition.junction())
+                        .append(" ");
+            }
+
+            sql.append(condition.column())
+                    .append(" ")
+                    .append(condition.operator().sql())
+                    .append(" ?");
+        }
+
+        return sql.toString();
     }
 }

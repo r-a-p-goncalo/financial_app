@@ -32,11 +32,53 @@ public class SQLiteQueryBuilder {
             Object value
     ) {
 
+        return addCondition(
+                column,
+                operator,
+                value,
+                SQLiteQueryJunction.AND
+        );
+    }
+
+    public SQLiteQueryBuilder orWhere(
+            String column,
+            Object value
+    ) {
+
+        return orWhere(
+                column,
+                SQLiteQueryOperator.EQUALS,
+                value
+        );
+    }
+
+    public SQLiteQueryBuilder orWhere(
+            String column,
+            SQLiteQueryOperator operator,
+            Object value
+    ) {
+
+        return addCondition(
+                column,
+                operator,
+                value,
+                SQLiteQueryJunction.OR
+        );
+    }
+
+    private SQLiteQueryBuilder addCondition(
+            String column,
+            SQLiteQueryOperator operator,
+            Object value,
+            SQLiteQueryJunction junction
+    ) {
+
         conditions.add(
                 new SQLiteQueryCondition(
                         column,
                         operator,
-                        value
+                        value,
+                        junction
                 )
         );
 

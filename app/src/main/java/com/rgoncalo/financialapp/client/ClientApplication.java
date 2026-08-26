@@ -5,6 +5,7 @@ import com.rgoncalo.financialapp.application.transaction.CreateTransactionReques
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryForAccountRequest;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.GetAccountRequest;
+import com.rgoncalo.financialapp.client.data.account.AccountTransactionSummary;
 import com.rgoncalo.financialapp.client.data.account.ClientAccount;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
@@ -17,10 +18,7 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 //TODO: This maybe could be changed into a global state and then applications for each window
 
@@ -33,15 +31,21 @@ import java.util.Optional;
 public class ClientApplication {
 
     private final Application serverApp;
+
     private final FinancialContextSession financialContextSession;
+
     private final AccountSession accountSession;
+
     private Collection<FinancialContextRecord> listedFinancialContexts;
-    private Collection<AccountRecord> listedAccountRecords;
+
+    private final Map<AccountRecordId, AccountRecord> cachedAccountRecords;
 
     public ClientApplication(Application serverApp){
         this.financialContextSession = new FinancialContextSession();
         this.accountSession = new AccountSession();
         this.serverApp = serverApp;
+
+        this.cachedAccountRecords = new HashMap<AccountRecordId, AccountRecord>();
     }
 
     public FinancialContextRecord createFinancialRecord(String name){
@@ -86,14 +90,14 @@ public class ClientApplication {
             throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);
 
         this.accountSession.clear();
-        this.listedAccountRecords = null;
+        this.cachedAccountRecords.clear();
         this.financialContextSession.load(newFinancialContext.get());
 
     }
 
     public void unloadFinancialContext() throws ClientRuntimeException {
         this.accountSession.clear();
-        this.listedAccountRecords = null;
+        this.cachedAccountRecords.clear();
         this.financialContextSession.clear();
 
     }
@@ -105,17 +109,21 @@ public class ClientApplication {
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
-        listedAccountRecords = serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
+        Collection<AccountRecord> listedAccountRecords = serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
+
+        this.cachedAccountRecords.clear();
+
+       listedAccountRecords.forEach(v -> this.cachedAccountRecords.put(v.accountRecordId(), v));
 
         return listedAccountRecords;
     }
 
     public AccountRecordId getAccountRecordIdIdFrom(String accountRecordIdString){
 
-        if (listedAccountRecords == null)
+        if (cachedAccountRecords.isEmpty())
             return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());
 
-        Iterator<AccountRecord> accountRecordIterator = listedAccountRecords.iterator();
+        Iterator<AccountRecord> accountRecordIterator = cachedAccountRecords.values().iterator();
         AccountRecord next;
 
         while (accountRecordIterator.hasNext()){

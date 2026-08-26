@@ -1,6 +1,5 @@
 package com.rgoncalo.financialapp.client.data.account;
 
-import com.rgoncalo.financialapp.client.AccountTransactionSummary;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;

@@ -1,7 +1,7 @@
 package com.rgoncalo.financialapp.cli.account;
 
 import com.rgoncalo.financialapp.cli.CLICommand;
-import com.rgoncalo.financialapp.client.AccountTransactionSummary;
+import com.rgoncalo.financialapp.client.data.account.AccountTransactionSummary;
 import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 

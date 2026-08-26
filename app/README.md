@@ -163,6 +163,14 @@ records every time the application starts, so use it only for disposable data.
 
 ---
 
+## Logging
+
+The application writes logs to `data/financial-app.log`, next to its SQLite
+database. The log is cleared when the application starts and is not written to
+the console.
+
+---
+
 ## Request Flow
 
 A normal request follows this general path:

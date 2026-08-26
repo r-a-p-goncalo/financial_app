@@ -10,6 +10,7 @@ import com.rgoncalo.financialapp.bootstrap.BootstrapRunner;
 import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
+import com.rgoncalo.financialapp.logging.ApplicationLogging;
 
 import java.sql.Connection;
 import java.nio.file.Files;
@@ -22,11 +23,16 @@ public class Main {
     private static final Path DEFAULT_BOOTSTRAP_FILE =
             Path.of("config", "bootstrap.json");
 
+    private static final Path DEFAULT_DATABASE_FILE =
+            Path.of("data", "financial-app.db");
+
     public static ApplicationConfiguration configureApplication(){
+
+        ApplicationLogging.configureForDatabase(DEFAULT_DATABASE_FILE);
 
         SQLiteConnection sqliteConnection =
                 new SQLiteConnection(
-                        "data/financial-app.db"
+                        DEFAULT_DATABASE_FILE.toString()
                 );
 
 

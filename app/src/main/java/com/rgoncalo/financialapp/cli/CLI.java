@@ -2,6 +2,8 @@ package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.client.ClientRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -10,6 +12,9 @@ public abstract class CLI implements  CLIInterface {
     private final Scanner scanner;
 
     private final HashMap<String, CliCommandInter> commands;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(CLI.class);
 
     public CLI(
             Scanner scanner,
@@ -53,8 +58,10 @@ public abstract class CLI implements  CLIInterface {
                     }
                     else{
                         try {
+                            logger.info("Executing command of CLI {}: {}\n", this.getClass().getSimpleName(), commandString);
                             command.execute(scanner);
                         } catch (ClientRuntimeException e){
+                            logger.error("Error when executing command of CLI {}: {}\n", this.getClass().getSimpleName(), e.getMessage(), e);
                             System.out.println("Error when executing command: " + e.getMessage());
                         }
                     }

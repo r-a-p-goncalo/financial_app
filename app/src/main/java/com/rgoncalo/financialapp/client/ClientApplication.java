@@ -5,6 +5,7 @@ import com.rgoncalo.financialapp.application.transaction.CreateTransactionReques
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryForAccountRequest;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.GetAccountRequest;
+import com.rgoncalo.financialapp.client.data.account.ClientAccount;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;

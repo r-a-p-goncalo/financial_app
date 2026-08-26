@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.client;
 
+import com.rgoncalo.financialapp.client.data.account.ClientAccount;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;

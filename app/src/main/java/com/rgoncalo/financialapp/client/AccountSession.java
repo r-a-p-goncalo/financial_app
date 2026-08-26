@@ -1,5 +1,7 @@
 package com.rgoncalo.financialapp.client;
 
+import com.rgoncalo.financialapp.client.data.account.ClientAccount;
+
 /**
  * Holds the account currently selected by the account-level CLI.
  */

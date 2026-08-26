@@ -18,14 +18,33 @@ import java.util.Objects;
 public final class ClientAccount {
 
     private final AccountRecord account;
+    private final List<AccountTransactionSummary> transactionSummaries;
+    private final MonetaryValue currentTotal;
 
-    public ClientAccount(AccountRecord account) {
+    public ClientAccount(
+            AccountRecord account,
+            Collection<TransactionRecord> transactions
+    ) {
         this.account = Objects.requireNonNull(account);
         Objects.requireNonNull(account.initialAmount());
+        this.transactionSummaries = summarizeTransactions(transactions);
+        this.currentTotal = transactionSummaries.isEmpty()
+                ? account.initialAmount()
+                : transactionSummaries
+                        .getLast()
+                        .totalAfterTransaction();
     }
 
-    public AccountRecord record() {
+    public AccountRecord account() {
         return account;
+    }
+
+    public List<AccountTransactionSummary> transactionSummaries() {
+        return transactionSummaries;
+    }
+
+    public MonetaryValue currentTotal() {
+        return currentTotal;
     }
 
     /**
@@ -33,12 +52,15 @@ public final class ClientAccount {
      * account. Outgoing transactions decrease the total; incoming transactions
      * increase it.
      */
-    public List<AccountTransactionSummary> summarizeTransactions(
+    private List<AccountTransactionSummary> summarizeTransactions(
             Collection<TransactionRecord> transactions
     ) {
 
+        Objects.requireNonNull(transactions);
+
         List<TransactionRecord> transactionsByTime = transactions
                 .stream()
+                .peek(Objects::requireNonNull)
                 .sorted(
                         Comparator.comparing(
                                         TransactionRecord::dateTime,

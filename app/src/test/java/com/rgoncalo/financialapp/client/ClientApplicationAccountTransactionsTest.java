@@ -3,6 +3,8 @@ package com.rgoncalo.financialapp.client;
 import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
 import com.rgoncalo.financialapp.client.data.account.AccountTransactionSummary;
+import com.rgoncalo.financialapp.client.data.account.ClientAccount;
+import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextView;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ClientApplicationAccountTransactionsTest {
 
     @Test
-    void loadsAnAccountAndReturnsItsRunningTransactionTotals() {
+    void loadsAFinancialContextViewWithAccountRunningTotals() {
 
         FinancialContextId contextId = new FinancialContextId("context");
         AccountRecordId accountId = new AccountRecordId("account", contextId);
@@ -85,14 +88,18 @@ class ClientApplicationAccountTransactionsTest {
         );
 
         client.loadIntoFinancialContext(contextId);
-        client.loadAccount(accountId);
+        FinancialContextView view = client.loadFinancialContextView(
+                LocalDate.parse("2026-01-02")
+        );
 
-        List<AccountTransactionSummary> result = client
-                .listTransactionsSummaryForCurrentAccount();
+        ClientAccount account = view.findAccount(accountId).orElseThrow();
+        List<AccountTransactionSummary> result = account.transactionSummaries();
 
         assertEquals(2, result.size());
         assertEquals(monetaryValue("60"), result.get(0).totalAfterTransaction());
         assertEquals(monetaryValue("80"), result.get(1).totalAfterTransaction());
+        assertEquals(monetaryValue("80"), account.currentTotal());
+        assertEquals(view, client.getCurrentFinancialContextView());
     }
 
     private TransactionRecord transaction(

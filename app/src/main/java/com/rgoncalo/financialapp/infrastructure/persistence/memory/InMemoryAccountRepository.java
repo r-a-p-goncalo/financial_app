@@ -30,11 +30,6 @@ public class InMemoryAccountRepository implements AccountRepository {
                                 account.accountRecordId().financialContextId(),
                                 financialContextId
                         ))
-                .map(account -> new AccountRecord(
-                        account.accountRecordId(),
-                        account.name(),
-                        null
-                ))
                 .toList();
     }
 

@@ -7,6 +7,7 @@ The application currently runs as a single process and is interacted with throug
 The current implementation supports:
 
 * financial contexts;
+* dated financial-context views, including running account balances and totals;
 * accounts;
 * transactions;
 * interchangeable repository implementations;
@@ -17,7 +18,7 @@ The current implementation supports:
 
 ## Next Steps
 
-* Complete account current-value calculation based on transactions. There is more to be done on accounts and transactions.
+* Extend financial-context views with generated and recurring transactions.
 * Introduce versioned database migrations before schema changes need to preserve existing user data.
 
 ---
@@ -73,7 +74,8 @@ The `Application` class acts as the main entry point to the available use cases.
 
 Contains client-side application state and logic.
 
-The client maintains session-level state, particularly the currently loaded financial context.
+The client maintains session-level state, particularly the currently loaded
+financial context and an optional dated financial-context view.
 
 ```text
 User loads Financial Context A
@@ -82,6 +84,11 @@ ClientApplication stores Context A
         ↓
 Subsequent operations use Context A automatically
 ```
+
+A financial-context view is calculated client-side from the context's accounts
+and transactions. The view includes transactions through its selected calendar
+date (the current date by default), retains each account's running balances,
+and exposes the total for each account as of that date.
 
 The client and application layers currently communicate through direct Java method calls. There is no network boundary in version `0.1`.
 

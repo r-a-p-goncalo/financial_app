@@ -29,7 +29,7 @@ public class FinancialCli extends CLI {
         commands.add(new CommandCreateAccountCommand(app));
         commands.add(new CommandCreateTransactionCommand(app));
         commands.add(new CommandListTransactionSummaries(app));
-        commands.add(new CommandLoadAccount(app));
+        commands.add(new CommandLoadFinancialContextView(app));
 
         return commands;
     }

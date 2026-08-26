@@ -2,18 +2,16 @@ package com.rgoncalo.financialapp.cli.financialcontextview;
 
 import com.rgoncalo.financialapp.cli.CLICommand;
 import com.rgoncalo.financialapp.client.ClientApplication;
-import com.rgoncalo.financialapp.client.ClientRuntimeException;
-import com.rgoncalo.financialapp.client.data.account.AccountTransactionSummary;
-import com.rgoncalo.financialapp.client.data.account.ClientAccount;
 import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextView;
+import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextTransactionSummary;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 
 import java.util.Scanner;
 
 /**
- * Displays the selected account's dated transaction history and the total
- * left after each transaction.
+ * Displays every dated transaction in the financial context, together with
+ * the post-transaction total of both affected accounts.
  */
 public class CommandListFinancialContextViewAccountTransactions
         extends CLICommand {
@@ -33,26 +31,15 @@ public class CommandListFinancialContextViewAccountTransactions
     public void execute(Scanner scanner) {
         FinancialContextView view = app.getCurrentFinancialContextView();
 
-        System.out.print("Account id or name: ");
-        String accountIdOrName = scanner.nextLine().trim();
-
-        ClientAccount account = view.findAccount(accountIdOrName)
-                .orElseThrow(() -> new ClientRuntimeException(
-                        "No account in the financial context view matches: "
-                                + accountIdOrName
-                ));
-
         System.out.println();
-        System.out.println(
-                "Transactions for account: " + account.account().name()
-        );
+        System.out.println("Transactions as of " + view.date() + ":");
 
-        if (account.transactionSummaries().isEmpty()) {
+        if (view.transactionSummaries().isEmpty()) {
             System.out.println("No transactions found.");
         }
 
-        for (AccountTransactionSummary summary
-                : account.transactionSummaries()) {
+        for (FinancialContextTransactionSummary summary
+                : view.transactionSummaries()) {
             TransactionRecord transaction = summary.transaction();
 
             System.out.println();
@@ -61,23 +48,17 @@ public class CommandListFinancialContextViewAccountTransactions
                             .transactionRecordId()
             );
             System.out.println("Date: " + transaction.dateTime());
-            System.out.println(
-                    "Origin: " + accountName(
-                            view,
-                            transaction.originAccountId()
-                    )
+            printAccountBalance(
+                    "Origin",
+                    transaction.originAccountId(),
+                    summary.originBalance()
             );
-            System.out.println(
-                    "Target: " + accountName(
-                            view,
-                            transaction.targetAccountId()
-                    )
+            printAccountBalance(
+                    "Target",
+                    transaction.targetAccountId(),
+                    summary.targetBalance()
             );
             System.out.println("Value: " + transaction.value());
-            System.out.println(
-                    "Total after transaction: "
-                            + summary.totalAfterTransaction()
-            );
         }
 
         System.out.println();
@@ -85,19 +66,28 @@ public class CommandListFinancialContextViewAccountTransactions
 
     @Override
     public String help() {
-        return "lists an account's transactions with running totals";
+        return "lists all transactions with origin and target totals";
     }
 
-    private String accountName(
-            FinancialContextView view,
-            AccountRecordId accountId
+    private void printAccountBalance(
+            String side,
+            AccountRecordId accountId,
+            FinancialContextTransactionSummary.AccountBalance balance
     ) {
-        if (accountId == null) {
-            return "External";
+        if (balance != null) {
+            System.out.println(
+                    side + ": " + balance.account().account().name()
+            );
+            System.out.println(
+                    side + " total after transaction: "
+                            + balance.totalAfterTransaction()
+            );
+            return;
         }
 
-        return view.findAccount(accountId)
-                .map(account -> account.account().name())
-                .orElse(accountId.toString());
+        System.out.println(
+                side + ": " + (accountId == null ? "External" : accountId)
+        );
+        System.out.println(side + " total after transaction: N/A");
     }
 }

@@ -3,6 +3,7 @@ package com.rgoncalo.financialapp.client;
 import com.rgoncalo.financialapp.client.data.account.AccountTransactionSummary;
 import com.rgoncalo.financialapp.client.data.account.ClientAccount;
 import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextView;
+import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextTransactionSummary;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
@@ -85,6 +86,26 @@ class ClientAccountTest {
         assertEquals(monetaryValue("80"), result.get(1).totalAfterTransaction());
         assertEquals(monetaryValue("80"), computedAccount.currentTotal());
         assertEquals(monetaryValue("20"), computedOtherAccount.currentTotal());
+
+        List<FinancialContextTransactionSummary> transactions = view
+                .transactionSummaries();
+
+        assertEquals(2, transactions.size());
+        assertEquals(outgoingFirst, transactions.get(0).transaction());
+        assertEquals("Checking", transactions.get(0).originBalance()
+                .account().account().name());
+        assertEquals(monetaryValue("60"), transactions.get(0)
+                .originBalance().totalAfterTransaction());
+        assertEquals("Savings", transactions.get(0).targetBalance()
+                .account().account().name());
+        assertEquals(monetaryValue("40"), transactions.get(0)
+                .targetBalance().totalAfterTransaction());
+
+        assertEquals(incomingSecond, transactions.get(1).transaction());
+        assertEquals(monetaryValue("20"), transactions.get(1)
+                .originBalance().totalAfterTransaction());
+        assertEquals(monetaryValue("80"), transactions.get(1)
+                .targetBalance().totalAfterTransaction());
     }
 
     @Test

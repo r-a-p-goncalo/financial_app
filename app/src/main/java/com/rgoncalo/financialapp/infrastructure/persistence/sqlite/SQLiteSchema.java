@@ -1,21 +1,23 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLiteCreateTableGenerator;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLiteTableDefinition;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.schema.SQLiteTableDefinitionFactory;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
 
+/**
+ * Defines the SQLite schema explicitly.
+ *
+ * <p>Schema names are part of the persistence contract and are intentionally
+ * not inferred from Java record names. A migration tool can replace the
+ * ordered statements here when the application begins preserving user data
+ * across schema versions.</p>
+ */
 public final class SQLiteSchema {
 
     private SQLiteSchema() {
@@ -26,78 +28,58 @@ public final class SQLiteSchema {
                     SQLiteSchema.class
             );
 
-    private static final Map<Class<?>, SQLiteTableDefinition> initializedTables = new HashMap<Class<?>, SQLiteTableDefinition>();
+    private static final List<String> CREATE_STATEMENTS = List.of(
+            """
+                    CREATE TABLE IF NOT EXISTS financial_contexts (
+                        financial_context_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS accounts (
+                        financial_context_id TEXT NOT NULL,
+                        account_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        initial_amount TEXT NOT NULL,
+                        PRIMARY KEY (financial_context_id, account_id)
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS transactions (
+                        financial_context_id TEXT NOT NULL,
+                        transaction_id TEXT NOT NULL,
+                        origin_account_id TEXT,
+                        target_account_id TEXT,
+                        date_time TEXT NOT NULL,
+                        value TEXT NOT NULL,
+                        PRIMARY KEY (financial_context_id, transaction_id),
+                        CHECK (
+                            origin_account_id IS NOT NULL
+                            OR target_account_id IS NOT NULL
+                        )
+                    )
+                    """,
+            """
+                    CREATE INDEX IF NOT EXISTS transactions_by_origin_account
+                    ON transactions (financial_context_id, origin_account_id)
+                    """,
+            """
+                    CREATE INDEX IF NOT EXISTS transactions_by_target_account
+                    ON transactions (financial_context_id, target_account_id)
+                    """
+    );
 
-    public static void initialize(
-            Connection connection,
-            AbstractMap.SimpleEntry<Class<?>, Collection<String>>... recordTypesAndPrimaryKeys
-    ) {
+    public static void initialize(Connection connection) {
+        Objects.requireNonNull(connection);
 
-        SQLiteTypeConverters typeConverters =
-                new SQLiteTypeConverters();
-
-        SQLiteCreateTableGenerator generator =
-                new SQLiteCreateTableGenerator(
-                        typeConverters
-                );
-
-        for (
-                AbstractMap.SimpleEntry<Class<?>, Collection<String>> recordTypeAndPrimaryKeys
-                : recordTypesAndPrimaryKeys
-        ) {
-
-            Class<?> recordType = recordTypeAndPrimaryKeys.getKey();
-            Collection<String> primaryKeys = recordTypeAndPrimaryKeys.getValue();
-
-            createTable(
-                    connection,
-                    recordType,
-                    primaryKeys,
-                    generator
-            );
-        }
-    }
-
-    public static SQLiteTableDefinition getInitializedTable(Class<?> recordType){
-        return initializedTables.get(recordType);
-    }
-
-    private static void createTable(
-            Connection connection,
-            Class<?> recordType,
-            Collection<String> primaryKeys,
-            SQLiteCreateTableGenerator generator
-    ) {
-
-        SQLiteTableDefinition table =
-                SQLiteTableDefinitionFactory.create(
-                        recordType
-                );
-
-        initializedTables.put(recordType, table);
-
-        String sql =
-                generator.generate(
-                        table,
-                        primaryKeys
-                );
-
-        logger.info("Executing table creation statement: \n\n{}", sql);
-
-        try (
-                Statement statement =
-                        connection.createStatement()
-        ) {
-
-            statement.execute(
-                    sql
-            );
-
+        try (Statement statement = connection.createStatement()) {
+            for (String sql : CREATE_STATEMENTS) {
+                logger.info("Executing schema statement:\n{}", sql);
+                statement.execute(sql);
+            }
         } catch (SQLException exception) {
-
             throw new PersistenceException(
-                    "Could not initialize table for record: "
-                            + recordType.getName(),
+                    "Could not initialize SQLite schema",
                     exception
             );
         }

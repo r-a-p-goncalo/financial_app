@@ -146,4 +146,48 @@ import static org.junit.jupiter.api.Assertions.*;
                 saved.get()
         );
     }
+
+    @TestTemplate
+    void canCreateTransactionWithOneExternalSide(
+            RepositoryTestConfiguration configuration
+    ) {
+
+        AccountRepository accountRepository =
+                configuration.createAccountRepository();
+        TransactionRepository transactionRepository =
+                configuration.createTransactionRepository();
+
+        FinancialContextId context =
+                new FinancialContextId("context-1");
+        AccountRecord origin =
+                new AccountRecord(
+                        new AccountRecordId("origin-account", context),
+                        "Origin",
+                        new MonetaryValue(new BigDecimal("1000"))
+                );
+
+        accountRepository.save(origin);
+
+        TransactionRecord result = new CreateTransaction(
+                transactionRepository,
+                accountRepository
+        ).execute(
+                new CreateTransactionRequest(
+                        context,
+                        origin.accountRecordId(),
+                        null,
+                        Instant.parse("2026-08-21T10:00:00Z"),
+                        new MonetaryValue(new BigDecimal("125.50"))
+                )
+        );
+
+        assertEquals(origin.accountRecordId(), result.originAccountId());
+        assertNull(result.targetAccountId());
+        assertEquals(
+                result,
+                transactionRepository.findById(
+                        result.transactionRecordId()
+                ).orElseThrow()
+        );
+    }
 }

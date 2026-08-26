@@ -11,8 +11,6 @@ import java.sql.SQLException;
 
 public class SQLiteConnection {
 
-    private final static boolean DELETE_DATABASE_IF_EXISTS = true;
-
     private final Connection connection;
 
     public SQLiteConnection(String databasePath) {
@@ -24,10 +22,6 @@ public class SQLiteConnection {
 
             if (parent != null) {
                 Files.createDirectories(parent);
-            }
-
-            if (DELETE_DATABASE_IF_EXISTS) {
-                Files.deleteIfExists(path);
             }
 
             this.connection = DriverManager.getConnection(

@@ -11,14 +11,14 @@ The current implementation supports:
 * transactions;
 * interchangeable repository implementations;
 * in-memory and SQLite persistence;
-* dynamic SQLite schema and query construction based on Java record classes.
+* explicit SQLite schema and repository mappings.
 
 ---
 
 ## Next Steps
 
 * Complete account current-value calculation based on transactions. There is more to be done on accounts and transactions.
-* Improve the SQLite schema API and reduce remaining manual configuration while prioritizing future development and performance. We're missing a division of common data representation and database data representation.
+* Introduce versioned database migrations before schema changes need to preserve existing user data.
 
 ---
 
@@ -48,7 +48,7 @@ Contains the shared data structures used throughout the application.
 
 The main application data is represented using Java `record` classes, including records and nested ID/value objects.
 
-These records are also used by the SQLite infrastructure to derive database structure dynamically.
+SQLite repositories map these records explicitly to the database schema.
 
 ---
 
@@ -227,164 +227,40 @@ The in-memory implementation is useful for lightweight execution and testing, wh
 
 ---
 
-## Dynamic SQLite Schema
+## SQLite Schema and Repository Mapping
 
-SQLite tables are created dynamically from the Java record classes.
-
-Instead of manually defining each table column as a separate constant, the schema system inspects the structure of a record using reflection.
-
-For example:
-
-```java
-public record AccountRecord(
-    AccountRecordId accountRecordId,
-    String name,
-    MonetaryValue initialAmount
-) {}
-```
-
-Nested records are recursively expanded into columns.
-
-Conceptually:
+`SQLiteSchema` creates the application's explicit tables and indexes:
 
 ```text
-AccountRecord
-├── accountRecordId
-│   ├── accountId
-│   └── financialContextId
-├── name
-└── initialAmount
+financial_contexts
+accounts
+transactions
 ```
 
-becomes a flat SQLite structure similar to:
+The table and column names are deliberately defined in SQL rather than
+generated from Java records. This keeps the database contract stable when
+application models evolve and makes future migrations straightforward.
+
+Each SQLite application repository owns the SQL for its aggregate and maps
+each `ResultSet` row to an application record. For example,
+`SQLiteAccountRepository` defines its account `INSERT` and `SELECT`
+statements alongside the code that builds an `AccountRecord`.
+
+`SQLiteRepository<T>` remains the shared JDBC helper. It handles prepared
+statement binding, result-set iteration, resource cleanup, logging, and
+persistence exceptions, but it does not derive schema or query information.
 
 ```text
-account_id
-account_financial_context_id
-name
-initial_amount
-```
-
-The exact column names are generated from the nested record path.
-
-The process is:
-
-```text
-Java Record Class
-        ↓
-RecordStructure
-        ↓
-Column Definitions
-        ↓
-SQLiteTableDefinition
-        ↓
-CREATE TABLE statement
-        ↓
-SQLite Table
-```
-
-Primary-key columns are currently supplied when the schema is initialized.
-
-This means the record structure defines most of the table automatically, while identity configuration is still explicitly provided.
-
----
-
-## Dynamic Record Persistence
-
-The SQLite persistence layer uses the same record structure for saving and reading data.
-
-### Saving
-
-`RecordFlattener` recursively converts a record into a flat map of column names and values.
-
-```text
-Nested Java Record
-        ↓
-RecordFlattener
-        ↓
-column → value
-        ↓
-Dynamic INSERT query
-        ↓
+SQLiteAccountRepository
+        ↓ explicit SQL and row mapper
+SQLiteRepository<AccountRecord>
+        ↓ prepared statements and JDBC resource handling
 SQLite
 ```
 
-When saving records, null values can be ignored. This allows partial record objects to be used without generating values for every possible column.
-
-Values are passed through SQLite type converters before being bound to SQL statements.
-
----
-
-### Reading
-
-When data is retrieved, `RecordConstructor` performs the reverse operation.
-
-```text
-SQLite ResultSet
-        ↓
-Column Values
-        ↓
-SQLite Type Converters
-        ↓
-Nested Record Reconstruction
-        ↓
-Java Record
-```
-
-The constructor recursively rebuilds nested record objects using reflection and the record's canonical constructor.
-
-This allows repository code to work with the original record type rather than manually mapping every database column.
-
----
-
-## Dynamic Queries
-
-The generic `SQLiteRepository<T>` handles common persistence operations.
-
-It dynamically generates SQL for operations such as:
-
-* `INSERT`;
-* `SELECT`;
-* conditional `SELECT`;
-* `DELETE`.
-
-Query conditions can also be constructed from record values.
-
-For example, a nested ID object can be flattened into its corresponding database columns and used to construct the required `WHERE` conditions.
-
-The general flow is:
-
-```text
-Record / Partial Record
-        ↓
-RecordFlattener
-        ↓
-column/value pairs
-        ↓
-Query Builder
-        ↓
-Prepared SQL Statement
-```
-
-Prepared statements are used to bind values rather than directly inserting values into SQL strings.
-
----
-
-## Type Conversion
-
-SQLite does not directly represent every Java type used by the application.
-
-`SQLiteTypeConverters` provides conversions between Java values and database values.
-
-Current converters include support for types such as:
-
-* `String`;
-* `Integer`;
-* `Double`;
-* `Instant`;
-* `MonetaryValue`.
-
-Adding support for another persisted value type should generally only require adding the appropriate SQLite type converter rather than modifying each repository.
+Monetary values and timestamps are converted explicitly in the repository
+that persists them. This keeps storage decisions close to the SQL that uses
+them.
 
 ---
 
@@ -433,7 +309,7 @@ Create an isolated SQLite in-memory database:
 jdbc:sqlite::memory:
 ```
 
-The dynamic SQLite schema is initialized before the repositories are created.
+The explicit SQLite schema is initialized before the repositories are created.
 
 This means the same application behaviour can be tested against both:
 
@@ -477,23 +353,20 @@ Infrastructure
 In-Memory / SQLite
 ```
 
-The SQLite implementation is largely driven by the Java record model:
+The SQLite implementation has an explicit persistence boundary:
 
 ```text
-Record Classes
-      ↓
-Dynamic Schema Generation
-      ↓
-Dynamic Record Flattening
-      ↓
-Dynamic SQL Generation
-      ↓
+SQLiteSchema
+      ↓ explicit tables and indexes
+SQLite application repositories
+      ↓ explicit SQL and row mapping
+SQLiteRepository<T>
+      ↓ JDBC resource handling
 SQLite
-      ↓
-Dynamic Record Reconstruction
 ```
 
-This reduces the amount of entity-specific SQL and mapping code required when the record structure changes.
+This makes relational constraints, indexes, joins, and future schema migrations
+clearer as the data model becomes more sophisticated.
 
 ---
 
@@ -501,7 +374,6 @@ This reduces the amount of entity-specific SQL and mapping code required when th
 
 * The client and application currently run in the same Java process.
 * There is no HTTP/API layer yet.
-* SQLite primary-key configuration is still explicitly supplied during schema initialization.
-* The schema system does not yet provide database migrations or versioning.
+* The schema is initialized with `CREATE TABLE IF NOT EXISTS`; it does not yet provide database migrations or versioning.
 * Currency/unit behaviour is not yet implemented.
-* The persistence system currently focuses on the application's record-based data model and may require additional metadata or configuration as database requirements become more complex.
+* Foreign-key constraints and database-level validation will be added as the domain rules become more complete.

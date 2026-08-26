@@ -1,13 +1,6 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQuery;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryBuilder;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryCondition;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.query.SQLiteQueryGenerator;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordConstructor;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.record.RecordFlattener;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.typeconverter.SQLiteTypeConverters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,307 +11,111 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
-public class SQLiteRepository<T> {
+/**
+ * Small JDBC helper shared by SQLite-backed application repositories.
+ *
+ * <p>Each application repository owns its SQL and row mapping. This class
+ * centralizes resource handling, prepared-statement binding, and conversion of
+ * JDBC failures into {@link PersistenceException}; it deliberately does not
+ * derive table names, column names, or schemas from application records.</p>
+ */
+public final class SQLiteRepository<T> {
 
-    private final Connection connection;
-
-    private final Class<T> recordType;
-
-    private final String tableName;
-
-    private final SQLiteQueryGenerator
-            queryGenerator;
-
-    private final SQLiteTypeConverters
-            typeConverters;
-
-    private final RecordConstructor
-            recordConstructor;
+    @FunctionalInterface
+    public interface RowMapper<T> {
+        T map(ResultSet resultSet) throws SQLException;
+    }
 
     private static final Logger logger =
-            LoggerFactory.getLogger(
-                    SQLiteRepository.class
-            );
+            LoggerFactory.getLogger(SQLiteRepository.class);
+
+    private final Connection connection;
+    private final RowMapper<T> rowMapper;
 
     public SQLiteRepository(
             Connection connection,
-            Class<T> recordType,
-            String tableName,
-            SQLiteTypeConverters typeConverters
+            RowMapper<T> rowMapper
     ) {
-
-        this.connection =
-                connection;
-
-        this.recordType =
-                recordType;
-
-        this.tableName =
-                tableName;
-
-        this.typeConverters =
-                typeConverters;
-
-        this.queryGenerator =
-                new SQLiteQueryGenerator();
-
-        this.recordConstructor =
-                new RecordConstructor(
-                        typeConverters
-                );
+        this.connection = Objects.requireNonNull(connection);
+        this.rowMapper = Objects.requireNonNull(rowMapper);
     }
 
     public T save(
-            T record
+            String sql,
+            T record,
+            Object... parameters
     ) {
+        executeUpdate(sql, parameters);
+        return record;
+    }
 
-        Map<String, Object> values =
-                RecordFlattener.flatten(
-                        record,
-                        true
-                );
+    public void executeUpdate(
+            String sql,
+            Object... parameters
+    ) {
+        logger.info("Executing update query:\n{}", sql);
 
-        String sql =
-                queryGenerator.createInsertSql(
-                        tableName,
-                        values.keySet()
-                );
-
-        logger.info("Executing save query:\n{}", sql);
-
-        try (
-                PreparedStatement statement =
-                        connection.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            bindValues(
-                    statement,
-                    values.values()
-            );
-
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
             statement.executeUpdate();
-
-            return record;
-
         } catch (SQLException exception) {
-
-            throw new RuntimeException(
-                    "Could not save record in table: "
-                            + tableName,
+            throw new PersistenceException(
+                    "Could not execute update query: " + sql,
                     exception
             );
         }
-    }
-
-    public Optional<T> findSingleByRecordValue(Object id) {
-
-        Collection<T> accountRecordsWithId = findByRecordValues(id);
-
-        if (accountRecordsWithId.size() > 1) {
-            throw new PersistenceException("Multiple records were gotten with ID");
-
-        } else if (accountRecordsWithId.size() == 1) {
-            return Optional.of(accountRecordsWithId.iterator().next());
-
-        } else {
-            return Optional.empty();
-        }
-
-    }
-
-    public Collection<T> getAllRecords(){
-        SQLiteQueryBuilder builder =
-                new SQLiteQueryBuilder();
-        builder.build();
-
-        SQLiteQuery query =
-                builder.build();
-
-        return find(query);
-    }
-
-    public Collection<T> findByRecordValues(
-            Object recordValue
-    ) {
-
-        Map<String, Object> idValues =
-                RecordFlattener.flatten(
-                        recordValue,
-                        true
-                );
-
-        SQLiteQueryBuilder builder =
-                new SQLiteQueryBuilder();
-
-        for (
-                Map.Entry<String, Object> entry
-                : idValues.entrySet()
-        ) {
-
-            builder.where(
-                    entry.getKey(),
-                    entry.getValue()
-            );
-        }
-
-        SQLiteQuery query =
-                builder.build();
-
-       return find(query);
     }
 
     public Collection<T> find(
-            SQLiteQuery query
+            String sql,
+            Object... parameters
     ) {
-
-        String sql =
-                queryGenerator.createSelectSql(
-                        tableName,
-                        query
-                );
-
         logger.info("Executing find query:\n{}", sql);
 
-        try (
-                PreparedStatement statement =
-                        connection.prepareStatement(
-                                sql
-                        )
-        ) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
 
-            bindQuery(
-                    statement,
-                    query
-            );
-
-            try (
-                    ResultSet resultSet =
-                            statement.executeQuery()
-            ) {
-
-                List<T> records =
-                        new ArrayList<>();
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<T> records = new ArrayList<>();
 
                 while (resultSet.next()) {
-
-                    records.add(
-                            recordConstructor.construct(
-                                    recordType,
-                                    resultSet
-                            )
-                    );
+                    records.add(rowMapper.map(resultSet));
                 }
 
-                return records;
+                return List.copyOf(records);
             }
-
         } catch (SQLException exception) {
-
-            throw new RuntimeException(
-                    "Could not execute query: "
-                            + sql,
+            throw new PersistenceException(
+                    "Could not execute find query: " + sql,
                     exception
             );
         }
     }
 
-    public void delete(
-            Object id
+    public Optional<T> findSingle(
+            String sql,
+            Object... parameters
     ) {
+        Collection<T> records = find(sql, parameters);
 
-        Map<String, Object> idValues =
-                RecordFlattener.flatten(
-                        id,
-                        true
-                );
-
-        SQLiteQueryBuilder builder =
-                new SQLiteQueryBuilder();
-
-        for (
-                Map.Entry<String, Object> entry
-                : idValues.entrySet()
-        ) {
-
-            builder.where(
-                    entry.getKey(),
-                    entry.getValue()
+        if (records.size() > 1) {
+            throw new PersistenceException(
+                    "Expected at most one record but found " + records.size()
             );
         }
 
-        SQLiteQuery query =
-                builder.build();
-
-        String sql =
-                queryGenerator.createDeleteSql(
-                        tableName,
-                        query
-                );
-
-        try (
-                PreparedStatement statement =
-                        connection.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            bindQuery(
-                    statement,
-                    query
-            );
-
-            statement.executeUpdate();
-
-        } catch (SQLException exception) {
-
-            throw new RuntimeException(
-                    "Could not delete record",
-                    exception
-            );
-        }
+        return records.stream().findFirst();
     }
 
-    private void bindValues(
+    private void bind(
             PreparedStatement statement,
-            Collection<Object> values
+            Object... parameters
     ) throws SQLException {
-
-        int index = 1;
-
-        for (Object value : values) {
-
-            statement.setObject(
-                    index++,
-                    typeConverters.toDatabase(
-                            value
-                    )
-            );
-        }
-    }
-
-    private void bindQuery(
-            PreparedStatement statement,
-            SQLiteQuery query
-    ) throws SQLException {
-
-        int index = 1;
-
-        for (
-                SQLiteQueryCondition condition
-                : query.conditions()
-        ) {
-
-            statement.setObject(
-                    index++,
-                    typeConverters.toDatabase(
-                            condition.value()
-                    )
-            );
+        for (int index = 0; index < parameters.length; index++) {
+            statement.setObject(index + 1, parameters[index]);
         }
     }
 }

@@ -30,13 +30,9 @@ public class CommandListFinancialContextViewAccounts extends CLICommand {
 
         for (ClientAccount account : view.accounts()) {
             System.out.println("---");
-            System.out.println(
-                    "    Id: " + account.account().accountRecordId()
-            );
+            System.out.println("    Id: " + account.account().accountRecordId());
             System.out.println("    Name: " + account.account().name());
-            System.out.println(
-                    "    Current total: " + account.currentTotal()
-            );
+            System.out.println("    Current total: " + account.currentTotal());
         }
 
         System.out.println();

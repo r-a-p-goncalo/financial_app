@@ -13,9 +13,6 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
@@ -36,23 +33,30 @@ public class ClientApplication {
 
     private final FinancialContextViewSession financialContextViewSession;
 
-    private Collection<FinancialContextRecord> listedFinancialContexts;
-
-    private final Map<AccountRecordId, AccountRecord> cachedAccountRecords;
-
-    private static final Logger logger =
-            LoggerFactory.getLogger(ClientApplication.class);
+    private final ClientDataCache dataCache;
 
     public ClientApplication(Application serverApp){
+        this(serverApp, new ClientDataCache());
+    }
+
+    public ClientApplication(
+            Application serverApp,
+            ClientDataCache dataCache
+    ) {
         this.financialContextSession = new FinancialContextSession();
         this.financialContextViewSession = new FinancialContextViewSession();
         this.serverApp = serverApp;
-
-        this.cachedAccountRecords = new HashMap<AccountRecordId, AccountRecord>();
+        this.dataCache = Objects.requireNonNull(dataCache);
     }
 
     public FinancialContextRecord createFinancialRecord(String name){
-        return serverApp.createFinancialContext().execute(new CreateFinancialContextRequest(name));
+        FinancialContextRecord financialContext = serverApp
+                .createFinancialContext()
+                .execute(new CreateFinancialContextRequest(name));
+
+        dataCache.saveFinancialContext(financialContext);
+
+        return financialContext;
     }
 
     public FinancialContextRecord getCurrentFinancialContext(){
@@ -60,28 +64,19 @@ public class ClientApplication {
     }
 
     public Collection<FinancialContextRecord> getFinancialContexts(){
-        listedFinancialContexts = this.serverApp.listFinancialContextSummary().execute(new ListFinancialContextSummaryRequest());
+        Collection<FinancialContextRecord> financialContexts = this.serverApp
+                .listFinancialContextSummary()
+                .execute(new ListFinancialContextSummaryRequest());
 
-        return listedFinancialContexts;
+        dataCache.refreshFinancialContexts(financialContexts);
+
+        return financialContexts;
     }
 
     public FinancialContextId getFinancialContextIdFrom(String financialContextIdString){
-
-        if (listedFinancialContexts == null)
-            return new FinancialContextId(financialContextIdString);
-
-        Iterator<FinancialContextRecord> financialContextRecordIterator = listedFinancialContexts.iterator();
-        FinancialContextRecord next;
-
-        while (financialContextRecordIterator.hasNext()){
-
-            next = financialContextRecordIterator.next();
-
-            if (next.name().equals(financialContextIdString))
-                financialContextIdString = next.financialContextId().financialContextId();
-        }
-
-        return new FinancialContextId(financialContextIdString);
+        return dataCache.findFinancialContextByName(financialContextIdString)
+                .map(FinancialContextRecord::financialContextId)
+                .orElseGet(() -> new FinancialContextId(financialContextIdString));
 
     }
 
@@ -93,14 +88,13 @@ public class ClientApplication {
             throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);
 
         this.financialContextViewSession.clear();
-        this.cachedAccountRecords.clear();
         this.financialContextSession.load(newFinancialContext.get());
+        dataCache.saveFinancialContext(newFinancialContext.get());
 
     }
 
     public void unloadFinancialContext() throws ClientRuntimeException {
         this.financialContextViewSession.clear();
-        this.cachedAccountRecords.clear();
         this.financialContextSession.clear();
 
     }
@@ -118,39 +112,40 @@ public class ClientApplication {
         );
 
         financialContextViewSession.clear();
+        dataCache.saveAccountRecord(account);
 
         return account;
     }
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
 
-        Collection<AccountRecord> listedAccountRecords = serverApp.accountSummary().execute(new ListAccountsSummaryRequest(this.financialContextSession.requireCurrentContext().financialContextId()));
+        Collection<AccountRecord> listedAccountRecords = serverApp
+                .accountSummary()
+                .execute(new ListAccountsSummaryRequest(
+                        this.financialContextSession
+                                .requireCurrentContext()
+                                .financialContextId()
+                ));
 
-        this.cachedAccountRecords.clear();
-
-       listedAccountRecords.forEach(v -> this.cachedAccountRecords.put(v.accountRecordId(), v));
+        dataCache.refreshAccountRecords(
+                this.financialContextSession
+                        .requireCurrentContext()
+                        .financialContextId(),
+                listedAccountRecords
+        );
 
         return listedAccountRecords;
     }
 
-    public AccountRecord getCachedAccountRecord(AccountRecordId accountRecordId){
-
-        if(accountRecordId == null)
-            return null;
-
-        return cachedAccountRecords.get(accountRecordId);
+    public ClientDataCache dataCache() {
+        return dataCache;
     }
 
-    public String getCachedAccountRecordName(AccountRecordId accountRecordId, String toReturnIfFail){
-
-        AccountRecord accountRecord = getCachedAccountRecord(accountRecordId);
-
-        if(accountRecord == null) {
-            logger.info("Received request to get account record name that failed, with account id: {}", accountRecordId);
-            return toReturnIfFail;
-
-        }else
-            return accountRecord.name();
+    /**
+     * Returns an account record previously received from the server, if any.
+     */
+    public AccountRecord getCachedAccountRecord(AccountRecordId accountRecordId) {
+        return dataCache.findAccountRecord(accountRecordId).orElse(null);
     }
 
     /**
@@ -161,21 +156,17 @@ public class ClientApplication {
      */
     public AccountRecordId getAccountRecordIdFrom(String accountRecordIdString){
 
-        if (cachedAccountRecords.isEmpty())
-            return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());
+        FinancialContextId financialContextId = financialContextSession
+                .requireCurrentContext()
+                .financialContextId();
 
-        Iterator<AccountRecord> accountRecordIterator = cachedAccountRecords.values().iterator();
-        AccountRecord next;
-
-        while (accountRecordIterator.hasNext()){
-
-            next = accountRecordIterator.next();
-
-            if (next.name().equals(accountRecordIdString))
-                return next.accountRecordId();
-        }
-
-        return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());
+        return dataCache
+                .findAccountRecordByName(financialContextId, accountRecordIdString)
+                .map(AccountRecord::accountRecordId)
+                .orElseGet(() -> new AccountRecordId(
+                        accountRecordIdString,
+                        financialContextId
+                ));
 
     }
 
@@ -223,6 +214,7 @@ public class ClientApplication {
                 );
 
         financialContextViewSession.clear();
+        dataCache.saveTransactionRecord(transaction);
 
         return transaction;
     }
@@ -235,13 +227,17 @@ public class ClientApplication {
                         .requireCurrentContext()
                         .financialContextId();
 
-        return serverApp
+        Collection<TransactionRecord> transactions = serverApp
                 .transactionsSummary()
                 .execute(
                         new ListTransactionsSummaryRequest(
                                 financialContextId
                         )
                 );
+
+        dataCache.refreshTransactionRecords(financialContextId, transactions);
+
+        return transactions;
     }
 
     /**
@@ -267,6 +263,15 @@ public class ClientApplication {
                                 financialContext.financialContextId()
                         )
                 );
+
+        dataCache.refreshAccountRecords(
+                financialContext.financialContextId(),
+                accounts
+        );
+        dataCache.refreshTransactionRecords(
+                financialContext.financialContextId(),
+                transactions
+        );
 
         FinancialContextView view = new FinancialContextView(
                 financialContext,

@@ -2,6 +2,7 @@ package com.rgoncalo.financialapp.cli.transaction;
 
 import com.rgoncalo.financialapp.cli.CLICommand;
 import com.rgoncalo.financialapp.client.ClientApplication;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 
 import java.util.Collection;
@@ -30,12 +31,7 @@ public class CommandListTransactionSummaries
         System.out.println();
 
         if (transactions.isEmpty()) {
-
-            System.out.println(
-                    "No transactions found."
-            );
-
-            System.out.println();
+            System.out.println("No transactions found.\n");
             return;
         }
 
@@ -45,30 +41,15 @@ public class CommandListTransactionSummaries
 
             System.out.println();
 
-            System.out.println(
-                    "Id: " +
-                            transaction.transactionRecordId().transactionRecordId()
-            );
+            System.out.println("Id: " + transaction.transactionRecordId().transactionRecordId());
 
-            System.out.println(
-                    "Origin: " +
-                            transaction.originAccountId()
-            );
+            System.out.println("Origin: " + displayAccount(transaction.originAccountId()));
+            System.out.println("Target: " + displayAccount(transaction.targetAccountId()));
 
-            System.out.println(
-                    "Target: " +
-                            transaction.targetAccountId()
-            );
+            System.out.println("Date: " + transaction.dateTime());
 
-            System.out.println(
-                    "Date: " +
-                            transaction.dateTime()
-            );
+            System.out.println("Value: " + transaction.value());
 
-            System.out.println(
-                    "Value: " +
-                            transaction.value()
-            );
         }
 
         System.out.println();
@@ -77,5 +58,11 @@ public class CommandListTransactionSummaries
     @Override
     public String help() {
         return "lists transactions in the current financial context";
+    }
+
+    private String displayAccount(AccountRecordId accountRecordId) {
+        return accountRecordId == null
+                ? UNKNOWN_OR_IRRELEVANT_ACCOUNT
+                : accountRecordId.toString();
     }
 }

@@ -59,15 +59,12 @@ public class CommandListFinancialContextViewAccountTransactions
 
         System.out.println();
 
-        System.out.println(
-                "Id: " + transaction.transactionRecordId()
-                        .transactionRecordId()
-        );
+        System.out.println("Id: " + transaction.transactionRecordId().transactionRecordId());
 
         System.out.println("Date: " + transaction.dateTime());
 
-        String originName = app.getCachedAccountRecordName(transaction.originAccountId(), " ");
-        String targetName = app.getCachedAccountRecordName(transaction.targetAccountId(), " ");
+        String originName = displayAccount(transaction.originAccountId());
+        String targetName = displayAccount(transaction.targetAccountId());
 
         System.out.println(originName + " -> " + transaction.value() + " -> " + targetName);
 
@@ -85,16 +82,20 @@ public class CommandListFinancialContextViewAccountTransactions
             FinancialContextTransactionSummary.AccountBalance balance
     ) {
         if (balance != null) {
-            System.out.println(
-                    side + " total after transaction: "
-                            + balance.totalAfterTransaction()
-            );
+            System.out.println(side + " total after transaction: " + balance.totalAfterTransaction());
             return;
         }
 
-        System.out.println(
-                side + ": " + (accountId == null ? "External" : accountId)
-        );
+        System.out.println(side + ": " + (accountId == null ? "External" : accountId));
+
         System.out.println(side + " total after transaction: N/A");
+    }
+
+    private String displayAccount(AccountRecordId accountRecordId) {
+        if (accountRecordId == null) {
+            return UNKNOWN_OR_IRRELEVANT_ACCOUNT;
+        }
+
+        return app.dataCache().getCachedAccountRecordName(accountRecordId, accountRecordId.toString());
     }
 }

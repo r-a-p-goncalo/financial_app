@@ -29,7 +29,7 @@ public class CommandCreateTransactionCommand
         System.out.println("Creating transaction.");
 
         AccountRecordId originAccountId = null;
-        System.out.print("Origin account id: ");
+        System.out.print("Origin account id (blank for unknown or irrelevant): ");
         String originAccountIdString =
                 scanner.nextLine().trim();
 
@@ -37,7 +37,7 @@ public class CommandCreateTransactionCommand
             originAccountId =  app.getAccountRecordIdFrom(originAccountIdString);
 
         AccountRecordId targetAccountId = null;
-        System.out.print("Target account id: ");
+        System.out.print("Target account id (blank for unknown or irrelevant): ");
         String targetAccountIdString =
                 scanner.nextLine().trim();
 
@@ -68,14 +68,8 @@ public class CommandCreateTransactionCommand
                 "Id: " +
                         transaction.transactionRecordId().transactionRecordId()
         );
-        System.out.println(
-                "Origin account: " +
-                        transaction.originAccountId()
-        );
-        System.out.println(
-                "Target account: " +
-                        transaction.targetAccountId()
-        );
+        System.out.println("Origin account: " + displayAccount(transaction.originAccountId()));
+        System.out.println("Target account: " + displayAccount(transaction.targetAccountId()));
         System.out.println(
                 "Date: " +
                         transaction.dateTime()
@@ -90,5 +84,11 @@ public class CommandCreateTransactionCommand
     @Override
     public String help() {
         return "creates a transaction between two accounts";
+    }
+
+    private String displayAccount(AccountRecordId accountRecordId) {
+        return accountRecordId == null
+                ? UNKNOWN_OR_IRRELEVANT_ACCOUNT
+                : accountRecordId.toString();
     }
 }

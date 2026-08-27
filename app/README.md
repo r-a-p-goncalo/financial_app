@@ -107,6 +107,14 @@ The CLI is responsible for:
 
 The CLI does not interact directly with repositories or SQLite.
 
+### Transactions with an unknown or irrelevant account
+
+A transaction may have a `null` origin or target `AccountRecordId`, but not
+both. The missing side represents an unknown or irrelevant external account.
+This allows, for example, a normal expense to be represented as a transfer
+from an account to a `null` target. In the CLI, leave that account prompt blank;
+transaction displays label the missing side as `Unknown or irrelevant account`.
+
 ---
 
 ### `infrastructure`

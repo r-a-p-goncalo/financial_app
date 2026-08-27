@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 public abstract class CLICommand implements CliCommandInter{
 
+    protected static final String UNKNOWN_OR_IRRELEVANT_ACCOUNT = "Unknown or irrelevant account";
+
     protected final ClientApplication app;
 
     public CLICommand(ClientApplication app){

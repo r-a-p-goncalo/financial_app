@@ -13,6 +13,8 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,6 +39,9 @@ public class ClientApplication {
     private Collection<FinancialContextRecord> listedFinancialContexts;
 
     private final Map<AccountRecordId, AccountRecord> cachedAccountRecords;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(ClientApplication.class);
 
     public ClientApplication(Application serverApp){
         this.financialContextSession = new FinancialContextSession();
@@ -128,7 +133,33 @@ public class ClientApplication {
         return listedAccountRecords;
     }
 
-    public AccountRecordId getAccountRecordIdIdFrom(String accountRecordIdString){
+    public AccountRecord getCachedAccountRecord(AccountRecordId accountRecordId){
+
+        if(accountRecordId == null)
+            return null;
+
+        return cachedAccountRecords.get(accountRecordId);
+    }
+
+    public String getCachedAccountRecordName(AccountRecordId accountRecordId, String toReturnIfFail){
+
+        AccountRecord accountRecord = getCachedAccountRecord(accountRecordId);
+
+        if(accountRecord == null) {
+            logger.info("Received request to get account record name that failed, with account id: {}", accountRecordId);
+            return toReturnIfFail;
+
+        }else
+            return accountRecord.name();
+    }
+
+    /**
+     *
+     * @param accountRecordIdString, either an id string of an account record or its name
+     *
+     * @return the account record id object correspondent to the given name or id string
+     */
+    public AccountRecordId getAccountRecordIdFrom(String accountRecordIdString){
 
         if (cachedAccountRecords.isEmpty())
             return new AccountRecordId(accountRecordIdString, financialContextSession.requireCurrentContext().financialContextId());

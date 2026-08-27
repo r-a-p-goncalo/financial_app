@@ -40,25 +40,9 @@ public class CommandListFinancialContextViewAccountTransactions
 
         for (FinancialContextTransactionSummary summary
                 : view.transactionSummaries()) {
-            TransactionRecord transaction = summary.transaction();
 
-            System.out.println();
-            System.out.println(
-                    "Id: " + transaction.transactionRecordId()
-                            .transactionRecordId()
-            );
-            System.out.println("Date: " + transaction.dateTime());
-            printAccountBalance(
-                    "Origin",
-                    transaction.originAccountId(),
-                    summary.originBalance()
-            );
-            printAccountBalance(
-                    "Target",
-                    transaction.targetAccountId(),
-                    summary.targetBalance()
-            );
-            System.out.println("Value: " + transaction.value());
+            printTransactionInfo(summary);
+
         }
 
         System.out.println();
@@ -69,15 +53,38 @@ public class CommandListFinancialContextViewAccountTransactions
         return "lists all transactions with origin and target totals";
     }
 
+    private void printTransactionInfo(FinancialContextTransactionSummary summary){
+
+        TransactionRecord transaction = summary.transaction();
+
+        System.out.println();
+
+        System.out.println(
+                "Id: " + transaction.transactionRecordId()
+                        .transactionRecordId()
+        );
+
+        System.out.println("Date: " + transaction.dateTime());
+
+        String originName = app.getCachedAccountRecordName(transaction.originAccountId(), " ");
+        String targetName = app.getCachedAccountRecordName(transaction.targetAccountId(), " ");
+
+        System.out.println(originName + " -> " + transaction.value() + " -> " + targetName);
+
+        if (transaction.originAccountId() != null)
+            printAccountBalance(originName, transaction.originAccountId(), summary.originBalance());
+
+        if (transaction.targetAccountId() != null)
+            printAccountBalance( targetName, transaction.targetAccountId(), summary.targetBalance());
+
+    }
+
     private void printAccountBalance(
             String side,
             AccountRecordId accountId,
             FinancialContextTransactionSummary.AccountBalance balance
     ) {
         if (balance != null) {
-            System.out.println(
-                    side + ": " + balance.account().account().name()
-            );
             System.out.println(
                     side + " total after transaction: "
                             + balance.totalAfterTransaction()

@@ -3,6 +3,11 @@
   "commands": [
     {
       "type": "create-financial-context",
+      "ref": "family",
+      "name": "Family finances"
+    },
+    {
+      "type": "create-financial-context",
       "ref": "personal",
       "name": "Personal finances"
     },
@@ -21,12 +26,92 @@
       "initialAmount": "500.00"
     },
     {
+      "type": "create-account",
+      "context": "personal",
+      "ref": "cash",
+      "name": "Cash",
+      "initialAmount": "80.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "personal",
+      "target": "checking",
+      "dateTime": "2026-08-20T09:00:00Z",
+      "value": "2500.00"
+    },
+    {
       "type": "create-transaction",
       "context": "personal",
       "origin": "checking",
       "target": "savings",
       "dateTime": "2026-08-25T09:00:00Z",
       "value": "100.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "personal",
+      "origin": "checking",
+      "target": "cash",
+      "dateTime": "2026-08-26T12:30:00Z",
+      "value": "40.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "personal",
+      "origin": "checking",
+      "dateTime": "2026-08-27T18:00:00Z",
+      "value": "65.50"
+    },
+    {
+      "type": "create-account",
+      "context": "family",
+      "ref": "household-checking",
+      "name": "Household checking",
+      "initialAmount": "3000.00"
+    },
+    {
+      "type": "create-account",
+      "context": "family",
+      "ref": "emergency-fund",
+      "name": "Emergency fund",
+      "initialAmount": "8000.00"
+    },
+    {
+      "type": "create-account",
+      "context": "family",
+      "ref": "household-cash",
+      "name": "Household cash",
+      "initialAmount": "150.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "family",
+      "target": "household-checking",
+      "dateTime": "2026-08-20T09:00:00Z",
+      "value": "4200.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "family",
+      "origin": "household-checking",
+      "target": "emergency-fund",
+      "dateTime": "2026-08-22T10:30:00Z",
+      "value": "500.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "family",
+      "origin": "household-checking",
+      "target": "household-cash",
+      "dateTime": "2026-08-24T17:00:00Z",
+      "value": "100.00"
+    },
+    {
+      "type": "create-transaction",
+      "context": "family",
+      "origin": "household-checking",
+      "dateTime": "2026-08-26T19:00:00Z",
+      "value": "180.25"
     }
   ]
 }

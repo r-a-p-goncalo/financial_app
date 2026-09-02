@@ -22,6 +22,19 @@ public class InMemoryFinancialContextRepository implements FinancialContextRepos
     }
 
     @Override
+    public Collection<FinancialContextRecord> listChildren(
+            FinancialContextId parentFinancialContextId
+    ) {
+        return financialContexts.values()
+                .stream()
+                .filter(context -> Objects.equals(
+                        context.parentFinancialContextId(),
+                        parentFinancialContextId
+                ))
+                .toList();
+    }
+
+    @Override
     public Optional<FinancialContextRecord> findById(FinancialContextId id) {
         return Optional.ofNullable(financialContexts.get(id));
     }

@@ -40,6 +40,20 @@ public class CreateTransaction {
         if (request.originAccountId() == null && request.targetAccountId() == null)
             throw new IllegalArgumentException("Request must have an origin or a target");
 
+        if (request.originAccountId() != null && !request.financialContextId()
+                .equals(request.originAccountId().financialContextId())) {
+            throw new IllegalArgumentException(
+                    "Origin account must belong to the financial context."
+            );
+        }
+
+        if (request.targetAccountId() != null && !request.financialContextId()
+                .equals(request.targetAccountId().financialContextId())) {
+            throw new IllegalArgumentException(
+                    "Target account must belong to the financial context."
+            );
+        }
+
         if (request.originAccountId() != null && accountRepository.findById(request.originAccountId()).isEmpty()) {
             throw new IllegalArgumentException(
                     "Origin account does not exist in the financial context."

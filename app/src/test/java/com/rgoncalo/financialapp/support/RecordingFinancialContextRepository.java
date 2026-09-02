@@ -32,6 +32,15 @@ public final class RecordingFinancialContextRepository implements FinancialConte
     }
 
     @Override
+    public Collection<FinancialContextRecord> listChildren(
+            FinancialContextId parentFinancialContextId
+    ) {
+        return financialContextRepository.listChildren(
+                parentFinancialContextId
+        );
+    }
+
+    @Override
     public Optional<FinancialContextRecord> findById(FinancialContextId id) {
         findCalls++;
         return financialContextRepository.findById(id);

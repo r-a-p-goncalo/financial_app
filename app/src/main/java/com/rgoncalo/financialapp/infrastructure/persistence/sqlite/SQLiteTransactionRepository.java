@@ -23,20 +23,35 @@ public class SQLiteTransactionRepository
                 origin_account_id,
                 target_account_id,
                 date_time,
-                value
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                value,
+                parent_financial_context_id,
+                parent_transaction_id,
+                overridden_attributes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(financial_context_id, transaction_id) DO UPDATE SET
+                origin_account_id = excluded.origin_account_id,
+                target_account_id = excluded.target_account_id,
+                date_time = excluded.date_time,
+                value = excluded.value,
+                parent_financial_context_id = excluded.parent_financial_context_id,
+                parent_transaction_id = excluded.parent_transaction_id,
+                overridden_attributes = excluded.overridden_attributes
             """;
 
     private static final String SELECT_BY_CONTEXT = """
             SELECT financial_context_id, transaction_id, origin_account_id,
-                   target_account_id, date_time, value
+                   target_account_id, date_time, value,
+                   parent_financial_context_id, parent_transaction_id,
+                   overridden_attributes
             FROM transactions
             WHERE financial_context_id = ?
             """;
 
     private static final String SELECT_BY_ACCOUNT = """
             SELECT financial_context_id, transaction_id, origin_account_id,
-                   target_account_id, date_time, value
+                   target_account_id, date_time, value,
+                   parent_financial_context_id, parent_transaction_id,
+                   overridden_attributes
             FROM transactions
             WHERE financial_context_id = ?
               AND (origin_account_id = ? OR target_account_id = ?)
@@ -44,7 +59,9 @@ public class SQLiteTransactionRepository
 
     private static final String SELECT_BY_ID = """
             SELECT financial_context_id, transaction_id, origin_account_id,
-                   target_account_id, date_time, value
+                   target_account_id, date_time, value,
+                   parent_financial_context_id, parent_transaction_id,
+                   overridden_attributes
             FROM transactions
             WHERE financial_context_id = ? AND transaction_id = ?
             """;
@@ -73,7 +90,10 @@ public class SQLiteTransactionRepository
                 accountId(transaction.originAccountId()),
                 accountId(transaction.targetAccountId()),
                 transaction.dateTime().toString(),
-                transaction.value().toString()
+                transaction.value().toString(),
+                parentFinancialContextId(transaction),
+                parentTransactionId(transaction),
+                transaction.overriddenAttributes()
         );
     }
 
@@ -138,7 +158,9 @@ public class SQLiteTransactionRepository
                         financialContextId
                 ),
                 java.time.Instant.parse(resultSet.getString("date_time")),
-                MonetaryValue.parse(resultSet.getString("value"))
+                MonetaryValue.parse(resultSet.getString("value")),
+                parentTransactionRecordId(resultSet),
+                resultSet.getInt("overridden_attributes")
         );
     }
 
@@ -149,5 +171,40 @@ public class SQLiteTransactionRepository
         return accountId == null
                 ? null
                 : new AccountRecordId(accountId, financialContextId);
+    }
+
+    private static String parentFinancialContextId(
+            TransactionRecord transaction
+    ) {
+        return transaction.parentTransactionRecordId() == null
+                ? null
+                : transaction.parentTransactionRecordId().financialContextId()
+                .financialContextId();
+    }
+
+    private static String parentTransactionId(TransactionRecord transaction) {
+        return transaction.parentTransactionRecordId() == null
+                ? null
+                : transaction.parentTransactionRecordId().transactionRecordId();
+    }
+
+    private static TransactionRecordId parentTransactionRecordId(
+            ResultSet resultSet
+    ) throws SQLException {
+        String parentTransactionId = resultSet.getString(
+                "parent_transaction_id"
+        );
+        String parentFinancialContextId = resultSet.getString(
+                "parent_financial_context_id"
+        );
+
+        if (parentTransactionId == null || parentFinancialContextId == null) {
+            return null;
+        }
+
+        return new TransactionRecordId(
+                parentTransactionId,
+                new FinancialContextId(parentFinancialContextId)
+        );
     }
 }

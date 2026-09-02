@@ -22,18 +22,30 @@ public class SQLiteAccountRepository implements AccountRepository {
 
     private static final String INSERT = """
             INSERT INTO accounts (
-                financial_context_id, account_id, name, initial_amount
-            ) VALUES (?, ?, ?, ?)
+                financial_context_id, account_id, name, initial_amount,
+                parent_financial_context_id, parent_account_id,
+                overridden_attributes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(financial_context_id, account_id) DO UPDATE SET
+                name = excluded.name,
+                initial_amount = excluded.initial_amount,
+                parent_financial_context_id = excluded.parent_financial_context_id,
+                parent_account_id = excluded.parent_account_id,
+                overridden_attributes = excluded.overridden_attributes
             """;
 
     private static final String SELECT_BY_CONTEXT = """
-            SELECT financial_context_id, account_id, name, initial_amount
+            SELECT financial_context_id, account_id, name, initial_amount,
+                   parent_financial_context_id, parent_account_id,
+                   overridden_attributes
             FROM accounts
             WHERE financial_context_id = ?
             """;
 
     private static final String SELECT_BY_ID = """
-            SELECT financial_context_id, account_id, name, initial_amount
+            SELECT financial_context_id, account_id, name, initial_amount,
+                   parent_financial_context_id, parent_account_id,
+                   overridden_attributes
             FROM accounts
             WHERE financial_context_id = ? AND account_id = ?
             """;
@@ -57,7 +69,10 @@ public class SQLiteAccountRepository implements AccountRepository {
                 id.financialContextId().financialContextId(),
                 id.accountRecordId(),
                 account.name(),
-                account.initialAmount().toString()
+                account.initialAmount().toString(),
+                parentFinancialContextId(account),
+                parentAccountId(account),
+                account.overriddenAttributes()
         );
     }
 
@@ -95,7 +110,40 @@ public class SQLiteAccountRepository implements AccountRepository {
                         financialContextId
                 ),
                 resultSet.getString("name"),
-                MonetaryValue.parse(resultSet.getString("initial_amount"))
+                MonetaryValue.parse(resultSet.getString("initial_amount")),
+                parentAccountRecordId(resultSet),
+                resultSet.getInt("overridden_attributes")
+        );
+    }
+
+    private static String parentFinancialContextId(AccountRecord account) {
+        return account.parentAccountRecordId() == null
+                ? null
+                : account.parentAccountRecordId().financialContextId()
+                .financialContextId();
+    }
+
+    private static String parentAccountId(AccountRecord account) {
+        return account.parentAccountRecordId() == null
+                ? null
+                : account.parentAccountRecordId().accountRecordId();
+    }
+
+    private static AccountRecordId parentAccountRecordId(
+            ResultSet resultSet
+    ) throws SQLException {
+        String parentAccountId = resultSet.getString("parent_account_id");
+        String parentFinancialContextId = resultSet.getString(
+                "parent_financial_context_id"
+        );
+
+        if (parentAccountId == null || parentFinancialContextId == null) {
+            return null;
+        }
+
+        return new AccountRecordId(
+                parentAccountId,
+                new FinancialContextId(parentFinancialContextId)
         );
     }
 

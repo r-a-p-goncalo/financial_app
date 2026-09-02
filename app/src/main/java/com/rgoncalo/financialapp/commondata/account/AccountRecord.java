@@ -12,8 +12,41 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 public record AccountRecord(
         AccountRecordId accountRecordId,
         String name,
-        MonetaryValue initialAmount
+        MonetaryValue initialAmount,
+        AccountRecordId parentAccountRecordId,
+        int overriddenAttributes
 ) {
+
+    public enum Attribute {
+        NAME(1),
+        INITIAL_AMOUNT(1 << 1);
+
+        private final int mask;
+
+        Attribute(int mask) {
+            this.mask = mask;
+        }
+
+        public int mask() {
+            return mask;
+        }
+    }
+
+    public AccountRecord(
+            AccountRecordId accountRecordId,
+            String name,
+            MonetaryValue initialAmount
+    ) {
+        this(accountRecordId, name, initialAmount, null, 0);
+    }
+
+    public boolean overrides(Attribute attribute) {
+        return (overriddenAttributes & attribute.mask()) != 0;
+    }
+
+    public boolean inherits(Attribute attribute) {
+        return parentAccountRecordId != null && !overrides(attribute);
+    }
 
     /**
      *

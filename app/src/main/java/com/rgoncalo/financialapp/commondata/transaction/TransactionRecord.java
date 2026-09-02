@@ -9,7 +9,45 @@ public record TransactionRecord (TransactionRecordId transactionRecordId,
                                  AccountRecordId originAccountId,
                                  AccountRecordId targetAccountId,
                                  Instant dateTime,
-                                 MonetaryValue value) {
+                                 MonetaryValue value,
+                                 TransactionRecordId parentTransactionRecordId,
+                                 int overriddenAttributes) {
+
+    public enum Attribute {
+        ORIGIN_ACCOUNT(1),
+        TARGET_ACCOUNT(1 << 1),
+        DATE_TIME(1 << 2),
+        VALUE(1 << 3);
+
+        private final int mask;
+
+        Attribute(int mask) {
+            this.mask = mask;
+        }
+
+        public int mask() {
+            return mask;
+        }
+    }
+
+    public TransactionRecord(
+            TransactionRecordId transactionRecordId,
+            AccountRecordId originAccountId,
+            AccountRecordId targetAccountId,
+            Instant dateTime,
+            MonetaryValue value
+    ) {
+        this(transactionRecordId, originAccountId, targetAccountId, dateTime,
+                value, null, 0);
+    }
+
+    public boolean overrides(Attribute attribute) {
+        return (overriddenAttributes & attribute.mask()) != 0;
+    }
+
+    public boolean inherits(Attribute attribute) {
+        return parentTransactionRecordId != null && !overrides(attribute);
+    }
 
     /**
      *

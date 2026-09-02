@@ -2,10 +2,8 @@ package com.rgoncalo.financialapp.client;
 
 import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.transaction.CreateTransactionRequest;
-import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryRequest;
 import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextView;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
-import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.*;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
@@ -59,6 +57,28 @@ public class ClientApplication {
         return financialContext;
     }
 
+    /**
+     * Creates a lazy child copy of the currently loaded context.
+     * A {@code null} name continues inheriting the parent name.
+     */
+    public FinancialContextRecord cloneCurrentFinancialContext(String name) {
+        FinancialContextRecord parent = financialContextSession
+                .requireCurrentContext();
+        FinancialContextRecord clone = serverApp.cloneFinancialContext().execute(
+                new CloneFinancialContextRequest(
+                        parent.financialContextId(),
+                        name
+                )
+        );
+        FinancialContextRecord effectiveClone = effectiveContext(
+                clone.financialContextId()
+        ).financialContext();
+
+        dataCache.saveFinancialContext(effectiveClone);
+
+        return effectiveClone;
+    }
+
     public FinancialContextRecord getCurrentFinancialContext(){
         return this.financialContextSession.requireCurrentContext();
     }
@@ -68,9 +88,33 @@ public class ClientApplication {
                 .listFinancialContextSummary()
                 .execute(new ListFinancialContextSummaryRequest());
 
+        financialContexts = financialContexts.stream()
+                .map(financialContext -> effectiveContext(
+                        financialContext.financialContextId()
+                ).financialContext())
+                .toList();
+
         dataCache.refreshFinancialContexts(financialContexts);
 
         return financialContexts;
+    }
+
+    public Collection<FinancialContextRecord> getCurrentFinancialContextChildren() {
+        FinancialContextId parentId = financialContextSession
+                .requireCurrentContext()
+                .financialContextId();
+        Collection<FinancialContextRecord> children = serverApp
+                .listFinancialContextChildren()
+                .execute(new ListFinancialContextChildrenRequest(parentId))
+                .stream()
+                .map(child -> effectiveContext(
+                        child.financialContextId()
+                ).financialContext())
+                .toList();
+
+        children.forEach(dataCache::saveFinancialContext);
+
+        return children;
     }
 
     public FinancialContextId getFinancialContextIdFrom(String financialContextIdString){
@@ -81,16 +125,42 @@ public class ClientApplication {
     }
 
     public void loadIntoFinancialContext(FinancialContextId financialContextId) throws  ClientRuntimeException{
-
-        Optional<FinancialContextRecord> newFinancialContext = serverApp.getFinancialContextById().execute(new GetFinancialContextRequest(financialContextId));
-
-        if (newFinancialContext.isEmpty())
-            throw new ClientRuntimeException("Error getting financial context with id: " + financialContextId);
+        EffectiveFinancialContext effectiveContext = effectiveContext(
+                financialContextId
+        );
 
         this.financialContextViewSession.clear();
-        this.financialContextSession.load(newFinancialContext.get());
-        dataCache.saveFinancialContext(newFinancialContext.get());
+        this.financialContextSession.load(
+                effectiveContext.financialContext()
+        );
+        dataCache.saveFinancialContext(effectiveContext.financialContext());
 
+    }
+
+    /**
+     * Loads one of the current context's direct children.
+     */
+    public void loadCurrentFinancialContextChild(
+            FinancialContextId childFinancialContextId
+    ) {
+        FinancialContextId parentId = financialContextSession
+                .requireCurrentContext()
+                .financialContextId();
+        FinancialContextRecord child = serverApp.getFinancialContextById()
+                .execute(new GetFinancialContextRequest(childFinancialContextId))
+                .orElseThrow(() -> new ClientRuntimeException(
+                        "Error getting financial context with id: "
+                                + childFinancialContextId
+                ));
+
+        if (!parentId.equals(child.parentFinancialContextId())) {
+            throw new ClientRuntimeException(
+                    "The selected financial context is not a child of the "
+                            + "current context."
+            );
+        }
+
+        loadIntoFinancialContext(childFinancialContextId);
     }
 
     public void unloadFinancialContext() throws ClientRuntimeException {
@@ -118,19 +188,15 @@ public class ClientApplication {
     }
 
     public Collection<AccountRecord> listAccountsSummary() throws ClientRuntimeException {
-
-        Collection<AccountRecord> listedAccountRecords = serverApp
-                .accountSummary()
-                .execute(new ListAccountsSummaryRequest(
-                        this.financialContextSession
-                                .requireCurrentContext()
-                                .financialContextId()
-                ));
+        FinancialContextId financialContextId = financialContextSession
+                .requireCurrentContext()
+                .financialContextId();
+        Collection<AccountRecord> listedAccountRecords = effectiveContext(
+                financialContextId
+        ).accounts();
 
         dataCache.refreshAccountRecords(
-                this.financialContextSession
-                        .requireCurrentContext()
-                        .financialContextId(),
+                financialContextId,
                 listedAccountRecords
         );
 
@@ -227,13 +293,9 @@ public class ClientApplication {
                         .requireCurrentContext()
                         .financialContextId();
 
-        Collection<TransactionRecord> transactions = serverApp
-                .transactionsSummary()
-                .execute(
-                        new ListTransactionsSummaryRequest(
-                                financialContextId
-                        )
-                );
+        Collection<TransactionRecord> transactions = effectiveContext(
+                financialContextId
+        ).transactions();
 
         dataCache.refreshTransactionRecords(financialContextId, transactions);
 
@@ -248,21 +310,15 @@ public class ClientApplication {
         FinancialContextRecord financialContext = financialContextSession
                 .requireCurrentContext();
 
-        Collection<AccountRecord> accounts = serverApp
-                .accountSummary()
-                .execute(
-                        new ListAccountsSummaryRequest(
-                                financialContext.financialContextId()
-                        )
-                );
-
-        Collection<TransactionRecord> transactions = serverApp
-                .transactionsSummary()
-                .execute(
-                        new ListTransactionsSummaryRequest(
-                                financialContext.financialContextId()
-                        )
-                );
+        EffectiveFinancialContext effectiveContext = effectiveContext(
+                financialContext.financialContextId()
+        );
+        financialContext = effectiveContext.financialContext();
+        financialContextSession.load(financialContext);
+        dataCache.saveFinancialContext(financialContext);
+        Collection<AccountRecord> accounts = effectiveContext.accounts();
+        Collection<TransactionRecord> transactions = effectiveContext
+                .transactions();
 
         dataCache.refreshAccountRecords(
                 financialContext.financialContextId(),
@@ -298,5 +354,15 @@ public class ClientApplication {
 
     public void unloadFinancialContextView() {
         financialContextViewSession.clear();
+    }
+
+    private EffectiveFinancialContext effectiveContext(
+            FinancialContextId financialContextId
+    ) {
+        return serverApp.getEffectiveFinancialContext().execute(
+                new GetEffectiveFinancialContextRequest(financialContextId)
+        ).orElseThrow(() -> new ClientRuntimeException(
+                "Error getting financial context with id: " + financialContextId
+        ));
     }
 }

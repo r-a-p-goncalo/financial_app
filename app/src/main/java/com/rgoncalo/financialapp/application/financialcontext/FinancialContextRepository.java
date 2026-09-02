@@ -22,6 +22,16 @@ public interface FinancialContextRepository {
     Collection<FinancialContextRecord> listFinancialContextsSummary();
 
     /**
+     * Returns the contexts copied directly from the supplied parent context.
+     *
+     * @param parentFinancialContextId the parent context identity
+     * @return the direct children of the parent context
+     */
+    Collection<FinancialContextRecord> listChildren(
+            FinancialContextId parentFinancialContextId
+    );
+
+    /**
      *
      * Queries a specific financial context
      *

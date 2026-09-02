@@ -4,8 +4,6 @@ import com.rgoncalo.financialapp.cli.CLI;
 import com.rgoncalo.financialapp.cli.CliCommandInter;
 import com.rgoncalo.financialapp.cli.transaction.CommandCreateTransactionCommand;
 import com.rgoncalo.financialapp.cli.transaction.CommandListTransactionSummaries;
-import com.rgoncalo.financialapp.cli.usercontext.CommandCreateFinancialContext;
-import com.rgoncalo.financialapp.cli.usercontext.CommandListFinancialContextSummary;
 import com.rgoncalo.financialapp.client.ClientApplication;
 
 import java.util.ArrayList;
@@ -30,6 +28,9 @@ public class FinancialCli extends CLI {
         commands.add(new CommandCreateTransactionCommand(app));
         commands.add(new CommandListTransactionSummaries(app));
         commands.add(new CommandLoadFinancialContextView(app));
+        commands.add(new CommandCloneFinancialContext(app));
+        commands.add(new CommandListFinancialContextChildren(app));
+        commands.add(new CommandLoadFinancialContextChild(app));
 
         return commands;
     }

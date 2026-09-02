@@ -4,7 +4,10 @@ import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.account.GetAccount;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummary;
 import com.rgoncalo.financialapp.application.financialcontext.CreateFinancialContext;
+import com.rgoncalo.financialapp.application.financialcontext.CloneFinancialContext;
+import com.rgoncalo.financialapp.application.financialcontext.GetEffectiveFinancialContext;
 import com.rgoncalo.financialapp.application.financialcontext.GetFinancialContext;
+import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextChildren;
 import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextSummary;
 import com.rgoncalo.financialapp.application.transaction.CreateTransaction;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummary;
@@ -51,8 +54,30 @@ public class Application {
         );
     }
 
+    public CloneFinancialContext cloneFinancialContext() {
+        return new CloneFinancialContext(
+                appConfig.financialContextRepository(),
+                appConfig.accountRepository(),
+                appConfig.transactionRepository()
+        );
+    }
+
+    public GetEffectiveFinancialContext getEffectiveFinancialContext() {
+        return new GetEffectiveFinancialContext(
+                appConfig.financialContextRepository(),
+                appConfig.accountRepository(),
+                appConfig.transactionRepository()
+        );
+    }
+
     public ListFinancialContextSummary listFinancialContextSummary() {
         return new ListFinancialContextSummary(
+                appConfig.financialContextRepository()
+        );
+    }
+
+    public ListFinancialContextChildren listFinancialContextChildren() {
+        return new ListFinancialContextChildren(
                 appConfig.financialContextRepository()
         );
     }

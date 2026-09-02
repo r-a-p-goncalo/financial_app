@@ -1,6 +1,5 @@
 package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 
-import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
@@ -21,17 +20,32 @@ public class SQLiteFinancialContextRepository
         implements FinancialContextRepository {
 
     private static final String INSERT = """
-            INSERT INTO financial_contexts (financial_context_id, name)
-            VALUES (?, ?)
+            INSERT INTO financial_contexts (
+                financial_context_id, name, parent_financial_context_id,
+                overridden_attributes
+            ) VALUES (?, ?, ?, ?)
+            ON CONFLICT(financial_context_id) DO UPDATE SET
+                name = excluded.name,
+                parent_financial_context_id = excluded.parent_financial_context_id,
+                overridden_attributes = excluded.overridden_attributes
             """;
 
     private static final String SELECT_ALL = """
-            SELECT financial_context_id, name
+            SELECT financial_context_id, name, parent_financial_context_id,
+                   overridden_attributes
             FROM financial_contexts
             """;
 
+    private static final String SELECT_CHILDREN = """
+            SELECT financial_context_id, name, parent_financial_context_id,
+                   overridden_attributes
+            FROM financial_contexts
+            WHERE parent_financial_context_id = ?
+            """;
+
     private static final String SELECT_BY_ID = """
-            SELECT financial_context_id, name
+            SELECT financial_context_id, name, parent_financial_context_id,
+                   overridden_attributes
             FROM financial_contexts
             WHERE financial_context_id = ?
             """;
@@ -53,7 +67,11 @@ public class SQLiteFinancialContextRepository
                 INSERT,
                 financialContext,
                 financialContext.financialContextId().financialContextId(),
-                financialContext.name()
+                financialContext.name(),
+                financialContext.parentFinancialContextId() == null ? null
+                        : financialContext.parentFinancialContextId()
+                        .financialContextId(),
+                financialContext.overriddenAttributes()
         );
     }
 
@@ -62,6 +80,16 @@ public class SQLiteFinancialContextRepository
     listFinancialContextsSummary() {
 
         return sqliteRepository.find(SELECT_ALL);
+    }
+
+    @Override
+    public Collection<FinancialContextRecord> listChildren(
+            FinancialContextId parentFinancialContextId
+    ) {
+        return sqliteRepository.find(
+                SELECT_CHILDREN,
+                parentFinancialContextId.financialContextId()
+        );
     }
 
     @Override
@@ -82,7 +110,19 @@ public class SQLiteFinancialContextRepository
                 new FinancialContextId(
                         resultSet.getString("financial_context_id")
                 ),
-                resultSet.getString("name")
+                resultSet.getString("name"),
+                financialContextId(
+                        resultSet.getString("parent_financial_context_id")
+                ),
+                resultSet.getInt("overridden_attributes")
         );
+    }
+
+    private static FinancialContextId financialContextId(
+            String financialContextId
+    ) {
+        return financialContextId == null
+                ? null
+                : new FinancialContextId(financialContextId);
     }
 }

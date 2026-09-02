@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class SQLiteConnection {
 
@@ -27,6 +28,9 @@ public class SQLiteConnection {
             this.connection = DriverManager.getConnection(
                     "jdbc:sqlite:" + path
             );
+            try (Statement statement = this.connection.createStatement()) {
+                statement.execute("PRAGMA foreign_keys = ON");
+            }
 
         } catch (IOException | SQLException exception) {
             throw new PersistenceException(

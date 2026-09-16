@@ -4,13 +4,19 @@ import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
+import com.rgoncalo.financialapp.application.user.UserRepository;
 import com.rgoncalo.financialapp.bootstrap.BootstrapConfigLoader;
 import com.rgoncalo.financialapp.bootstrap.BootstrapRunner;
 import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
 import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
 import com.rgoncalo.financialapp.logging.ApplicationLogging;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
+import com.rgoncalo.financialapp.commondata.user.UserRecord;
 
 import java.sql.Connection;
 import java.nio.file.Files;
@@ -19,6 +25,9 @@ import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
+
+    private static final UserId LOCAL_DEVELOPMENT_USER_ID =
+            new UserId("local-development-user");
 
     private static final Path DEFAULT_BOOTSTRAP_FILE =
             Path.of("config", "bootstrap.json");
@@ -53,7 +62,23 @@ public class Main {
                 connection
         );
 
-        return new ApplicationConfiguration(accountRepository, financialContextRepository, transactionRepository);
+        UserRepository userRepository = new SQLiteUserRepository(connection);
+        FinancialContextPermissionRepository permissionRepository =
+                new SQLiteFinancialContextPermissionRepository(connection);
+
+        provisionLocalDevelopmentUser(
+                userRepository,
+                financialContextRepository,
+                permissionRepository
+        );
+
+        return new ApplicationConfiguration(
+                accountRepository,
+                financialContextRepository,
+                transactionRepository,
+                userRepository,
+                permissionRepository
+        );
 
     }
 
@@ -69,11 +94,15 @@ public class Main {
         bootstrapConfigurationFrom(args).ifPresent(
                 configuration -> runBootstrap(
                         serverApp,
-                        configuration
+                        configuration,
+                        LOCAL_DEVELOPMENT_USER_ID
                 )
         );
 
-        ClientApplication clientApplication = new ClientApplication(serverApp);
+        ClientApplication clientApplication = new ClientApplication(
+                serverApp,
+                LOCAL_DEVELOPMENT_USER_ID
+        );
 
         UserContextCli userContextCli = new UserContextCli(new Scanner(System.in), clientApplication);
 
@@ -114,7 +143,8 @@ public class Main {
 
     private static void runBootstrap(
             Application application,
-            BootstrapConfiguration configuration
+            BootstrapConfiguration configuration,
+            UserId userId
     ) {
 
         System.out.println("Running bootstrap configuration required: " + configuration.required + ", file: " + configuration.file);
@@ -132,9 +162,39 @@ public class Main {
             return;
         }
 
-        new BootstrapRunner(application).run(
+        new BootstrapRunner(application, userId).run(
                 new BootstrapConfigLoader().load(configuration.file())
         );
+    }
+
+    private static void provisionLocalDevelopmentUser(
+            UserRepository userRepository,
+            FinancialContextRepository financialContextRepository,
+            FinancialContextPermissionRepository permissionRepository
+    ) {
+        userRepository.findById(LOCAL_DEVELOPMENT_USER_ID).orElseGet(() ->
+                userRepository.save(new UserRecord(
+                        LOCAL_DEVELOPMENT_USER_ID,
+                        "Local development user"
+                ))
+        );
+
+        financialContextRepository.listFinancialContextsSummary()
+                .forEach(context -> {
+                    if (permissionRepository.listByFinancialContextId(
+                            context.financialContextId()
+                    ).isEmpty()) {
+                        permissionRepository.save(
+                                new FinancialContextPermissionRecord(
+                                        context.financialContextId(),
+                                        LOCAL_DEVELOPMENT_USER_ID,
+                                        FinancialContextPermission.OWNER,
+                                        LOCAL_DEVELOPMENT_USER_ID,
+                                        java.time.Instant.now()
+                                )
+                        );
+                    }
+                });
     }
 
     private record BootstrapConfiguration(

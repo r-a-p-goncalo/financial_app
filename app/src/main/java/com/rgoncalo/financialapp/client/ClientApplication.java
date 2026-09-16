@@ -11,6 +11,7 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
@@ -26,6 +27,7 @@ import java.util.*;
 public class ClientApplication {
 
     private final Application serverApp;
+    private final UserId userId;
 
     private final FinancialContextSession financialContextSession;
 
@@ -33,24 +35,29 @@ public class ClientApplication {
 
     private final ClientDataCache dataCache;
 
-    public ClientApplication(Application serverApp){
-        this(serverApp, new ClientDataCache());
+    public ClientApplication(
+            Application serverApp,
+            UserId userId
+    ) {
+        this(serverApp, userId, new ClientDataCache());
     }
 
     public ClientApplication(
             Application serverApp,
+            UserId userId,
             ClientDataCache dataCache
     ) {
         this.financialContextSession = new FinancialContextSession();
         this.financialContextViewSession = new FinancialContextViewSession();
         this.serverApp = serverApp;
+        this.userId = Objects.requireNonNull(userId);
         this.dataCache = Objects.requireNonNull(dataCache);
     }
 
     public FinancialContextRecord createFinancialRecord(String name){
         FinancialContextRecord financialContext = serverApp
                 .createFinancialContext()
-                .execute(new CreateFinancialContextRequest(name));
+                .execute(new CreateFinancialContextRequest(name, userId));
 
         dataCache.saveFinancialContext(financialContext);
 
@@ -67,7 +74,8 @@ public class ClientApplication {
         FinancialContextRecord clone = serverApp.cloneFinancialContext().execute(
                 new CloneFinancialContextRequest(
                         parent.financialContextId(),
-                        name
+                        name,
+                        userId
                 )
         );
         FinancialContextRecord effectiveClone = effectiveContext(
@@ -86,7 +94,7 @@ public class ClientApplication {
     public Collection<FinancialContextRecord> getFinancialContexts(){
         Collection<FinancialContextRecord> financialContexts = this.serverApp
                 .listFinancialContextSummary()
-                .execute(new ListFinancialContextSummaryRequest());
+                .execute(new ListFinancialContextSummaryRequest(userId));
 
         financialContexts = financialContexts.stream()
                 .map(financialContext -> effectiveContext(
@@ -105,7 +113,7 @@ public class ClientApplication {
                 .financialContextId();
         Collection<FinancialContextRecord> children = serverApp
                 .listFinancialContextChildren()
-                .execute(new ListFinancialContextChildrenRequest(parentId))
+                .execute(new ListFinancialContextChildrenRequest(parentId, userId))
                 .stream()
                 .map(child -> effectiveContext(
                         child.financialContextId()
@@ -147,7 +155,10 @@ public class ClientApplication {
                 .requireCurrentContext()
                 .financialContextId();
         FinancialContextRecord child = serverApp.getFinancialContextById()
-                .execute(new GetFinancialContextRequest(childFinancialContextId))
+                .execute(new GetFinancialContextRequest(
+                        childFinancialContextId,
+                        userId
+                ))
                 .orElseThrow(() -> new ClientRuntimeException(
                         "Error getting financial context with id: "
                                 + childFinancialContextId
@@ -177,7 +188,8 @@ public class ClientApplication {
                         initialAmount,
                         this.financialContextSession
                                 .requireCurrentContext()
-                                .financialContextId()
+                                .financialContextId(),
+                        userId
                 )
         );
 
@@ -275,7 +287,8 @@ public class ClientApplication {
                                 originAccountId,
                                 targetAccountId,
                                 dateTime,
-                                value
+                                value,
+                                userId
                         )
                 );
 
@@ -360,7 +373,7 @@ public class ClientApplication {
             FinancialContextId financialContextId
     ) {
         return serverApp.getEffectiveFinancialContext().execute(
-                new GetEffectiveFinancialContextRequest(financialContextId)
+                new GetEffectiveFinancialContextRequest(financialContextId, userId)
         ).orElseThrow(() -> new ClientRuntimeException(
                 "Error getting financial context with id: " + financialContextId
         ));

@@ -5,7 +5,9 @@ import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 
@@ -26,25 +28,33 @@ public class GetEffectiveFinancialContext {
     private final FinancialContextRepository financialContextRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final FinancialContextAuthorization authorization;
 
     public GetEffectiveFinancialContext(
             FinancialContextRepository financialContextRepository,
             AccountRepository accountRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            FinancialContextAuthorization authorization
     ) {
         this.financialContextRepository = financialContextRepository;
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.authorization = authorization;
     }
 
     public Optional<EffectiveFinancialContext> execute(
             GetEffectiveFinancialContextRequest request
     ) {
-        return resolve(request.financialContextId(), new HashSet<>());
+        return resolve(
+                request.financialContextId(),
+                request.userId(),
+                new HashSet<>()
+        );
     }
 
     private Optional<EffectiveFinancialContext> resolve(
             FinancialContextId financialContextId,
+            UserId userId,
             Set<FinancialContextId> visitedContextIds
     ) {
         if (!visitedContextIds.add(financialContextId)) {
@@ -54,6 +64,11 @@ public class GetEffectiveFinancialContext {
         }
 
         try {
+            authorization.requirePermission(
+                    userId,
+                    financialContextId,
+                    FinancialContextPermission.READ
+            );
             Optional<FinancialContextRecord> context =
                     financialContextRepository.findById(financialContextId);
 
@@ -76,6 +91,7 @@ public class GetEffectiveFinancialContext {
 
             EffectiveFinancialContext parent = resolve(
                     context.get().parentFinancialContextId(),
+                    userId,
                     visitedContextIds
             ).orElseThrow(() -> new IllegalStateException(
                     "Parent financial context does not exist."

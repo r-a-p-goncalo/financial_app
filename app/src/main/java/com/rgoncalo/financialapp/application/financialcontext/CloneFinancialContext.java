@@ -5,6 +5,8 @@ import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
@@ -13,6 +15,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.time.Instant;
 
 /**
  * Creates a context-local lazy copy of a financial context.
@@ -26,15 +29,21 @@ public class CloneFinancialContext {
     private final FinancialContextRepository financialContextRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final FinancialContextPermissionRepository permissionRepository;
+    private final FinancialContextAuthorization authorization;
 
     public CloneFinancialContext(
             FinancialContextRepository financialContextRepository,
             AccountRepository accountRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            FinancialContextPermissionRepository permissionRepository,
+            FinancialContextAuthorization authorization
     ) {
         this.financialContextRepository = financialContextRepository;
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.permissionRepository = permissionRepository;
+        this.authorization = authorization;
     }
 
     public FinancialContextRecord execute(CloneFinancialContextRequest request) {
@@ -43,6 +52,11 @@ public class CloneFinancialContext {
         ).orElseThrow(() -> new IllegalArgumentException(
                 "Parent financial context does not exist."
         ));
+        authorization.requirePermission(
+                request.userId(),
+                parent.financialContextId(),
+                FinancialContextPermission.WRITE
+        );
 
         FinancialContextId childId = new FinancialContextId(
                 UUID.randomUUID().toString()
@@ -58,6 +72,13 @@ public class CloneFinancialContext {
         );
 
         financialContextRepository.save(child);
+        permissionRepository.save(new FinancialContextPermissionRecord(
+                child.financialContextId(),
+                request.userId(),
+                FinancialContextPermission.OWNER,
+                request.userId(),
+                Instant.now()
+        ));
 
         Collection<AccountRecord> parentAccounts = accountRepository
                 .listAccountsSummary(parent.financialContextId());

@@ -8,6 +8,10 @@ import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummary
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryAccountRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryTransactionRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryUserRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextPermissionRepository;
+import com.rgoncalo.financialapp.commondata.user.UserId;
+import com.rgoncalo.financialapp.commondata.user.UserRecord;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,11 +29,18 @@ class BootstrapRunnerTest {
                 new InMemoryFinancialContextRepository();
         InMemoryTransactionRepository transactionRepository =
                 new InMemoryTransactionRepository();
+        InMemoryUserRepository userRepository = new InMemoryUserRepository();
+        InMemoryFinancialContextPermissionRepository permissionRepository =
+                new InMemoryFinancialContextPermissionRepository();
+        UserId userId = new UserId("bootstrap-user");
+        userRepository.save(new UserRecord(userId, "Bootstrap user"));
         Application application = new Application(
                 new ApplicationConfiguration(
                         accountRepository,
                         contextRepository,
-                        transactionRepository
+                        transactionRepository,
+                        userRepository,
+                        permissionRepository
                 )
         );
         BootstrapPlan plan = new BootstrapPlan(
@@ -61,11 +72,11 @@ class BootstrapRunnerTest {
                 )
         );
 
-        BootstrapRunner runner = new BootstrapRunner(application);
+        BootstrapRunner runner = new BootstrapRunner(application, userId);
         runner.run(plan);
 
         var contexts = application.listFinancialContextSummary().execute(
-                new ListFinancialContextSummaryRequest()
+                new ListFinancialContextSummaryRequest(userId)
         );
 
         assertEquals(1, contexts.size());
@@ -76,7 +87,8 @@ class BootstrapRunnerTest {
                 2,
                 application.accountSummary().execute(
                         new ListAccountsSummaryRequest(
-                                context.financialContextId()
+                                context.financialContextId(),
+                                userId
                         )
                 ).size()
         );
@@ -84,7 +96,8 @@ class BootstrapRunnerTest {
                 1,
                 application.transactionsSummary().execute(
                         new ListTransactionsSummaryRequest(
-                                context.financialContextId()
+                                context.financialContextId(),
+                                userId
                         )
                 ).size()
         );
@@ -94,7 +107,7 @@ class BootstrapRunnerTest {
         assertEquals(
                 1,
                 application.listFinancialContextSummary().execute(
-                        new ListFinancialContextSummaryRequest()
+                        new ListFinancialContextSummaryRequest(userId)
                 ).size()
         );
     }

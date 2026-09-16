@@ -1,6 +1,8 @@
 package com.rgoncalo.financialapp.application.account;
 
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextAuthorization;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 
 import java.util.Collection;
 
@@ -12,9 +14,14 @@ import java.util.Collection;
 public class ListAccountsSummary {
 
     private final AccountRepository accountRepository;
+    private final FinancialContextAuthorization authorization;
 
-    public ListAccountsSummary(AccountRepository accountRepository) {
+    public ListAccountsSummary(
+            AccountRepository accountRepository,
+            FinancialContextAuthorization authorization
+    ) {
         this.accountRepository = accountRepository;
+        this.authorization = authorization;
     }
 
     /**
@@ -24,6 +31,11 @@ public class ListAccountsSummary {
      * @return a collection of accounts
      */
     public Collection<AccountRecord> execute(ListAccountsSummaryRequest request) {
+        authorization.requirePermission(
+                request.userId(),
+                request.financialContextId(),
+                FinancialContextPermission.READ
+        );
 
         return accountRepository.listAccountsSummary(request.financialContextId());
     }

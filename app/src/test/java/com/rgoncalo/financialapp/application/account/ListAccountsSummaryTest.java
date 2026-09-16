@@ -8,6 +8,10 @@ import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingAccountRepository;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -27,6 +31,12 @@ class ListAccountsSummaryTest {
         RecordingAccountRepository repository = new RecordingAccountRepository(configuration.createAccountRepository());
 
         FinancialContextId context1 = new FinancialContextId("context-1");
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context1, "Personal")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context1,
+                FinancialContextPermission.READ);
 
         AccountRecordId account1Id = new AccountRecordId("account-1", context1);
         AccountRecordId account2Id = new AccountRecordId("account-2", context1);
@@ -41,9 +51,15 @@ class ListAccountsSummaryTest {
             repository.save(accountRecord); //directly save in account record to skip the ID generation
         }
 
-        ListAccountsSummary useCase = new ListAccountsSummary(repository);
+        ListAccountsSummary useCase = new ListAccountsSummary(
+                repository,
+                TestUsers.authorization(configuration)
+        );
 
-        var result = useCase.execute(new ListAccountsSummaryRequest(context1));
+        var result = useCase.execute(new ListAccountsSummaryRequest(
+                context1,
+                userId
+        ));
 
         assertEquals(1, repository.summaryCalls());
         assertEquals(expected.size(), result.size());

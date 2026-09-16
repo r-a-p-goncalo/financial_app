@@ -15,6 +15,9 @@ import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingAccountRepository;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
 import com.rgoncalo.financialapp.support.RecordingTransactionRepository;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -45,6 +48,9 @@ class CloneFinancialContextTest {
 
         FinancialContextId parentId = new FinancialContextId("parent");
         rawContextRepository.save(new FinancialContextRecord(parentId, "Personal"));
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, parentId,
+                FinancialContextPermission.WRITE);
 
         AccountRecord checking = account(
                 "checking", parentId, "Checking", "1000.00"
@@ -74,8 +80,16 @@ class CloneFinancialContextTest {
                 new RecordingTransactionRepository(rawTransactionRepository);
 
         FinancialContextRecord child = new CloneFinancialContext(
-                contextRepository, accountRepository, transactionRepository
-        ).execute(new CloneFinancialContextRequest(parentId, "Holiday budget"));
+                contextRepository,
+                accountRepository,
+                transactionRepository,
+                configuration.createFinancialContextPermissionRepository(),
+                TestUsers.authorization(configuration)
+        ).execute(new CloneFinancialContextRequest(
+                parentId,
+                "Holiday budget",
+                userId
+        ));
 
         assertEquals(1, contextRepository.saveCalls());
         assertEquals(2, accountRepository.saveCalls());
@@ -87,6 +101,13 @@ class CloneFinancialContextTest {
         assertTrue(child.overrides(FinancialContextRecord.Attribute.NAME));
         assertEquals(child, contextRepository.findById(child.financialContextId())
                 .orElseThrow());
+        assertEquals(
+                FinancialContextPermission.OWNER,
+                configuration.createFinancialContextPermissionRepository()
+                        .findByUserAndContext(userId, child.financialContextId())
+                        .orElseThrow()
+                        .permission()
+        );
         assertEquals(
                 java.util.List.of(child),
                 contextRepository.listChildren(parentId)
@@ -139,12 +160,17 @@ class CloneFinancialContextTest {
                 configuration.createFinancialContextRepository();
         FinancialContextId parentId = new FinancialContextId("parent");
         contextRepository.save(new FinancialContextRecord(parentId, "Personal"));
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, parentId,
+                FinancialContextPermission.WRITE);
 
         FinancialContextRecord child = new CloneFinancialContext(
                 contextRepository,
                 configuration.createAccountRepository(),
-                configuration.createTransactionRepository()
-        ).execute(new CloneFinancialContextRequest(parentId, null));
+                configuration.createTransactionRepository(),
+                configuration.createFinancialContextPermissionRepository(),
+                TestUsers.authorization(configuration)
+        ).execute(new CloneFinancialContextRequest(parentId, null, userId));
 
         assertEquals("Personal", child.name());
         assertEquals(parentId, child.parentFinancialContextId());
@@ -170,13 +196,18 @@ class CloneFinancialContextTest {
                 );
 
         CloneFinancialContext useCase = new CloneFinancialContext(
-                contextRepository, accountRepository, transactionRepository
+                contextRepository,
+                accountRepository,
+                transactionRepository,
+                configuration.createFinancialContextPermissionRepository(),
+                TestUsers.authorization(configuration)
         );
+        UserId userId = TestUsers.create(configuration, "alice");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> useCase.execute(new CloneFinancialContextRequest(
-                        new FinancialContextId("missing"), "Copy"
+                        new FinancialContextId("missing"), "Copy", userId
                 ))
         );
 

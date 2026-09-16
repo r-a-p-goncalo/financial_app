@@ -31,6 +31,12 @@ public final class SQLiteSchema {
 
     private static final List<String> CREATE_STATEMENTS = List.of(
             """
+                    CREATE TABLE IF NOT EXISTS users (
+                        user_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL
+                    )
+                    """,
+            """
                     CREATE TABLE IF NOT EXISTS financial_contexts (
                         financial_context_id TEXT PRIMARY KEY,
                         name TEXT NOT NULL,
@@ -38,6 +44,22 @@ public final class SQLiteSchema {
                         overridden_attributes INTEGER NOT NULL DEFAULT 0,
                         FOREIGN KEY (parent_financial_context_id)
                             REFERENCES financial_contexts(financial_context_id)
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS financial_context_permissions (
+                        financial_context_id TEXT NOT NULL,
+                        user_id TEXT NOT NULL,
+                        permission TEXT NOT NULL CHECK (
+                            permission IN ('READ', 'WRITE', 'OWNER')
+                        ),
+                        granted_by_user_id TEXT NOT NULL,
+                        granted_at TEXT NOT NULL,
+                        PRIMARY KEY (financial_context_id, user_id),
+                        FOREIGN KEY (financial_context_id)
+                            REFERENCES financial_contexts(financial_context_id),
+                        FOREIGN KEY (user_id) REFERENCES users(user_id),
+                        FOREIGN KEY (granted_by_user_id) REFERENCES users(user_id)
                     )
                     """,
             """
@@ -120,6 +142,10 @@ public final class SQLiteSchema {
             statement.execute("""
                     CREATE INDEX IF NOT EXISTS financial_contexts_by_parent
                     ON financial_contexts (parent_financial_context_id)
+                    """);
+            statement.execute("""
+                    CREATE INDEX IF NOT EXISTS financial_context_permissions_by_user
+                    ON financial_context_permissions (user_id)
                     """);
             statement.execute("""
                     CREATE INDEX IF NOT EXISTS accounts_by_parent

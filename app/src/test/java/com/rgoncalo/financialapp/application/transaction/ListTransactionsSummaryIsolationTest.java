@@ -8,6 +8,10 @@ import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -41,6 +45,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 new FinancialContextId(
                         "context-2"
                 );
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context1, "Personal")
+        );
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context2, "Business")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context1,
+                FinancialContextPermission.READ);
 
         AccountRecordId account1Id = new AccountRecordId("account-1", context1);
         AccountRecordId account2Id = new AccountRecordId("account-2", context1);
@@ -86,13 +99,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
         ListTransactionsSummary useCase =
                 new ListTransactionsSummary(
-                        repository
+                        repository,
+                        TestUsers.authorization(configuration)
                 );
 
         Collection<TransactionRecord> result =
                 useCase.execute(
                         new ListTransactionsSummaryRequest(
-                                context1
+                                context1,
+                                userId
                         )
                 );
 

@@ -6,6 +6,9 @@ import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,10 +35,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
         repository.save(expected);
 
-        GetFinancialContext useCase = new GetFinancialContext(repository);
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, contextId,
+                FinancialContextPermission.READ);
+
+        GetFinancialContext useCase = new GetFinancialContext(
+                repository,
+                TestUsers.authorization(configuration)
+        );
 
         Optional<FinancialContextRecord> result = useCase.execute(
-                new GetFinancialContextRequest(contextId)
+                new GetFinancialContextRequest(contextId, userId)
         );
 
         assertEquals(1, repository.findCalls());
@@ -53,10 +63,16 @@ import static org.junit.jupiter.api.Assertions.*;
         RecordingFinancialContextRepository repository =
                 new RecordingFinancialContextRepository(configuration.createFinancialContextRepository());
 
-        GetFinancialContext useCase = new GetFinancialContext(repository);
+        UserId userId = TestUsers.create(configuration, "alice");
+        FinancialContextId missing = new FinancialContextId("missing-context");
+
+        GetFinancialContext useCase = new GetFinancialContext(
+                repository,
+                TestUsers.authorization(configuration)
+        );
 
         Optional<FinancialContextRecord> result = useCase.execute(
-                new GetFinancialContextRequest(new FinancialContextId("missing-context"))
+                new GetFinancialContextRequest(missing, userId)
         );
 
         assertTrue(result.isEmpty());

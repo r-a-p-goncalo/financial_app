@@ -1,7 +1,9 @@
 package com.rgoncalo.financialapp.application.transaction;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextAuthorization;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 
@@ -11,13 +13,16 @@ public class CreateTransaction {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final FinancialContextAuthorization authorization;
 
     public CreateTransaction(
             TransactionRepository transactionRepository,
-            AccountRepository accountRepository
+            AccountRepository accountRepository,
+            FinancialContextAuthorization authorization
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
+        this.authorization = authorization;
     }
 
     /**
@@ -27,6 +32,11 @@ public class CreateTransaction {
      * @return the newly created transaction
      */
     public TransactionRecord execute(CreateTransactionRequest request) {
+        authorization.requirePermission(
+                request.userId(),
+                request.financialContextId(),
+                FinancialContextPermission.WRITE
+        );
 
         if (request.originAccountId() != null
                 && request.originAccountId().equals(

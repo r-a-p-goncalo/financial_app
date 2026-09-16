@@ -8,6 +8,7 @@ import com.rgoncalo.financialapp.application.transaction.CreateTransactionReques
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +25,14 @@ import java.util.Objects;
 public class BootstrapRunner {
 
     private final Application application;
+    private final UserId userId;
 
     private static final Logger logger =
             LoggerFactory.getLogger(BootstrapRunner.class);
 
-    public BootstrapRunner(Application application) {
+    public BootstrapRunner(Application application, UserId userId) {
         this.application = Objects.requireNonNull(application);
+        this.userId = Objects.requireNonNull(userId);
     }
 
     public void run(BootstrapPlan plan) {
@@ -56,7 +59,7 @@ public class BootstrapRunner {
             case ALWAYS -> true;
             case IF_EMPTY -> application
                     .listFinancialContextSummary()
-                    .execute(new ListFinancialContextSummaryRequest())
+                    .execute(new ListFinancialContextSummaryRequest(userId))
                     .isEmpty();
         };
     }
@@ -100,7 +103,8 @@ public class BootstrapRunner {
                                 requireValue(
                                         command.name(),
                                         "financial context name"
-                                )
+                                ),
+                                userId
                         )
                 );
 
@@ -149,7 +153,8 @@ public class BootstrapRunner {
                                                 )
                                         )
                                 ),
-                                context.financialContextId()
+                                context.financialContextId(),
+                                userId
                         )
                 );
 
@@ -200,7 +205,8 @@ public class BootstrapRunner {
                                                 "transaction value"
                                         )
                                 )
-                        )
+                        ),
+                        userId
                 )
         );
     }

@@ -3,6 +3,7 @@ package com.rgoncalo.financialapp.application.transaction;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 
 import java.time.Instant;
 
@@ -11,5 +12,6 @@ public record CreateTransactionRequest (
         AccountRecordId originAccountId,
         AccountRecordId targetAccountId,
         Instant dateTime,
-        MonetaryValue value) {
+        MonetaryValue value,
+        UserId userId) {
 }

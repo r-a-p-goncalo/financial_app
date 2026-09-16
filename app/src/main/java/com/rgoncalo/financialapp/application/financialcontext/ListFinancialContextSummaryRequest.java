@@ -1,4 +1,6 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
-public record ListFinancialContextSummaryRequest() {
+import com.rgoncalo.financialapp.commondata.user.UserId;
+
+public record ListFinancialContextSummaryRequest(UserId userId) {
 }

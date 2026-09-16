@@ -15,6 +15,12 @@ import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryAccountRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryTransactionRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryUserRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextPermissionRepository;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
+import com.rgoncalo.financialapp.commondata.user.UserRecord;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -38,10 +44,22 @@ class ClientApplicationAccountTransactionsTest {
                 new InMemoryFinancialContextRepository();
         InMemoryTransactionRepository transactionRepository =
                 new InMemoryTransactionRepository();
+        InMemoryUserRepository userRepository = new InMemoryUserRepository();
+        InMemoryFinancialContextPermissionRepository permissionRepository =
+                new InMemoryFinancialContextPermissionRepository();
+        UserId userId = new UserId("alice");
+        userRepository.save(new UserRecord(userId, "Alice"));
 
         contextRepository.save(
                 new FinancialContextRecord(contextId, "Personal")
         );
+        permissionRepository.save(new FinancialContextPermissionRecord(
+                contextId,
+                userId,
+                FinancialContextPermission.OWNER,
+                userId,
+                Instant.parse("2026-01-01T00:00:00Z")
+        ));
         accountRepository.save(
                 new AccountRecord(
                         accountId,
@@ -82,9 +100,12 @@ class ClientApplicationAccountTransactionsTest {
                         new ApplicationConfiguration(
                                 accountRepository,
                                 contextRepository,
-                                transactionRepository
+                                transactionRepository,
+                                userRepository,
+                                permissionRepository
                         )
-                )
+                ),
+                userId
         );
 
         client.loadIntoFinancialContext(contextId);

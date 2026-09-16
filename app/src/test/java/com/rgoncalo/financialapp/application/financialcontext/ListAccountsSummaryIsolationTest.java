@@ -7,6 +7,10 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -25,38 +29,63 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
     void accountsFromAnotherFinancialContextAreNotVisible(RepositoryTestConfiguration configuration) {
         AccountRepository repository = configuration.createAccountRepository();
 
-        CreateAccount createAccount = new CreateAccount(repository);
-        ListAccountsSummary listAccountsSummary = new ListAccountsSummary(repository);
-
         FinancialContextId personalFinancialContextId = new FinancialContextId("personal");
         FinancialContextId businessFinancialContextId = new FinancialContextId("business");
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(personalFinancialContextId, "Personal")
+        );
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(businessFinancialContextId, "Business")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, personalFinancialContextId,
+                FinancialContextPermission.WRITE);
+        TestUsers.grant(configuration, userId, businessFinancialContextId,
+                FinancialContextPermission.WRITE);
+        CreateAccount createAccount = new CreateAccount(
+                repository,
+                TestUsers.authorization(configuration)
+        );
+        ListAccountsSummary listAccountsSummary = new ListAccountsSummary(
+                repository,
+                TestUsers.authorization(configuration)
+        );
 
         createAccount.execute(new CreateAccountRequest(
                 "Personal Checking",
                 new MonetaryValue(new BigDecimal("1000.00")),
-                personalFinancialContextId
+                personalFinancialContextId,
+                userId
         ));
 
         createAccount.execute(new CreateAccountRequest(
                 "Personal Savings",
                 new MonetaryValue(new BigDecimal("5000.00")),
-                personalFinancialContextId
+                personalFinancialContextId,
+                userId
         ));
 
         createAccount.execute(new CreateAccountRequest(
                 "Business Checking",
                 new MonetaryValue(new BigDecimal("10000.00")),
-                businessFinancialContextId
+                businessFinancialContextId,
+                userId
         ));
 
         Collection<AccountRecord> personalAccounts =
                 listAccountsSummary.execute(
-                        new ListAccountsSummaryRequest(personalFinancialContextId)
+                        new ListAccountsSummaryRequest(
+                                personalFinancialContextId,
+                                userId
+                        )
                 );
 
         Collection<AccountRecord> businessAccounts =
                 listAccountsSummary.execute(
-                        new ListAccountsSummaryRequest(businessFinancialContextId)
+                        new ListAccountsSummaryRequest(
+                                businessFinancialContextId,
+                                userId
+                        )
                 );
 
         assertEquals(2, personalAccounts.size());

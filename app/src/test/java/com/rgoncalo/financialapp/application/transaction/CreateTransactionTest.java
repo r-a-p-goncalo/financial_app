@@ -10,6 +10,10 @@ import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingTransactionRepository;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -41,6 +45,12 @@ import static org.junit.jupiter.api.Assertions.*;
                 new FinancialContextId(
                         "context-1"
                 );
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context, "Personal")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context,
+                FinancialContextPermission.WRITE);
 
         AccountRecord origin =
                 new AccountRecord(
@@ -72,7 +82,8 @@ import static org.junit.jupiter.api.Assertions.*;
         CreateTransaction useCase =
                 new CreateTransaction(
                         transactionRepository,
-                        accountRepository
+                        accountRepository,
+                        TestUsers.authorization(configuration)
                 );
 
         Instant dateTime =
@@ -92,7 +103,8 @@ import static org.junit.jupiter.api.Assertions.*;
                                 origin.accountRecordId(),
                                 target.accountRecordId(),
                                 dateTime,
-                                value
+                                value,
+                                userId
                         )
                 );
 
@@ -159,6 +171,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
         FinancialContextId context =
                 new FinancialContextId("context-1");
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context, "Personal")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context,
+                FinancialContextPermission.WRITE);
         AccountRecord origin =
                 new AccountRecord(
                         new AccountRecordId("origin-account", context),
@@ -170,14 +188,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
         TransactionRecord result = new CreateTransaction(
                 transactionRepository,
-                accountRepository
+                accountRepository,
+                TestUsers.authorization(configuration)
         ).execute(
                 new CreateTransactionRequest(
                         context,
                         origin.accountRecordId(),
                         null,
                         Instant.parse("2026-08-21T10:00:00Z"),
-                        new MonetaryValue(new BigDecimal("125.50"))
+                        new MonetaryValue(new BigDecimal("125.50")),
+                        userId
                 )
         );
 

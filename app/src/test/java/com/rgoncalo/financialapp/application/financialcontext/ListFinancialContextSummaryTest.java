@@ -6,6 +6,9 @@ import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -38,15 +41,28 @@ import static org.junit.jupiter.api.Assertions.*;
         for (FinancialContextRecord context : expected) {
             repository.save(context);
         }
+        repository.save(new FinancialContextRecord(
+                new FinancialContextId("private-context"),
+                "Private"
+        ));
+
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context1,
+                FinancialContextPermission.READ);
+        TestUsers.grant(configuration, userId, context2,
+                FinancialContextPermission.WRITE);
 
         ListFinancialContextSummary useCase =
-                new ListFinancialContextSummary(repository);
+                new ListFinancialContextSummary(
+                        repository,
+                        configuration.createFinancialContextPermissionRepository()
+                );
 
         var result = useCase.execute(
-                new ListFinancialContextSummaryRequest()
+                new ListFinancialContextSummaryRequest(userId)
         );
 
-        assertEquals(1, repository.summaryCalls());
+        assertEquals(0, repository.summaryCalls());
         assertEquals(expected.size(), result.size());
 
         for (FinancialContextRecord expectedContext : expected) {

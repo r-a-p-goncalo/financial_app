@@ -8,6 +8,10 @@ import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
+import com.rgoncalo.financialapp.support.TestUsers;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -34,6 +38,15 @@ class ListTransactionsSummaryForAccountTest {
 
         FinancialContextId context1 = new FinancialContextId("context-1");
         FinancialContextId context2 = new FinancialContextId("context-2");
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context1, "Personal")
+        );
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(context2, "Business")
+        );
+        UserId userId = TestUsers.create(configuration, "alice");
+        TestUsers.grant(configuration, userId, context1,
+                FinancialContextPermission.READ);
         AccountRecordId account = new AccountRecordId("account", context1);
         AccountRecordId other = new AccountRecordId("other", context1);
         AccountRecordId sameAccountInOtherContext = new AccountRecordId(
@@ -76,8 +89,14 @@ class ListTransactionsSummaryForAccountTest {
         repository.save(otherContext);
 
         Collection<TransactionRecord> result =
-                new ListTransactionsSummaryForAccount(repository).execute(
-                        new ListTransactionsSummaryForAccountRequest(account)
+                new ListTransactionsSummaryForAccount(
+                        repository,
+                        TestUsers.authorization(configuration)
+                ).execute(
+                        new ListTransactionsSummaryForAccountRequest(
+                                account,
+                                userId
+                        )
                 );
 
         assertEquals(2, result.size());

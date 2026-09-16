@@ -1,7 +1,9 @@
 package com.rgoncalo.financialapp.application.account;
 
+import com.rgoncalo.financialapp.application.financialcontext.FinancialContextAuthorization;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 
 import java.util.UUID;
 
@@ -13,9 +15,14 @@ import java.util.UUID;
 public class CreateAccount {
 
     private final AccountRepository accountRepository;
+    private final FinancialContextAuthorization authorization;
 
-    public CreateAccount(AccountRepository accountRepository) {
+    public CreateAccount(
+            AccountRepository accountRepository,
+            FinancialContextAuthorization authorization
+    ) {
         this.accountRepository = accountRepository;
+        this.authorization = authorization;
     }
 
     /**
@@ -25,6 +32,11 @@ public class CreateAccount {
      * @return the newly created account
      */
     public AccountRecord execute(CreateAccountRequest request) {
+        authorization.requirePermission(
+                request.userId(),
+                request.financialContextId(),
+                FinancialContextPermission.WRITE
+        );
 
         String accountId = UUID.randomUUID().toString(); // TODO: decide on the ID generation technique
 

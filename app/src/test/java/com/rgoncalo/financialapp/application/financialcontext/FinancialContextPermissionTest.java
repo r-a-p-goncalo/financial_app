@@ -7,6 +7,8 @@ import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.user.UserId;
 import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
+import com.rgoncalo.financialapp.application.account.ListAccountsSummary;
+import com.rgoncalo.financialapp.application.account.ListAccountsSummaryRequest;
 import com.rgoncalo.financialapp.application.security.AccessDeniedException;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
@@ -103,6 +105,25 @@ class FinancialContextPermissionTest {
                         contextId,
                         userId
                 )
+        ));
+    }
+
+    @TestTemplate
+    void userWithoutContextPermissionCannotReadAccounts(
+            RepositoryTestConfiguration configuration
+    ) {
+        FinancialContextId contextId = new FinancialContextId("private");
+        configuration.createFinancialContextRepository().save(
+                new FinancialContextRecord(contextId, "Private")
+        );
+        UserId userId = TestUsers.create(configuration, "outsider");
+        ListAccountsSummary listAccounts = new ListAccountsSummary(
+                configuration.createAccountRepository(),
+                TestUsers.authorization(configuration)
+        );
+
+        assertThrows(AccessDeniedException.class, () -> listAccounts.execute(
+                new ListAccountsSummaryRequest(contextId, userId)
         ));
     }
 }

@@ -12,6 +12,8 @@ import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryUserR
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.commondata.user.UserId;
 import com.rgoncalo.financialapp.commondata.user.UserRecord;
+import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
+import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -33,14 +35,21 @@ class BootstrapRunnerTest {
         InMemoryFinancialContextPermissionRepository permissionRepository =
                 new InMemoryFinancialContextPermissionRepository();
         UserId userId = new UserId("bootstrap-user");
-        userRepository.save(new UserRecord(userId, "Bootstrap user"));
+        userRepository.save(new UserRecord(
+                userId,
+                "Bootstrap user",
+                null
+        ));
         Application application = new Application(
                 new ApplicationConfiguration(
                         accountRepository,
                         contextRepository,
                         transactionRepository,
                         userRepository,
-                        permissionRepository
+                        permissionRepository,
+                        new PasswordHashingStrategyRegistry(
+                                new Pbkdf2PasswordHashingStrategy()
+                        )
                 )
         );
         BootstrapPlan plan = new BootstrapPlan(

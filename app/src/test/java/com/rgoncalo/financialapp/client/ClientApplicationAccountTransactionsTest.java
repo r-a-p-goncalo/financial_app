@@ -17,6 +17,8 @@ import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinan
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryTransactionRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryUserRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.memory.InMemoryFinancialContextPermissionRepository;
+import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
+import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
 import com.rgoncalo.financialapp.commondata.user.UserId;
@@ -48,7 +50,7 @@ class ClientApplicationAccountTransactionsTest {
         InMemoryFinancialContextPermissionRepository permissionRepository =
                 new InMemoryFinancialContextPermissionRepository();
         UserId userId = new UserId("alice");
-        userRepository.save(new UserRecord(userId, "Alice"));
+        userRepository.save(new UserRecord(userId, "Alice", null));
 
         contextRepository.save(
                 new FinancialContextRecord(contextId, "Personal")
@@ -102,7 +104,10 @@ class ClientApplicationAccountTransactionsTest {
                                 contextRepository,
                                 transactionRepository,
                                 userRepository,
-                                permissionRepository
+                                permissionRepository,
+                                new PasswordHashingStrategyRegistry(
+                                        new Pbkdf2PasswordHashingStrategy()
+                                )
                         )
                 ),
                 userId

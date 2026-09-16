@@ -33,7 +33,15 @@ public final class SQLiteSchema {
             """
                     CREATE TABLE IF NOT EXISTS users (
                         user_id TEXT PRIMARY KEY,
-                        name TEXT NOT NULL
+                        name TEXT NOT NULL UNIQUE,
+                        password_hashing_strategy TEXT,
+                        password_hash TEXT,
+                        CHECK (
+                            (password_hashing_strategy IS NULL
+                                AND password_hash IS NULL)
+                            OR (password_hashing_strategy IS NOT NULL
+                                AND password_hash IS NOT NULL)
+                        )
                     )
                     """,
             """
@@ -127,6 +135,7 @@ public final class SQLiteSchema {
             }
 
             createInheritanceIndexes(connection);
+            ensureUserCredentialColumns(connection);
         } catch (SQLException exception) {
             throw new PersistenceException(
                     "Could not initialize SQLite schema",
@@ -159,6 +168,53 @@ public final class SQLiteSchema {
                         parent_financial_context_id, parent_transaction_id
                     )
                     """);
+        }
+    }
+
+    private static void ensureUserCredentialColumns(Connection connection)
+            throws SQLException {
+        if (!hasColumn(connection, "users", "password_hashing_strategy")) {
+            executeSchemaChange(connection, """
+                    ALTER TABLE users
+                    ADD COLUMN password_hashing_strategy TEXT
+                    """);
+        }
+
+        if (!hasColumn(connection, "users", "password_hash")) {
+            executeSchemaChange(connection, """
+                    ALTER TABLE users
+                    ADD COLUMN password_hash TEXT
+                    """);
+        }
+    }
+
+    private static boolean hasColumn(
+            Connection connection,
+            String table,
+            String column
+    ) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(
+                     "PRAGMA table_info(" + table + ")"
+             )) {
+            while (resultSet.next()) {
+                if (column.equals(resultSet.getString("name"))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void executeSchemaChange(
+            Connection connection,
+            String sql
+    ) throws SQLException {
+        logger.info("Executing schema statement:\n{}", sql);
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(sql);
         }
     }
 

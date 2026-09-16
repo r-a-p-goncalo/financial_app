@@ -15,6 +15,7 @@ import com.rgoncalo.financialapp.application.transaction.CreateTransaction;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummary;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryForAccount;
 import com.rgoncalo.financialapp.application.user.CreateUser;
+import com.rgoncalo.financialapp.application.user.AuthenticateUser;
 import com.rgoncalo.financialapp.application.user.GetUser;
 import com.rgoncalo.financialapp.application.user.ListUsersSummary;
 
@@ -121,7 +122,17 @@ public class Application {
     }
 
     public CreateUser createUser() {
-        return new CreateUser(appConfig.userRepository());
+        return new CreateUser(
+                appConfig.userRepository(),
+                appConfig.passwordHashingStrategies()
+        );
+    }
+
+    public AuthenticateUser authenticateUser() {
+        return new AuthenticateUser(
+                appConfig.userRepository(),
+                appConfig.passwordHashingStrategies()
+        );
     }
 
     public GetUser getUserById() {

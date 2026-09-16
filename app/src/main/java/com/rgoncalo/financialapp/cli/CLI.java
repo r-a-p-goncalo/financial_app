@@ -2,6 +2,7 @@ package com.rgoncalo.financialapp.cli;
 
 import com.rgoncalo.financialapp.client.ClientApplication;
 import com.rgoncalo.financialapp.client.ClientRuntimeException;
+import com.rgoncalo.financialapp.application.security.AccessDeniedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public abstract class CLI implements  CLIInterface {
                         try {
                             logger.info("Executing command of CLI {}: {}\n", this.getClass().getSimpleName(), commandString);
                             command.execute(scanner);
-                        } catch (ClientRuntimeException e){
+                        } catch (ClientRuntimeException | AccessDeniedException e){
                             logger.error("Error when executing command of CLI {}: {}\n", this.getClass().getSimpleName(), e.getMessage(), e);
                             System.out.println("Error when executing command: " + e.getMessage());
                         }

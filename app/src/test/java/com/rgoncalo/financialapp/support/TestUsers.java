@@ -19,7 +19,7 @@ public final class TestUsers {
                                 String id) {
         UserId userId = new UserId(id);
         configuration.createUserRepository().save(
-                new UserRecord(userId, id)
+                new UserRecord(userId, id, null)
         );
         return userId;
     }

@@ -19,7 +19,7 @@ public class CommandListFinancialContextSummary extends CLICommand {
     public void execute(Scanner scanner) {
         Collection<FinancialContextRecord> financialContextRecords = this.app.getFinancialContexts();
 
-        System.out.println("Financial accounts:");
+        System.out.println("Financial contexts:");
 
         for(FinancialContextRecord financialContextRecord : financialContextRecords){
                 System.out.println("---");
@@ -38,6 +38,6 @@ public class CommandListFinancialContextSummary extends CLICommand {
 
     @Override
     public String help() {
-        return "Shows the list of financial contexts";
+        return "Shows the financial contexts you can access";
     }
 }

@@ -5,6 +5,7 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRe
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.application.user.UserRepository;
+import com.rgoncalo.financialapp.application.user.PasswordHashingStrategyResolver;
 
 public record ApplicationConfiguration(
         AccountRepository accountRepository,
@@ -12,6 +13,7 @@ public record ApplicationConfiguration(
         TransactionRepository transactionRepository,
         UserRepository userRepository,
         FinancialContextPermissionRepository
-                financialContextPermissionRepository
+                financialContextPermissionRepository,
+        PasswordHashingStrategyResolver passwordHashingStrategies
 ) {
 }

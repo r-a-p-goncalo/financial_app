@@ -8,15 +8,12 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPe
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.application.user.UserRepository;
 import com.rgoncalo.financialapp.bootstrap.BootstrapConfigLoader;
-import com.rgoncalo.financialapp.bootstrap.BootstrapRunner;
-import com.rgoncalo.financialapp.cli.usercontext.UserContextCli;
-import com.rgoncalo.financialapp.client.ClientApplication;
+import com.rgoncalo.financialapp.bootstrap.BootstrapPlan;
+import com.rgoncalo.financialapp.cli.user.UserAuthenticationCli;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
+import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
+import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import com.rgoncalo.financialapp.logging.ApplicationLogging;
-import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
-import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
-import com.rgoncalo.financialapp.commondata.user.UserId;
-import com.rgoncalo.financialapp.commondata.user.UserRecord;
 
 import java.sql.Connection;
 import java.nio.file.Files;
@@ -25,9 +22,6 @@ import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
-
-    private static final UserId LOCAL_DEVELOPMENT_USER_ID =
-            new UserId("local-development-user");
 
     private static final Path DEFAULT_BOOTSTRAP_FILE =
             Path.of("config", "bootstrap.json");
@@ -66,18 +60,15 @@ public class Main {
         FinancialContextPermissionRepository permissionRepository =
                 new SQLiteFinancialContextPermissionRepository(connection);
 
-        provisionLocalDevelopmentUser(
-                userRepository,
-                financialContextRepository,
-                permissionRepository
-        );
-
         return new ApplicationConfiguration(
                 accountRepository,
                 financialContextRepository,
                 transactionRepository,
                 userRepository,
-                permissionRepository
+                permissionRepository,
+                new PasswordHashingStrategyRegistry(
+                        new Pbkdf2PasswordHashingStrategy()
+                )
         );
 
     }
@@ -91,22 +82,11 @@ public class Main {
         ApplicationConfiguration serverAppConfig = configureApplication();
         Application serverApp = createApplication(serverAppConfig);
 
-        bootstrapConfigurationFrom(args).ifPresent(
-                configuration -> runBootstrap(
-                        serverApp,
-                        configuration,
-                        LOCAL_DEVELOPMENT_USER_ID
-                )
-        );
-
-        ClientApplication clientApplication = new ClientApplication(
+        new UserAuthenticationCli(
+                new Scanner(System.in),
                 serverApp,
-                LOCAL_DEVELOPMENT_USER_ID
-        );
-
-        UserContextCli userContextCli = new UserContextCli(new Scanner(System.in), clientApplication);
-
-        userContextCli.runCliLoop();
+                bootstrapPlanFrom(args)
+        ).runCliLoop();
     }
 
     private static Optional<BootstrapConfiguration>
@@ -141,60 +121,31 @@ public class Main {
         );
     }
 
-    private static void runBootstrap(
-            Application application,
-            BootstrapConfiguration configuration,
-            UserId userId
-    ) {
+    private static Optional<BootstrapPlan> bootstrapPlanFrom(String[] args) {
+        Optional<BootstrapConfiguration> configuration =
+                bootstrapConfigurationFrom(args);
 
-        System.out.println("Running bootstrap configuration required: " + configuration.required + ", file: " + configuration.file);
+        if (configuration.isEmpty()) {
+            return Optional.empty();
+        }
 
-        if (!Files.isRegularFile(configuration.file())) {
-            if (configuration.required()) {
+        BootstrapConfiguration bootstrapConfiguration = configuration.get();
+
+        if (!Files.isRegularFile(bootstrapConfiguration.file())) {
+            if (bootstrapConfiguration.required()) {
                 throw new IllegalArgumentException(
                         "Bootstrap configuration does not exist: "
-                                + configuration.file().toAbsolutePath()
+                                + bootstrapConfiguration.file().toAbsolutePath()
                 );
             }
 
-            System.out.println("Bootstrap configuration was not found and was not required, in path " + configuration.file());
-
-            return;
+            System.out.println("Bootstrap configuration was not found and was not required, in path " + bootstrapConfiguration.file());
+            return Optional.empty();
         }
 
-        new BootstrapRunner(application, userId).run(
-                new BootstrapConfigLoader().load(configuration.file())
+        return Optional.of(
+                new BootstrapConfigLoader().load(bootstrapConfiguration.file())
         );
-    }
-
-    private static void provisionLocalDevelopmentUser(
-            UserRepository userRepository,
-            FinancialContextRepository financialContextRepository,
-            FinancialContextPermissionRepository permissionRepository
-    ) {
-        userRepository.findById(LOCAL_DEVELOPMENT_USER_ID).orElseGet(() ->
-                userRepository.save(new UserRecord(
-                        LOCAL_DEVELOPMENT_USER_ID,
-                        "Local development user"
-                ))
-        );
-
-        financialContextRepository.listFinancialContextsSummary()
-                .forEach(context -> {
-                    if (permissionRepository.listByFinancialContextId(
-                            context.financialContextId()
-                    ).isEmpty()) {
-                        permissionRepository.save(
-                                new FinancialContextPermissionRecord(
-                                        context.financialContextId(),
-                                        LOCAL_DEVELOPMENT_USER_ID,
-                                        FinancialContextPermission.OWNER,
-                                        LOCAL_DEVELOPMENT_USER_ID,
-                                        java.time.Instant.now()
-                                )
-                        );
-                    }
-                });
     }
 
     private record BootstrapConfiguration(

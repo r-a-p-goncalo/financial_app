@@ -16,4 +16,6 @@ public interface UserRepository {
     Collection<UserRecord> listUsersSummary();
 
     Optional<UserRecord> findById(UserId userId);
+
+    Optional<UserRecord> findByName(String name);
 }

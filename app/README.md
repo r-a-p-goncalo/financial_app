@@ -10,7 +10,7 @@ authorization boundaries before a networked client/server deployment exists.
 
 The current implementation supports:
 
-* users without authentication credentials;
+* password-protected user registration and authentication;
 * financial contexts with shared role-based access;
 * lazy financial-context clones and effective-value resolution;
 * dated financial-context views, including running account balances and
@@ -26,10 +26,9 @@ The current implementation supports:
 
 ## Next Steps
 
-* Add an authentication boundary that resolves a signed-in principal to a
-  `UserId`.
 * Add a user-management interface for creating users and granting context
-  permissions outside application-code calls.
+  permissions within a loaded user context.
+* Add password-hash migration when a current hashing strategy is replaced.
 * Extend financial-context views with generated and recurring transactions.
 * Introduce versioned database migrations before schema changes need to
   preserve deployed user data.
@@ -60,6 +59,7 @@ com.rgoncalo.financialapp
 │   ├── financialcontext
 │   ├── financialcontextview
 │   ├── transaction
+│   ├── user
 │   └── usercontext
 ├── client
 │   └── data
@@ -70,9 +70,10 @@ com.rgoncalo.financialapp
 │   ├── transaction
 │   └── user
 ├── infrastructure
-│   └── persistence
-│       ├── memory
-│       └── sqlite
+│   ├── persistence
+│   │   ├── memory
+│   │   └── sqlite
+│   └── security
 ├── logging
 └── utils
 ```
@@ -145,9 +146,26 @@ operation.
 
 ### Users and financial-context access
 
-Authentication is intentionally not implemented in this prototype.
-`UserRecord` contains only an application identity and display name; it has no
-password, session, token, or external identity-provider data.
+Users register and log in through the console before a financial-context
+session is created. `UserRecord` stores an application identity, name, and a
+password hash. It never stores the plaintext password.
+
+Password hashing is behind two application interfaces:
+
+```text
+PasswordHashingStrategy
+        │ hashes and verifies one algorithm
+        ↓
+PasswordHashingStrategyResolver
+        │ selects the current strategy and resolves stored strategies
+        ↓
+Pbkdf2PasswordHashingStrategy
+```
+
+The current strategy uses PBKDF2-HMAC-SHA-256 with a unique random salt for
+each password. Stored hashes include the strategy ID, so a future strategy can
+be made current while the registry retains the old strategy to verify existing
+users during migration.
 
 Access is granted at the financial-context boundary:
 
@@ -234,11 +252,14 @@ transactions. It is responsible for:
 
 The CLI does not interact directly with repositories or SQLite.
 
-The current CLI uses one local development user provisioned at startup. This
-keeps the existing single-user workflow usable without adding login behavior.
-The user and permission use cases are available through `Application`, but
-the CLI does not yet provide commands for user administration or switching
-the active user.
+The root user console provides `register`, `login`, `help`, and `exit`
+commands. A successful registration or login creates a `ClientApplication`
+for that user and opens the user-context console. From there, the user can
+list only the financial contexts they may read, create an owned context, or
+load an accessible context.
+
+The CLI still does not provide commands to grant permissions or switch users
+inside an already loaded context.
 
 ### Transactions with an unknown or irrelevant account
 
@@ -289,8 +310,8 @@ outside the application layer.
 `Main` is the composition root.
 
 It creates the SQLite connection, initializes the schema, creates the SQLite
-repositories, provisions the local development user, and wires the
-repositories into `ApplicationConfiguration` and `Application`.
+repositories and password-hashing strategy registry, and wires them into
+`ApplicationConfiguration` and `Application`.
 
 ```text
 SQLite connection
@@ -299,21 +320,19 @@ SQLite schema
    ↓
 Repository implementations
    ↓
-Local development user and legacy-context permissions
-   ↓
 Application
    ↓
-Optional bootstrap plan
+User authentication console
    ↓
-ClientApplication
+Authenticated ClientApplication
    ↓
 CLI
 ```
 
-When an existing context has no permission records, startup grants the local
-development user `OWNER`. This preserves access to data created before the
-user and permission model was added. Contexts that already have memberships
-are left unchanged.
+Users created before password support have no password hash and cannot log in
+until their existing user name is registered with a password. Registration
+then preserves that user's identity and any context permissions already
+assigned to it.
 
 The application layer does not need to know that SQLite is the current
 runtime implementation.
@@ -322,10 +341,11 @@ runtime implementation.
 
 ## Bootstrap Data
 
-Before opening the CLI, `Main` looks for `config/bootstrap.json` and, when
-present, executes its commands through the server-side application use cases.
-The supplied file uses `"mode": "if-empty"`, so its sample data is only added
-when the local development user cannot access any financial contexts.
+At startup, `Main` looks for `config/bootstrap.json` and, when present, loads
+its plan before the console starts. The plan runs once after the first
+successful registration or login, through the server-side application use
+cases for that user. The supplied file uses `"mode": "if-empty"`, so its sample
+data is only added when that user cannot access any financial contexts.
 
 Commands are executed in file order. The `ref` fields are configuration-local
 aliases that let later account and transaction commands refer to generated
@@ -356,7 +376,7 @@ the console.
 A normal financial-data request follows this general path:
 
 ```text
-Local development user
+Authenticated user
  ↓
 CLI
  ↓
@@ -376,7 +396,7 @@ Database
 For example, account creation follows:
 
 ```text
-Local development user
+Authenticated user
  ↓
 Financial CLI
  ↓
@@ -448,6 +468,10 @@ The `financial_context_permissions` table has one row per user and financial
 context. It stores the role, the user that granted it, and the grant time. Its
 composite primary key prevents duplicate memberships for the same user and
 context.
+
+The `users` table stores each user's name, password-hashing strategy ID, and
+password hash. The schema initialization adds the two password columns when
+opening a database created before password support.
 
 Accounts and transactions use a composite identity of financial-context ID
 and record ID. Parent columns retain the links used by lazy clone resolution.
@@ -534,6 +558,7 @@ against SQLite mappings.
 The tests currently cover operations such as:
 
 * user creation, lookup, and listing;
+* password hashing, successful authentication, and rejected passwords;
 * financial-context creation, retrieval, cloning, and inheritance;
 * initial context ownership and context-permission grants;
 * read/write authorization;
@@ -588,12 +613,13 @@ migrations clearer as the data model becomes more sophisticated.
 
 * The client and application run in the same Java process.
 * There is no HTTP/API layer yet.
-* There is no authentication, login flow, session, token validation, or user
-  switching in the CLI.
-* User and permission administration are application use cases only; they are
-  not yet CLI commands.
+* Authentication is local console authentication only; there is no HTTP/API
+  token validation or external identity-provider integration.
+* The root console can register and log in users, but it does not yet provide
+  commands to grant context permissions or switch users within a session.
 * The schema is initialized with `CREATE TABLE IF NOT EXISTS`; it does not yet
   provide versioned migrations.
-* Context creation and initial permission creation are separate persistence
-  operations; they are not yet wrapped in a database transaction.
+* Context creation, initial permission creation, and user registration are
+  separate persistence operations; they are not yet wrapped in a database
+  transaction.
 * Currency/unit behavior is not yet implemented.

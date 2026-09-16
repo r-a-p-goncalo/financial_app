@@ -1,9 +1,13 @@
 package com.rgoncalo.financialapp.commondata.user;
 
 /**
- * Application-level user profile. It intentionally contains no credentials.
+ * Application-level user profile and password-hash metadata.
  */
-public record UserRecord(UserId userId, String name) {
+public record UserRecord(
+        UserId userId,
+        String name,
+        PasswordHash passwordHash
+) {
 
     public boolean equalsIdentity(Object object) {
         return object instanceof UserRecord other

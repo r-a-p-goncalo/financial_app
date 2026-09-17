@@ -7,31 +7,26 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRe
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.application.user.UserRepository;
-import com.rgoncalo.financialapp.bootstrap.BootstrapConfigLoader;
-import com.rgoncalo.financialapp.bootstrap.BootstrapPlan;
-import com.rgoncalo.financialapp.cli.user.UserAuthenticationCli;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
 import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
 import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import com.rgoncalo.financialapp.logging.ApplicationLogging;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 import java.sql.Connection;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.Scanner;
 
+@SpringBootApplication
 public class Main {
-
-    private static final Path DEFAULT_BOOTSTRAP_FILE =
-            Path.of("config", "bootstrap.json");
 
     private static final Path DEFAULT_DATABASE_FILE =
             Path.of("data", "financial-app.db");
 
     public static ApplicationConfiguration configureApplication(){
 
-        ApplicationLogging.configureForDatabase(DEFAULT_DATABASE_FILE);
+        configureLogging();
 
         SQLiteConnection sqliteConnection =
                 new SQLiteConnection(
@@ -78,79 +73,18 @@ public class Main {
     }
 
     public static void main(String[] args) {
-
-        ApplicationConfiguration serverAppConfig = configureApplication();
-        Application serverApp = createApplication(serverAppConfig);
-
-        new UserAuthenticationCli(
-                new Scanner(System.in),
-                serverApp,
-                bootstrapPlanFrom(args)
-        ).runCliLoop();
+        configureLogging();
+        SpringApplication.run(Main.class, args);
     }
 
-    private static Optional<BootstrapConfiguration>
-    bootstrapConfigurationFrom(String[] args) {
-
-        for (int index = 0; index < args.length; index++) {
-            if ("--no-bootstrap".equals(args[index])) {
-                return Optional.empty();
-            }
-
-            if ("--bootstrap".equals(args[index])) {
-                if (index + 1 == args.length) {
-                    throw new IllegalArgumentException(
-                            "--bootstrap requires a configuration file path"
-                    );
-                }
-
-                return Optional.of(
-                        new BootstrapConfiguration(
-                                Path.of(args[index + 1]),
-                                true
-                        )
-                );
-            }
-        }
-
-        return Optional.of(
-                new BootstrapConfiguration(
-                        DEFAULT_BOOTSTRAP_FILE,
-                        false
-                )
-        );
+    @Bean
+    public Application financialApplication() {
+        return createApplication(configureApplication());
     }
 
-    private static Optional<BootstrapPlan> bootstrapPlanFrom(String[] args) {
-        Optional<BootstrapConfiguration> configuration =
-                bootstrapConfigurationFrom(args);
-
-        if (configuration.isEmpty()) {
-            return Optional.empty();
+    private static void configureLogging() {
+        if (System.getProperty(ApplicationLogging.LOG_FILE_PROPERTY) == null) {
+            ApplicationLogging.configureForDatabase(DEFAULT_DATABASE_FILE);
         }
-
-        BootstrapConfiguration bootstrapConfiguration = configuration.get();
-
-        if (!Files.isRegularFile(bootstrapConfiguration.file())) {
-            if (bootstrapConfiguration.required()) {
-                throw new IllegalArgumentException(
-                        "Bootstrap configuration does not exist: "
-                                + bootstrapConfiguration.file().toAbsolutePath()
-                );
-            }
-
-            System.out.println("Bootstrap configuration was not found and was not required, in path " + bootstrapConfiguration.file());
-            return Optional.empty();
-        }
-
-        return Optional.of(
-                new BootstrapConfigLoader().load(bootstrapConfiguration.file())
-        );
-    }
-
-    private record BootstrapConfiguration(
-            Path file,
-            boolean required
-    ) {
     }
 }

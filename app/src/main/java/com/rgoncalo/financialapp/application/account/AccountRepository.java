@@ -10,7 +10,7 @@ import java.util.Optional;
 // TODO: if this gets too complex, separate the logic of queries and saving data
 
 /**
- * Provides persistence operations for {@link Account} objects.
+ * Provides persistence operations for {@link AccountRecord} objects.
  *
  * <p>The repository abstracts the storage mechanism from the application
  * layer. Implementations are responsible for storing and retrieving

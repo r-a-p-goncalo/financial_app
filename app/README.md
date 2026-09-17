@@ -3,14 +3,15 @@
 Version `0.1` is a local Java prototype of a financial management
 application.
 
-The application currently runs as a single process and is interacted with
-through a command-line interface. Its main purpose at this stage is to
-establish the application's domain, application, client, persistence, and
-authorization boundaries before a networked client/server deployment exists.
+The application currently runs as a Spring Boot process with a REST API. Its
+main purpose at this stage is to establish the application's domain,
+application, REST, persistence, and authorization boundaries before a React
+client is introduced.
 
 The current implementation supports:
 
 * password-protected user registration and authentication;
+* session-authenticated REST endpoints for browser clients;
 * financial contexts with shared role-based access;
 * lazy financial-context clones and effective-value resolution;
 * dated financial-context views, including running account balances and
@@ -26,8 +27,9 @@ The current implementation supports:
 
 ## Next Steps
 
-* Add a user-management interface for creating users and granting context
-  permissions within a loaded user context.
+* Create the React client that consumes the REST API and replaces the legacy
+  console UI.
+* Add REST endpoints for user management and context-permission grants.
 * Add password-hash migration when a current hashing strategy is replaced.
 * Extend financial-context views with generated and recurring transactions.
 * Introduce versioned database migrations before schema changes need to
@@ -75,6 +77,9 @@ com.rgoncalo.financialapp
 │   │   └── sqlite
 │   └── security
 ├── logging
+├── rest
+│   ├── auth
+│   └── financialcontext
 └── utils
 ```
 
@@ -232,14 +237,15 @@ context's accounts and transactions. The view includes transactions through
 its selected calendar date (the current date by default), retains each
 account's running balances, and exposes each account total at that date.
 
-The client and application layers currently communicate through direct Java
-method calls. There is no network boundary in version `0.1`.
+The legacy client and application layers communicate through direct Java
+method calls. The REST layer is the network boundary for future browser
+clients and calls the application layer directly.
 
 ---
 
 ### `cli`
 
-Contains the command-line user interface.
+Contains the legacy command-line user interface.
 
 The CLI is organized into nested command groups for user-context operations,
 financial-context operations, dated financial-context views, and
@@ -252,11 +258,8 @@ transactions. It is responsible for:
 
 The CLI does not interact directly with repositories or SQLite.
 
-The root user console provides `register`, `login`, `help`, and `exit`
-commands. A successful registration or login creates a `ClientApplication`
-for that user and opens the user-context console. From there, the user can
-list only the financial contexts they may read, create an owned context, or
-load an accessible context.
+The console remains in the codebase while the REST API is introduced, but
+`Main` no longer launches it. A React client will replace it.
 
 The CLI still does not provide commands to grant permissions or switch users
 inside an already loaded context.
@@ -266,9 +269,89 @@ inside an already loaded context.
 A transaction may have a `null` origin or target `AccountRecordId`, but not
 both. The missing side represents an unknown or irrelevant external account.
 This allows, for example, a normal expense to be represented as a transfer
-from an account to a `null` target. In the CLI, leave that account prompt
-blank; transaction displays label the missing side as
-`Unknown or irrelevant account`.
+from an account to a `null` target. REST transaction requests may omit either
+`originAccountId` or `targetAccountId`.
+
+---
+
+### `rest`
+
+Contains the Spring MVC REST adapter. Controllers receive HTTP requests,
+resolve the authenticated session user, call `Application` use cases, and
+map their results to HTTP-specific request and response records. They never
+read repositories or make authorization decisions directly.
+
+The API uses an HTTP session rather than accepting a `UserId` from the client.
+After registration or login, `UserSessionAuthenticator` stores the user's ID
+in Spring Security's session context. `CurrentUser` then supplies that ID to
+the application use case, where `FinancialContextAuthorization` enforces the
+existing context permissions.
+
+All state-changing API requests use Spring Security CSRF protection. The
+public `GET /api/v1/auth/csrf` endpoint creates a token and returns its header
+name and value. A browser client sends that value in the returned header name
+for subsequent `POST` requests and includes its session cookie.
+
+The development CORS configuration permits credentialed requests from
+`http://localhost:5173`, the usual Vite development origin. Set
+`financial-app.cors.allowed-origin` to the deployed React origin when that
+client is hosted separately.
+
+The first REST API version exposes the following endpoints:
+
+```text
+GET  /api/v1/auth/csrf
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+GET  /api/v1/auth/me
+POST /api/v1/auth/logout
+
+GET  /api/v1/financial-contexts
+POST /api/v1/financial-contexts
+GET  /api/v1/financial-contexts/{financialContextId}
+GET  /api/v1/financial-contexts/{financialContextId}/children
+POST /api/v1/financial-contexts/{financialContextId}/clones
+GET  /api/v1/financial-contexts/{financialContextId}/accounts
+POST /api/v1/financial-contexts/{financialContextId}/accounts
+GET  /api/v1/financial-contexts/{financialContextId}/transactions
+POST /api/v1/financial-contexts/{financialContextId}/transactions
+```
+
+Loading a financial context returns its effective context, accounts, and
+transactions, including values inherited from a parent clone. User responses
+exclude password hashes and all client requests derive the acting user from
+the authenticated session.
+
+---
+
+### `spring`
+
+Spring creates and connects the HTTP-layer objects that it manages as beans.
+Rather than a controller constructing its own dependencies, it declares them
+as constructor parameters and Spring supplies the matching beans when the
+application starts.
+
+`Main` is annotated with `@SpringBootApplication`, which enables Spring Boot
+configuration, component scanning, and web-server setup. The important
+annotations used by this application are:
+
+* `@Configuration` groups explicit bean definitions, such as the security
+  configuration.
+* `@Bean` marks a factory method whose returned object Spring manages; `Main`
+  uses it to create the application facade with its repositories and password
+  strategy.
+* `@Component` marks a general managed dependency, such as `CurrentUser` and
+  `UserSessionAuthenticator`.
+* `@RestController` marks a component that receives HTTP requests and returns
+  JSON responses.
+* `@GetMapping` and `@PostMapping` associate controller methods with API
+  routes.
+* `@Valid` applies Jakarta validation annotations on a request body before its
+  controller method runs.
+
+The default bean scope is one instance per running application. Controllers
+therefore do not store per-user mutable state; the authenticated user belongs
+to the HTTP session and is resolved separately for each request.
 
 ---
 
@@ -322,11 +405,11 @@ Repository implementations
    ↓
 Application
    ↓
-User authentication console
+Spring Boot REST API
    ↓
-Authenticated ClientApplication
+Authenticated HTTP session
    ↓
-CLI
+Application use cases
 ```
 
 Users created before password support have no password hash and cannot log in
@@ -337,29 +420,29 @@ assigned to it.
 The application layer does not need to know that SQLite is the current
 runtime implementation.
 
+Start the API from the `app` directory with:
+
+```text
+mvn spring-boot:run
+```
+
+Spring Boot listens on port `8080` by default.
+
 ---
 
 ## Bootstrap Data
 
-At startup, `Main` looks for `config/bootstrap.json` and, when present, loads
-its plan before the console starts. The plan runs once after the first
-successful registration or login, through the server-side application use
-cases for that user. The supplied file uses `"mode": "if-empty"`, so its sample
-data is only added when that user cannot access any financial contexts.
+`BootstrapConfigLoader` and `BootstrapRunner` remain available for creating
+sample data through application use cases. `Main` does not currently invoke a
+bootstrap plan when starting the REST API; a future protected administrative
+endpoint or development profile can decide when and for whom to run one.
 
 Commands are executed in file order. The `ref` fields are configuration-local
 aliases that let later account and transaction commands refer to generated
 financial-context and account IDs.
 
-Start the app with one of these options when needed:
-
-```text
---bootstrap path/to/bootstrap.json   Use a specific bootstrap file
---no-bootstrap                       Skip all bootstrap data
-```
-
 Supported modes are `never`, `if-empty`, and `always`. `always` creates new
-records every time the application starts, so use it only for disposable data.
+records every time it runs, so use it only for disposable data.
 
 ---
 
@@ -376,11 +459,9 @@ the console.
 A normal financial-data request follows this general path:
 
 ```text
-Authenticated user
+Authenticated HTTP session
  ↓
-CLI
- ↓
-ClientApplication
+REST controller
  ↓
 Application use case
  ↓
@@ -396,13 +477,9 @@ Database
 For example, account creation follows:
 
 ```text
-Authenticated user
+Authenticated HTTP session
  ↓
-Financial CLI
- ↓
-ClientApplication
- ↓
-Current Financial Context
+Account REST controller
  ↓
 CreateAccount request with UserId
  ↓
@@ -448,7 +525,7 @@ Repository Interface
 ```
 
 The in-memory implementation is useful for lightweight execution and tests,
-while SQLite provides relational persistence for the local CLI application.
+while SQLite provides relational persistence for the local API application.
 
 ---
 
@@ -579,9 +656,7 @@ implementation.
 The application currently follows this structure:
 
 ```text
-CLI
- ↓
-Client
+REST API
  ↓
 Application use cases and authorization
  ↓
@@ -611,12 +686,13 @@ migrations clearer as the data model becomes more sophisticated.
 
 ## Current Limitations
 
-* The client and application run in the same Java process.
-* There is no HTTP/API layer yet.
-* Authentication is local console authentication only; there is no HTTP/API
-  token validation or external identity-provider integration.
-* The root console can register and log in users, but it does not yet provide
-  commands to grant context permissions or switch users within a session.
+* The React client has not been created yet; the legacy Java client remains
+  in-process code and is not launched by `Main`.
+* Authentication uses a server-side HTTP session. Token-based authentication,
+  external identity-provider integration, session persistence, and horizontal
+  scaling are not implemented.
+* The REST API does not yet expose user-management or context-permission
+  endpoints.
 * The schema is initialized with `CREATE TABLE IF NOT EXISTS`; it does not yet
   provide versioned migrations.
 * Context creation, initial permission creation, and user registration are

@@ -5,8 +5,8 @@ application.
 
 The application currently runs as a Spring Boot process with a REST API. Its
 main purpose at this stage is to establish the application's domain,
-application, REST, persistence, and authorization boundaries before a React
-client is introduced.
+application, REST, persistence, and authorization boundaries for the React
+client in `../client`.
 
 The current implementation supports:
 
@@ -27,7 +27,7 @@ The current implementation supports:
 
 ## Next Steps
 
-* Create the React client that consumes the REST API and replaces the legacy
+* Extend the React client that consumes the REST API and replaces the legacy
   console UI.
 * Add REST endpoints for user management and context-permission grants.
 * Add password-hash migration when a current hashing strategy is replaced.
@@ -259,7 +259,8 @@ transactions. It is responsible for:
 The CLI does not interact directly with repositories or SQLite.
 
 The console remains in the codebase while the REST API is introduced, but
-`Main` no longer launches it. A React client will replace it.
+`Main` no longer launches it. The React client in `../client` now provides the
+browser interface for the endpoints currently exposed by the API.
 
 The CLI still does not provide commands to grant permissions or switch users
 inside an already loaded context.
@@ -686,8 +687,9 @@ migrations clearer as the data model becomes more sophisticated.
 
 ## Current Limitations
 
-* The React client has not been created yet; the legacy Java client remains
-  in-process code and is not launched by `Main`.
+* The React client covers authentication, contexts, accounts, transactions,
+  and context cloning for the first REST API version. It does not yet cover
+  forthcoming user-management or context-permission endpoints.
 * Authentication uses a server-side HTTP session. Token-based authentication,
   external identity-provider integration, session persistence, and horizontal
   scaling are not implemented.

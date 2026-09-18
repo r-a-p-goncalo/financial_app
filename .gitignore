@@ -11,3 +11,10 @@ data/*.db-wal
 
 .env
 /app/data
+
+/client/node_modules
+/client/dist
+/data
+
+/client/.env.*
+!/client/.env.example

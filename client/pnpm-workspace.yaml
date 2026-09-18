@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+# Vite depends on esbuild's platform-specific binary during development and builds.
+onlyBuiltDependencies:
+  - esbuild

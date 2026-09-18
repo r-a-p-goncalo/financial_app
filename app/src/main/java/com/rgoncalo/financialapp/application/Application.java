@@ -1,5 +1,6 @@
 package com.rgoncalo.financialapp.application;
 
+import com.rgoncalo.financialapp.application.account.CloneAccount;
 import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.account.GetAccount;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummary;
@@ -30,6 +31,11 @@ public class Application {
         this.appConfig = appConfig;
     }
 
+    /**
+     * Server side backend entry point to create an account in a financial context
+     *
+     * @return {@link CreateAccount}
+     */
     public CreateAccount createAccount() {
         return new CreateAccount(
                 appConfig.accountRepository(),
@@ -37,6 +43,26 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to explicitly clone an inherited account
+     * into a financial context.
+     *
+     * @return {@link CloneAccount}
+     */
+    public CloneAccount cloneAccount() {
+        return new CloneAccount(
+                appConfig.accountRepository(),
+                appConfig.financialContextRepository(),
+                appConfig.transactionRepository(),
+                authorization()
+        );
+    }
+
+    /**
+     * Server side backend entry point to get a list of accounts of a financial context
+     *
+     * @return {@link ListAccountsSummary}
+     */
     public ListAccountsSummary accountSummary() {
         return new ListAccountsSummary(
                 appConfig.accountRepository(),
@@ -44,6 +70,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to get an Account
+     *
+     * @return {@link GetAccount}
+     */
     public GetAccount getAccountById() {
         return new GetAccount(
                 appConfig.accountRepository(),
@@ -51,6 +82,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to create a financial context
+     *
+     * @return {@link CreateFinancialContext}
+     */
     public CreateFinancialContext createFinancialContext() {
         return new CreateFinancialContext(
                 appConfig.financialContextRepository(),
@@ -59,6 +95,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to get a financial context
+     *
+     * @return {@link GetFinancialContext}
+     */
     public GetFinancialContext getFinancialContextById() {
         return new GetFinancialContext(
                 appConfig.financialContextRepository(),
@@ -66,16 +107,24 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to clone a financial context
+     *
+     * @return {@link CloneFinancialContext}
+     */
     public CloneFinancialContext cloneFinancialContext() {
         return new CloneFinancialContext(
                 appConfig.financialContextRepository(),
-                appConfig.accountRepository(),
-                appConfig.transactionRepository(),
                 appConfig.financialContextPermissionRepository(),
                 authorization()
         );
     }
 
+    /**
+     * Server side backend entry point to get an effective financial context
+     *
+     * @return {@link GetEffectiveFinancialContext}
+     */
     public GetEffectiveFinancialContext getEffectiveFinancialContext() {
         return new GetEffectiveFinancialContext(
                 appConfig.financialContextRepository(),
@@ -85,6 +134,12 @@ public class Application {
         );
     }
 
+
+    /**
+     * Server side backend entry point to get a list of financial contexts of a user
+     *
+     * @return {@link ListFinancialContextSummary}
+     */
     public ListFinancialContextSummary listFinancialContextSummary() {
         return new ListFinancialContextSummary(
                 appConfig.financialContextRepository(),
@@ -92,6 +147,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to get a list of financial contexts of a user
+     *
+     * @return {@link ListFinancialContextSummary}
+     */
     public ListFinancialContextChildren listFinancialContextChildren() {
         return new ListFinancialContextChildren(
                 appConfig.financialContextRepository(),
@@ -99,6 +159,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to create a transaction in a financial context
+     *
+     * @return {@link CreateTransaction}
+     */
     public CreateTransaction createTransaction() {
         return new CreateTransaction(
                 appConfig.transactionRepository(),
@@ -107,6 +172,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point get a list of transactions for a financial context
+     *
+     * @return {@link ListTransactionsSummary}
+     */
     public ListTransactionsSummary transactionsSummary() {
         return new ListTransactionsSummary(
                 appConfig.transactionRepository(),
@@ -114,6 +184,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to get a list of transactions for an account
+     *
+     * @return {@link ListTransactionsSummaryForAccount}
+     */
     public ListTransactionsSummaryForAccount transactionsSummaryForAccount() {
         return new ListTransactionsSummaryForAccount(
                 appConfig.transactionRepository(),
@@ -121,6 +196,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to create a user
+     *
+     * @return {@link CreateUser}
+     */
     public CreateUser createUser() {
         return new CreateUser(
                 appConfig.userRepository(),
@@ -128,6 +208,11 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point to authenticate a user
+     *
+     * @return {@link AuthenticateUser}
+     */
     public AuthenticateUser authenticateUser() {
         return new AuthenticateUser(
                 appConfig.userRepository(),
@@ -135,16 +220,30 @@ public class Application {
         );
     }
 
+    /**
+     * Server side backend entry point get a user
+     *
+     * @return {@link GetUser}
+     */
     public GetUser getUserById() {
         return new GetUser(appConfig.userRepository());
     }
 
+    /**
+     * Server side backend entry point list users
+     *
+     * @return {@link ListUsersSummary}
+     */
     public ListUsersSummary listUsersSummary() {
         return new ListUsersSummary(appConfig.userRepository());
     }
 
-    public GrantFinancialContextPermission
-    grantFinancialContextPermission() {
+    /**
+     * Server side backend entry point for a user to grant another user a financial context permission
+     *
+     * @return {@link GrantFinancialContextPermission}
+     */
+    public GrantFinancialContextPermission grantFinancialContextPermission() {
         return new GrantFinancialContextPermission(
                 authorization(),
                 appConfig.financialContextRepository(),

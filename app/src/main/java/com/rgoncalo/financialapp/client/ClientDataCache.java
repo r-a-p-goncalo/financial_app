@@ -88,7 +88,10 @@ public final class ClientDataCache {
     ) {
         FinancialContextCache cache = cacheFor(financialContextId);
         cache.accountRecords.clear();
-        accountRecords.forEach(this::saveAccountRecord);
+        accountRecords.forEach(account -> cache.accountRecords.put(
+                account.accountRecordId(),
+                account
+        ));
     }
 
     public Optional<AccountRecord> findAccountRecord(
@@ -158,7 +161,10 @@ public final class ClientDataCache {
     ) {
         FinancialContextCache cache = cacheFor(financialContextId);
         cache.transactionRecords.clear();
-        transactionRecords.forEach(this::saveTransactionRecord);
+        transactionRecords.forEach(transaction -> cache.transactionRecords.put(
+                transaction.transactionRecordId(),
+                transaction
+        ));
     }
 
     public Optional<TransactionRecord> findTransactionRecord(

@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.client;
 
 import com.rgoncalo.financialapp.application.Application;
+import com.rgoncalo.financialapp.application.account.CloneAccountRequest;
 import com.rgoncalo.financialapp.application.transaction.CreateTransactionRequest;
 import com.rgoncalo.financialapp.client.data.financialcontext.FinancialContextView;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
@@ -273,11 +274,8 @@ public class ClientApplication {
                         .requireCurrentContext()
                         .financialContextId();
 
-        if(originAccountId != null)
-            originAccountId = new AccountRecordId(originAccountId.accountRecordId(), financialContextSession.requireCurrentContext().financialContextId());
-
-        if(targetAccountId != null)
-            targetAccountId = new AccountRecordId(targetAccountId.accountRecordId(), financialContextSession.requireCurrentContext().financialContextId());
+        originAccountId = realAccountId(originAccountId, financialContextId);
+        targetAccountId = realAccountId(targetAccountId, financialContextId);
 
         TransactionRecord transaction = serverApp
                 .createTransaction()
@@ -296,6 +294,29 @@ public class ClientApplication {
         dataCache.saveTransactionRecord(transaction);
 
         return transaction;
+    }
+
+    private AccountRecordId realAccountId(
+            AccountRecordId accountRecordId,
+            FinancialContextId financialContextId
+    ) {
+        if (accountRecordId == null
+                || financialContextId.equals(
+                accountRecordId.financialContextId()
+        )) {
+            return accountRecordId;
+        }
+
+        AccountRecord account = serverApp.cloneAccount().execute(
+                new CloneAccountRequest(
+                        accountRecordId,
+                        financialContextId,
+                        userId
+                )
+        );
+        dataCache.saveAccountRecord(account);
+
+        return account.accountRecordId();
     }
 
     public Collection<TransactionRecord> listTransactionsSummary()

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../shared/api/browser-transport";
 import type {
+  CloneAccountInput,
   CreateAccountInput,
   CreateFinancialContextInput,
   CreateTransactionInput,
@@ -51,9 +52,17 @@ export function useCreateAccount(financialContextId: string) {
   return useMutation({
     mutationFn: (input: CreateAccountInput) =>
       api.financialContexts.createAccount(financialContextId, input),
+    // A new parent account is visible in every active child context.
     onSuccess: () => queryClient.invalidateQueries({
-      queryKey: financialContextKeys.details(financialContextId),
+      queryKey: financialContextKeys.all,
     }),
+  });
+}
+
+export function useCloneAccount(financialContextId: string) {
+  return useMutation({
+    mutationFn: (input: CloneAccountInput) =>
+      api.financialContexts.cloneAccount(financialContextId, input),
   });
 }
 
@@ -63,8 +72,10 @@ export function useCreateTransaction(financialContextId: string) {
   return useMutation({
     mutationFn: (input: CreateTransactionInput) =>
       api.financialContexts.createTransaction(financialContextId, input),
+    // A transaction in a parent context changes every active clone's
+    // effective transaction stream, so all context queries become stale.
     onSuccess: () => queryClient.invalidateQueries({
-      queryKey: financialContextKeys.details(financialContextId),
+      queryKey: financialContextKeys.all,
     }),
   });
 }

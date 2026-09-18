@@ -46,8 +46,13 @@ native transport and mobile authentication flow.
 
 The client implements the REST API's currently available part of the product
 design: authenticated users can create independent financial contexts (or
-clone one for a scenario), add accounts, and record dated transfers. A
+create a live clone for a scenario), add accounts, and record dated transfers.
+A clone continues to receive accounts and transactions added to its parent;
+child-specific records are stored only when the child changes or adds data. A
 transaction may have one external side, which represents income or an expense.
+An inherited account carries its owning context ID, so the client recognizes it
+as virtual. Before posting a child transaction that uses that account, the
+client explicitly requests a real child account copy and uses the returned ID.
 The account table and each account's transaction running balance are derived
 from the same decimal-safe financial rules. Transactions are recorded through
 an income, expense, or transfer workflow; leaving the optional date empty uses

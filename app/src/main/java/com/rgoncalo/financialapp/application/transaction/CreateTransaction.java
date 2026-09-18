@@ -3,9 +3,11 @@ package com.rgoncalo.financialapp.application.transaction;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextAuthorization;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
+import com.rgoncalo.financialapp.commondata.user.UserId;
 
 import java.util.UUID;
 
@@ -38,41 +40,25 @@ public class CreateTransaction {
                 FinancialContextPermission.WRITE
         );
 
-        if (request.originAccountId() != null
-                && request.originAccountId().equals(
+        if (request.originAccountId() == null && request.targetAccountId() == null)
+            throw new IllegalArgumentException("Request must have an origin or a target");
+
+        validateAccount(
+                request.originAccountId(),
+                request.financialContextId(),
+                "Origin"
+        );
+        validateAccount(
+                request.targetAccountId(),
+                request.financialContextId(),
+                "Target"
+        );
+
+        if (request.originAccountId() != null && request.originAccountId().equals(
                 request.targetAccountId()
         )) {
             throw new IllegalArgumentException(
                     "Origin and target accounts cannot be the same."
-            );
-        }
-
-        if (request.originAccountId() == null && request.targetAccountId() == null)
-            throw new IllegalArgumentException("Request must have an origin or a target");
-
-        if (request.originAccountId() != null && !request.financialContextId()
-                .equals(request.originAccountId().financialContextId())) {
-            throw new IllegalArgumentException(
-                    "Origin account must belong to the financial context."
-            );
-        }
-
-        if (request.targetAccountId() != null && !request.financialContextId()
-                .equals(request.targetAccountId().financialContextId())) {
-            throw new IllegalArgumentException(
-                    "Target account must belong to the financial context."
-            );
-        }
-
-        if (request.originAccountId() != null && accountRepository.findById(request.originAccountId()).isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Origin account does not exist in the financial context."
-            );
-        }
-
-        if (request.targetAccountId() != null && accountRepository.findById(request.targetAccountId()).isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Target account does not exist in the financial context."
             );
         }
 
@@ -90,5 +76,26 @@ public class CreateTransaction {
         );
 
         return transactionRepository.save(transaction);
+    }
+
+    private void validateAccount(
+            AccountRecordId accountId,
+            FinancialContextId financialContextId,
+            String side
+    ) {
+        if (accountId == null) {
+            return;
+        }
+        if (!financialContextId.equals(accountId.financialContextId())) {
+            throw new IllegalArgumentException(
+                    side + " account must belong to the financial context."
+            );
+        }
+
+        if (accountRepository.findById(accountId).isEmpty()) {
+            throw new IllegalArgumentException(
+                    side + " account does not exist in the financial context."
+            );
+        }
     }
 }

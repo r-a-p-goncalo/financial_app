@@ -8,9 +8,7 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPer
 import java.util.UUID;
 
 /**
- * Application use case for creating an account.
- *
- * <p>This use case coordinates account creation and persistence</p>
+ * Application use case for creating an account in a financial context
  */
 public class CreateAccount {
 

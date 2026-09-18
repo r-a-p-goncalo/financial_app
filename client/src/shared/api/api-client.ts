@@ -1,5 +1,6 @@
 import type {
   Account,
+  CloneAccountInput,
   CreateAccountInput,
   CreateFinancialContextInput,
   CreateTransactionInput,
@@ -42,6 +43,8 @@ export function createApiClient(transport: ApiTransport) {
         ),
       createAccount: (financialContextId: string, input: CreateAccountInput) =>
         transport.post<Account>(`/financial-contexts/${financialContextId}/accounts`, input),
+      cloneAccount: (financialContextId: string, input: CloneAccountInput) =>
+        transport.post<Account>(`/financial-contexts/${financialContextId}/accounts/clones`, input),
       createTransaction: (financialContextId: string, input: CreateTransactionInput) =>
         transport.post<Transaction>(`/financial-contexts/${financialContextId}/transactions`, input),
     },

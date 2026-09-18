@@ -2,7 +2,7 @@ import { type FormEvent, useId, useRef, useState } from "react";
 import type { Account } from "../../../shared/api/contracts";
 import { errorMessage } from "../../../shared/api/api-error";
 import { dateTimeInputToInstant, isPositiveDecimal } from "../../../shared/lib/format";
-import { useCreateTransaction } from "../queries";
+import { useCloneAccount, useCreateTransaction } from "../queries";
 
 type TransactionType = "income" | "expense" | "transfer";
 
@@ -16,10 +16,17 @@ interface TransactionDialogProps {
   accounts: Account[];
   financialContextId: string;
   defaultAccountId?: string;
+  onTransactionSaved?: (clonedAccountIds: ReadonlyMap<string, string>) => void;
 }
 
-export function TransactionDialog({ accounts, financialContextId, defaultAccountId }: TransactionDialogProps) {
+export function TransactionDialog({
+  accounts,
+  financialContextId,
+  defaultAccountId,
+  onTransactionSaved,
+}: TransactionDialogProps) {
   const createTransaction = useCreateTransaction(financialContextId);
+  const cloneAccount = useCloneAccount(financialContextId);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   const [transactionType, setTransactionType] = useState<TransactionType>();
@@ -31,6 +38,7 @@ export function TransactionDialog({ accounts, financialContextId, defaultAccount
 
   function resetForm() {
     createTransaction.reset();
+    cloneAccount.reset();
     setTransactionType(undefined);
     setOriginAccountId("");
     setTargetAccountId("");
@@ -81,19 +89,49 @@ export function TransactionDialog({ accounts, financialContextId, defaultAccount
     }
 
     try {
+      const clonedAccountIds = new Map<string, string>();
+      const localOriginAccountId = await localAccountId(originId, clonedAccountIds);
+      const localTargetAccountId = await localAccountId(targetId, clonedAccountIds);
+
       await createTransaction.mutateAsync({
-        originAccountId: originId,
-        targetAccountId: targetId,
+        originAccountId: localOriginAccountId,
+        targetAccountId: localTargetAccountId,
         dateTime: dateTime ? dateTimeInputToInstant(dateTime) : new Date().toISOString(),
         value,
       });
+      onTransactionSaved?.(clonedAccountIds);
       close();
     } catch (error) {
-      if (error instanceof Error && error.message === "Choose a valid date and time.") {
+      if (error instanceof Error && (
+        error.message === "Choose a valid date and time."
+        || error.message === "The selected account is no longer available."
+      )) {
         setLocalError(error.message);
       }
       // Mutation state provides server errors.
     }
+  }
+
+  async function localAccountId(
+    accountId: string | null,
+    clonedAccountIds: Map<string, string>,
+  ): Promise<string | null> {
+    if (!accountId) return null;
+
+    const account = accounts.find((candidate) => candidate.accountId === accountId);
+    if (!account) {
+      throw new Error("The selected account is no longer available.");
+    }
+    if (account.financialContextId === financialContextId) {
+      return account.accountId;
+    }
+
+    const clone = await cloneAccount.mutateAsync({
+      sourceAccountId: account.accountId,
+      sourceFinancialContextId: account.financialContextId,
+    });
+    clonedAccountIds.set(account.accountId, clone.accountId);
+    return clone.accountId;
   }
 
   const selectedType = transactionType ? transactionTypes[transactionType] : undefined;
@@ -153,11 +191,12 @@ export function TransactionDialog({ accounts, financialContextId, defaultAccount
             </label>
             <p className="field-hint">Leave the date blank to use the current date and time when you save.</p>
             {localError && <p className="form-error" role="alert">{localError}</p>}
+            {cloneAccount.isError && <p className="form-error" role="alert">{errorMessage(cloneAccount.error)}</p>}
             {createTransaction.isError && <p className="form-error" role="alert">{errorMessage(createTransaction.error)}</p>}
             <div className="dialog-actions">
               <button className="button button-quiet" type="button" onClick={() => setTransactionType(undefined)}>Back</button>
-              <button className="button button-primary" type="submit" disabled={createTransaction.isPending}>
-                {createTransaction.isPending ? "Saving…" : `Add ${selectedType.title}`}
+              <button className="button button-primary" type="submit" disabled={createTransaction.isPending || cloneAccount.isPending}>
+                {createTransaction.isPending || cloneAccount.isPending ? "Saving…" : `Add ${selectedType.title}`}
               </button>
             </div>
           </form>

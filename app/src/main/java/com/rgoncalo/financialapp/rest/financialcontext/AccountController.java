@@ -1,10 +1,12 @@
 package com.rgoncalo.financialapp.rest.financialcontext;
 
 import com.rgoncalo.financialapp.application.Application;
+import com.rgoncalo.financialapp.application.account.CloneAccountRequest;
 import com.rgoncalo.financialapp.application.account.CreateAccountRequest;
 import com.rgoncalo.financialapp.application.financialcontext.EffectiveFinancialContext;
 import com.rgoncalo.financialapp.application.financialcontext.GetEffectiveFinancialContextRequest;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.rest.CurrentUser;
@@ -56,6 +58,29 @@ public class AccountController {
                 new CreateAccountRequest(
                         request.name(),
                         new MonetaryValue(request.initialAmount()),
+                        new FinancialContextId(financialContextId),
+                        currentUser.userId(authentication)
+                )
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(AccountResponse.from(account));
+    }
+
+    @PostMapping("/clones")
+    public ResponseEntity<AccountResponse> clone(
+            @PathVariable String financialContextId,
+            @Valid @RequestBody CloneAccountHttpRequest request,
+            Authentication authentication
+    ) {
+        AccountRecord account = application.cloneAccount().execute(
+                new CloneAccountRequest(
+                        new AccountRecordId(
+                                request.sourceAccountId(),
+                                new FinancialContextId(
+                                        request.sourceFinancialContextId()
+                                )
+                        ),
                         new FinancialContextId(financialContextId),
                         currentUser.userId(authentication)
                 )

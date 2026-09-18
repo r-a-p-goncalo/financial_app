@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 public record AccountResponse(
         String accountId,
+        String financialContextId,
         String name,
         BigDecimal initialAmount
 ) {
@@ -13,6 +14,8 @@ public record AccountResponse(
     public static AccountResponse from(AccountRecord account) {
         return new AccountResponse(
                 account.accountRecordId().accountRecordId(),
+                account.accountRecordId().financialContextId()
+                        .financialContextId(),
                 account.name(),
                 account.initialAmount().getValue()
         );

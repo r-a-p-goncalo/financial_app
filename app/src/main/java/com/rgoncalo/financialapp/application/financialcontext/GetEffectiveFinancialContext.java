@@ -21,7 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Resolves the effective values of a context without changing stored rows.
+ * Resolves a context without changing stored rows. Explicit child objects
+ * precede inherited parent objects that have not been overridden.
  */
 public class GetEffectiveFinancialContext {
 
@@ -47,23 +48,28 @@ public class GetEffectiveFinancialContext {
     ) {
         return resolve(
                 request.financialContextId(),
-                request.userId(),
-                new HashSet<>()
+                request.userId()
         );
     }
 
+    /**
+     *
+     * Recursively resolves the effective financial context, computing the parents before the children
+     *
+     * Gets the currently selected context, storing its accounts and transactions
+     *
+     * If there is a parent context, starts resolving
+     *
+     * @param financialContextId
+     * @param userId
+     *
+     * @return
+     */
     private Optional<EffectiveFinancialContext> resolve(
             FinancialContextId financialContextId,
-            UserId userId,
-            Set<FinancialContextId> visitedContextIds
+            UserId userId
     ) {
-        if (!visitedContextIds.add(financialContextId)) {
-            throw new IllegalStateException(
-                    "Financial context inheritance contains a cycle."
-            );
-        }
 
-        try {
             authorization.requirePermission(
                     userId,
                     financialContextId,
@@ -72,7 +78,7 @@ public class GetEffectiveFinancialContext {
             Optional<FinancialContextRecord> context =
                     financialContextRepository.findById(financialContextId);
 
-            if (context.isEmpty()) {
+            if (context.isEmpty()) { //if there is no context with that id
                 return Optional.empty();
             }
 
@@ -91,8 +97,7 @@ public class GetEffectiveFinancialContext {
 
             EffectiveFinancialContext parent = resolve(
                     context.get().parentFinancialContextId(),
-                    userId,
-                    visitedContextIds
+                    userId
             ).orElseThrow(() -> new IllegalStateException(
                     "Parent financial context does not exist."
             ));
@@ -108,7 +113,7 @@ public class GetEffectiveFinancialContext {
             List<TransactionRecord> effectiveTransactions = resolveTransactions(
                     transactions,
                     parent.transactions(),
-                    effectiveAccounts
+                    accounts
             );
 
             return Optional.of(new EffectiveFinancialContext(
@@ -116,11 +121,14 @@ public class GetEffectiveFinancialContext {
                     effectiveAccounts,
                     effectiveTransactions
             ));
-        } finally {
-            visitedContextIds.remove(financialContextId);
-        }
     }
 
+    /**
+     *
+     * Resolves the actual context data, such as the name
+     *
+     * This is to complete missing attributes that are defined in the parent
+     */
     private FinancialContextRecord resolveContext(
             FinancialContextRecord context,
             FinancialContextRecord parent
@@ -135,6 +143,12 @@ public class GetEffectiveFinancialContext {
         );
     }
 
+    /**
+     *
+     * Resolves the actual accounts data
+     *
+     * This is to complete missing attributes that are defined in the parents
+     */
     private List<AccountRecord> resolveAccounts(
             Collection<AccountRecord> accounts,
             Collection<AccountRecord> parentAccounts
@@ -146,13 +160,17 @@ public class GetEffectiveFinancialContext {
         }
 
         List<AccountRecord> effectiveAccounts = new ArrayList<>();
+        Set<AccountRecordId> explicitlyDefinedParentAccountIds = new HashSet<>();
 
         for (AccountRecord account : accounts) {
+
             AccountRecord parentAccount = parentRecord(
                     account.parentAccountRecordId(),
                     parentAccountsById,
                     "account"
             );
+
+            //note that this clones the account if parentAccount is null
             effectiveAccounts.add(new AccountRecord(
                     account.accountRecordId(),
                     account.inherits(AccountRecord.Attribute.NAME)
@@ -164,6 +182,20 @@ public class GetEffectiveFinancialContext {
                     account.parentAccountRecordId(),
                     account.overriddenAttributes()
             ));
+            if (account.parentAccountRecordId() != null && !explicitlyDefinedParentAccountIds.add(account.parentAccountRecordId())) {
+                throw new IllegalStateException(
+                        "A child context cannot define the same account twice."
+                );
+            }
+        }
+
+        //for the parent accounts that had no children, simply had them to the effective list
+        for (AccountRecord parentAccount : parentAccounts) {
+            if (!explicitlyDefinedParentAccountIds.contains(
+                    parentAccount.accountRecordId()
+            )) {
+                effectiveAccounts.add(parentAccount);
+            }
         }
 
         return List.copyOf(effectiveAccounts);
@@ -172,7 +204,7 @@ public class GetEffectiveFinancialContext {
     private List<TransactionRecord> resolveTransactions(
             Collection<TransactionRecord> transactions,
             Collection<TransactionRecord> parentTransactions,
-            Collection<AccountRecord> effectiveAccounts
+            Collection<AccountRecord> accounts
     ) {
         Map<TransactionRecordId, TransactionRecord> parentTransactionsById =
                 new HashMap<>();
@@ -185,49 +217,107 @@ public class GetEffectiveFinancialContext {
                     parentTransaction
             );
         }
-        for (AccountRecord effectiveAccount : effectiveAccounts) {
-            if (effectiveAccount.parentAccountRecordId() != null) {
+        for (AccountRecord account : accounts) {
+            if (account.parentAccountRecordId() != null) {
                 childAccountIdsByParentId.put(
-                        effectiveAccount.parentAccountRecordId(),
-                        effectiveAccount.accountRecordId()
+                        account.parentAccountRecordId(),
+                        account.accountRecordId()
                 );
             }
         }
 
         List<TransactionRecord> effectiveTransactions = new ArrayList<>();
+        Set<TransactionRecordId> explicitlyDefinedParentTransactionIds =
+                new HashSet<>();
 
         for (TransactionRecord transaction : transactions) {
+            if (transaction.parentTransactionRecordId() == null) {
+                effectiveTransactions.add(transaction);
+                continue;
+            }
+
             TransactionRecord parentTransaction = parentRecord(
                     transaction.parentTransactionRecordId(),
                     parentTransactionsById,
                     "transaction"
             );
-            effectiveTransactions.add(new TransactionRecord(
-                    transaction.transactionRecordId(),
-                    transaction.inherits(TransactionRecord.Attribute.ORIGIN_ACCOUNT)
-                            ? childAccountId(
-                                    parentTransaction.originAccountId(),
-                                    childAccountIdsByParentId
-                            )
-                            : transaction.originAccountId(),
-                    transaction.inherits(TransactionRecord.Attribute.TARGET_ACCOUNT)
-                            ? childAccountId(
-                                    parentTransaction.targetAccountId(),
-                                    childAccountIdsByParentId
-                            )
-                            : transaction.targetAccountId(),
-                    transaction.inherits(TransactionRecord.Attribute.DATE_TIME)
-                            ? parentTransaction.dateTime()
-                            : transaction.dateTime(),
-                    transaction.inherits(TransactionRecord.Attribute.VALUE)
-                            ? parentTransaction.value()
-                            : transaction.value(),
-                    transaction.parentTransactionRecordId(),
-                    transaction.overriddenAttributes()
+            if (!explicitlyDefinedParentTransactionIds.add(
+                    transaction.parentTransactionRecordId()
+            )) {
+                throw new IllegalStateException(
+                        "A child context cannot override the same transaction twice."
+                );
+            }
+            effectiveTransactions.add(resolveChildTransaction(
+                    transaction,
+                    parentTransaction,
+                    childAccountIdsByParentId
             ));
         }
 
+        for (TransactionRecord parentTransaction : parentTransactions) {
+            if (!explicitlyDefinedParentTransactionIds.contains(
+                    parentTransaction.transactionRecordId()
+            )) {
+                effectiveTransactions.add(projectParentTransaction(
+                        parentTransaction,
+                        childAccountIdsByParentId
+                ));
+            }
+        }
+
         return List.copyOf(effectiveTransactions);
+    }
+
+    private TransactionRecord projectParentTransaction(
+            TransactionRecord parentTransaction,
+            Map<AccountRecordId, AccountRecordId> childAccountIdsByParentId
+    ) {
+        return new TransactionRecord(
+                parentTransaction.transactionRecordId(),
+                childAccountId(
+                        parentTransaction.originAccountId(),
+                        childAccountIdsByParentId
+                ),
+                childAccountId(
+                        parentTransaction.targetAccountId(),
+                        childAccountIdsByParentId
+                ),
+                parentTransaction.dateTime(),
+                parentTransaction.value(),
+                parentTransaction.parentTransactionRecordId(),
+                parentTransaction.overriddenAttributes()
+        );
+    }
+
+    private TransactionRecord resolveChildTransaction(
+            TransactionRecord childTransaction,
+            TransactionRecord parentTransaction,
+            Map<AccountRecordId, AccountRecordId> childAccountIdsByParentId
+    ) {
+        return new TransactionRecord(
+                childTransaction.transactionRecordId(),
+                childTransaction.inherits(TransactionRecord.Attribute.ORIGIN_ACCOUNT)
+                        ? childAccountId(
+                                parentTransaction.originAccountId(),
+                                childAccountIdsByParentId
+                        )
+                        : childTransaction.originAccountId(),
+                childTransaction.inherits(TransactionRecord.Attribute.TARGET_ACCOUNT)
+                        ? childAccountId(
+                                parentTransaction.targetAccountId(),
+                                childAccountIdsByParentId
+                        )
+                        : childTransaction.targetAccountId(),
+                childTransaction.inherits(TransactionRecord.Attribute.DATE_TIME)
+                        ? parentTransaction.dateTime()
+                        : childTransaction.dateTime(),
+                childTransaction.inherits(TransactionRecord.Attribute.VALUE)
+                        ? parentTransaction.value()
+                        : childTransaction.value(),
+                childTransaction.parentTransactionRecordId(),
+                childTransaction.overriddenAttributes()
+        );
     }
 
     private <T, I> T parentRecord(
@@ -258,17 +348,9 @@ public class GetEffectiveFinancialContext {
             return null;
         }
 
-        AccountRecordId childAccountId = childAccountIdsByParentId.get(
+        return childAccountIdsByParentId.getOrDefault(
+                parentAccountId,
                 parentAccountId
         );
-
-        if (childAccountId == null) {
-            throw new IllegalStateException(
-                    "Could not map inherited transaction account into the "
-                            + "financial context."
-            );
-        }
-
-        return childAccountId;
     }
 }

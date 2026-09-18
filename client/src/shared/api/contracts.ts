@@ -29,6 +29,7 @@ export interface FinancialContext {
 
 export interface Account {
   accountId: string;
+  financialContextId: string;
   name: string;
   initialAmount: Decimal;
 }
@@ -59,6 +60,11 @@ export interface CreateFinancialContextInput {
 export interface CreateAccountInput {
   name: string;
   initialAmount: string;
+}
+
+export interface CloneAccountInput {
+  sourceAccountId: string;
+  sourceFinancialContextId: string;
 }
 
 export interface CreateTransactionInput {

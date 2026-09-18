@@ -8,8 +8,8 @@ import {
 } from "./balances";
 
 const accounts: Account[] = [
-  { accountId: "cash", name: "Cash", initialAmount: "100" },
-  { accountId: "savings", name: "Savings", initialAmount: "50" },
+  { accountId: "cash", financialContextId: "context", name: "Cash", initialAmount: "100" },
+  { accountId: "savings", financialContextId: "context", name: "Savings", initialAmount: "50" },
 ];
 
 const transactions: Transaction[] = [

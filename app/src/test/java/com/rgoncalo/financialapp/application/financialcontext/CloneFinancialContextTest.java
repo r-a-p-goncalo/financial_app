@@ -1,6 +1,8 @@
 package com.rgoncalo.financialapp.application.financialcontext;
 
 import com.rgoncalo.financialapp.application.account.AccountRepository;
+import com.rgoncalo.financialapp.application.account.CloneAccount;
+import com.rgoncalo.financialapp.application.account.CloneAccountRequest;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
@@ -12,9 +14,7 @@ import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
 import com.rgoncalo.financialapp.configuration.RepositoryTestConfiguration;
 import com.rgoncalo.financialapp.configuration.RepositoryTestExtension;
 import com.rgoncalo.financialapp.logging.TestLoggingExtension;
-import com.rgoncalo.financialapp.support.RecordingAccountRepository;
 import com.rgoncalo.financialapp.support.RecordingFinancialContextRepository;
-import com.rgoncalo.financialapp.support.RecordingTransactionRepository;
 import com.rgoncalo.financialapp.support.TestUsers;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.user.UserId;
@@ -23,9 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CloneFinancialContextTest {
 
     @TestTemplate
-    void clonesContextAccountsAndTransactionsIntoAnIndependentChild(
+    void projectsParentTransactionsIntoTheChildAndKeepsChildTransactionsLocal(
             RepositoryTestConfiguration configuration
     ) {
         FinancialContextRepository rawContextRepository =
@@ -74,15 +71,8 @@ class CloneFinancialContextTest {
 
         RecordingFinancialContextRepository contextRepository =
                 new RecordingFinancialContextRepository(rawContextRepository);
-        RecordingAccountRepository accountRepository =
-                new RecordingAccountRepository(rawAccountRepository);
-        RecordingTransactionRepository transactionRepository =
-                new RecordingTransactionRepository(rawTransactionRepository);
-
         FinancialContextRecord child = new CloneFinancialContext(
                 contextRepository,
-                accountRepository,
-                transactionRepository,
                 configuration.createFinancialContextPermissionRepository(),
                 TestUsers.authorization(configuration)
         ).execute(new CloneFinancialContextRequest(
@@ -92,8 +82,6 @@ class CloneFinancialContextTest {
         ));
 
         assertEquals(1, contextRepository.saveCalls());
-        assertEquals(2, accountRepository.saveCalls());
-        assertEquals(2, transactionRepository.saveCalls());
 
         assertNotEquals(parentId, child.financialContextId());
         assertEquals(parentId, child.parentFinancialContextId());
@@ -113,43 +101,103 @@ class CloneFinancialContextTest {
                 contextRepository.listChildren(parentId)
         );
 
-        Map<AccountRecordId, AccountRecord> childAccountsByParentId =
-                accountRepository.listAccountsSummary(child.financialContextId())
-                        .stream()
-                        .collect(Collectors.toMap(
-                                AccountRecord::parentAccountRecordId,
-                                Function.identity()
-                        ));
+        assertTrue(rawAccountRepository.listAccountsSummary(
+                child.financialContextId()
+        ).isEmpty());
 
-        assertEquals(2, childAccountsByParentId.size());
-        assertClonedAccount(checking, childAccountsByParentId.get(
-                checking.accountRecordId()), child.financialContextId());
-        assertClonedAccount(savings, childAccountsByParentId.get(
-                savings.accountRecordId()), child.financialContextId());
+        assertTrue(rawTransactionRepository.listTransactionsSummary(
+                child.financialContextId()
+        ).isEmpty());
 
-        Map<TransactionRecordId, TransactionRecord> childTransactionsByParentId =
-                transactionRepository.listTransactionsSummary(
-                                child.financialContextId()
-                        )
-                        .stream()
-                        .collect(Collectors.toMap(
-                                TransactionRecord::parentTransactionRecordId,
-                                Function.identity()
-                        ));
+        TransactionRecord laterIncome = transaction(
+                "later-income", parentId, null, checking.accountRecordId(),
+                "2026-08-23T10:00:00Z", "100.00"
+        );
+        rawTransactionRepository.save(laterIncome);
+        TransactionRecord overriddenIncome = new TransactionRecord(
+                new TransactionRecordId(
+                        "adjusted-income", child.financialContextId()
+                ),
+                null,
+                null,
+                income.dateTime(),
+                new MonetaryValue(new BigDecimal("850.00")),
+                income.transactionRecordId(),
+                TransactionRecord.Attribute.VALUE.mask()
+        );
+        rawTransactionRepository.save(overriddenIncome);
+        AccountRecord childSavings = new CloneAccount(
+                rawAccountRepository,
+                rawContextRepository,
+                rawTransactionRepository,
+                TestUsers.authorization(configuration)
+        ).execute(new CloneAccountRequest(
+                savings.accountRecordId(),
+                child.financialContextId(),
+                userId
+        ));
+        TransactionRecord childExpense = transaction(
+                "child-expense", child.financialContextId(),
+                childSavings.accountRecordId(),
+                null,
+                "2026-08-24T10:00:00Z", "25.00"
+        );
+        rawTransactionRepository.save(childExpense);
 
-        assertEquals(2, childTransactionsByParentId.size());
-        assertClonedTransaction(
+        EffectiveFinancialContext effectiveChild =
+                new GetEffectiveFinancialContext(
+                        rawContextRepository,
+                        rawAccountRepository,
+                        rawTransactionRepository,
+                        TestUsers.authorization(configuration)
+                ).execute(new GetEffectiveFinancialContextRequest(
+                        child.financialContextId(), userId
+                )).orElseThrow();
+
+        assertEquals(4, effectiveChild.transactions().size());
+        assertEquals(childSavings.accountRecordId(),
+                effectiveChild.accounts().get(0).accountRecordId());
+        assertEquals(checking.accountRecordId(),
+                effectiveChild.accounts().get(1).accountRecordId());
+        assertEquals(overriddenIncome.transactionRecordId(),
+                effectiveChild.transactions().get(0).transactionRecordId());
+        assertEquals(childExpense.transactionRecordId(),
+                effectiveChild.transactions().get(1).transactionRecordId());
+        assertFalse(effectiveChild.transactions().stream().anyMatch(
+                transaction -> transaction.transactionRecordId().equals(
+                        income.transactionRecordId()
+                )
+        ));
+        assertProjectedTransaction(
                 transfer,
-                childTransactionsByParentId.get(transfer.transactionRecordId()),
-                child.financialContextId(),
-                childAccountsByParentId
+                effectiveTransaction(effectiveChild, transfer.transactionRecordId()),
+                checking.accountRecordId(),
+                childSavings.accountRecordId()
         );
-        assertClonedTransaction(
-                income,
-                childTransactionsByParentId.get(income.transactionRecordId()),
-                child.financialContextId(),
-                childAccountsByParentId
+        assertEquals(overriddenIncome.transactionRecordId(),
+                effectiveTransaction(
+                        effectiveChild,
+                        overriddenIncome.transactionRecordId()
+                ).transactionRecordId());
+        assertEquals(checking.accountRecordId(),
+                effectiveTransaction(
+                        effectiveChild,
+                        overriddenIncome.transactionRecordId()
+                ).targetAccountId());
+        assertEquals(new MonetaryValue(new BigDecimal("850.00")),
+                effectiveTransaction(
+                        effectiveChild,
+                        overriddenIncome.transactionRecordId()
+                ).value());
+        assertProjectedTransaction(
+                laterIncome,
+                effectiveTransaction(effectiveChild, laterIncome.transactionRecordId()),
+                null,
+                checking.accountRecordId()
         );
+        assertEquals(childExpense, effectiveTransaction(
+                effectiveChild, childExpense.transactionRecordId()
+        ));
     }
 
     @TestTemplate
@@ -166,8 +214,6 @@ class CloneFinancialContextTest {
 
         FinancialContextRecord child = new CloneFinancialContext(
                 contextRepository,
-                configuration.createAccountRepository(),
-                configuration.createTransactionRepository(),
                 configuration.createFinancialContextPermissionRepository(),
                 TestUsers.authorization(configuration)
         ).execute(new CloneFinancialContextRequest(parentId, null, userId));
@@ -186,19 +232,8 @@ class CloneFinancialContextTest {
                 new RecordingFinancialContextRepository(
                         configuration.createFinancialContextRepository()
                 );
-        RecordingAccountRepository accountRepository =
-                new RecordingAccountRepository(
-                        configuration.createAccountRepository()
-                );
-        RecordingTransactionRepository transactionRepository =
-                new RecordingTransactionRepository(
-                        configuration.createTransactionRepository()
-                );
-
         CloneFinancialContext useCase = new CloneFinancialContext(
                 contextRepository,
-                accountRepository,
-                transactionRepository,
                 configuration.createFinancialContextPermissionRepository(),
                 TestUsers.authorization(configuration)
         );
@@ -214,8 +249,6 @@ class CloneFinancialContextTest {
         assertEquals("Parent financial context does not exist.",
                 exception.getMessage());
         assertEquals(0, contextRepository.saveCalls());
-        assertEquals(0, accountRepository.saveCalls());
-        assertEquals(0, transactionRepository.saveCalls());
     }
 
     private AccountRecord account(
@@ -248,55 +281,30 @@ class CloneFinancialContextTest {
         );
     }
 
-    private void assertClonedAccount(
-            AccountRecord parent,
-            AccountRecord child,
-            FinancialContextId childContextId
+    private TransactionRecord effectiveTransaction(
+            EffectiveFinancialContext context,
+            TransactionRecordId transactionId
     ) {
-        assertNotNull(child);
-        assertNotEquals(parent.accountRecordId(), child.accountRecordId());
-        assertEquals(childContextId, child.accountRecordId().financialContextId());
-        assertEquals(parent.accountRecordId(), child.parentAccountRecordId());
-        assertEquals(parent.name(), child.name());
-        assertEquals(parent.initialAmount(), child.initialAmount());
-        assertEquals(0, child.overriddenAttributes());
-        assertTrue(child.inherits(AccountRecord.Attribute.NAME));
-        assertTrue(child.inherits(AccountRecord.Attribute.INITIAL_AMOUNT));
+        return context.transactions().stream()
+                .filter(transaction -> transaction.transactionRecordId()
+                        .equals(transactionId))
+                .findFirst()
+                .orElseThrow();
     }
 
-    private void assertClonedTransaction(
+    private void assertProjectedTransaction(
             TransactionRecord parent,
             TransactionRecord child,
-            FinancialContextId childContextId,
-            Map<AccountRecordId, AccountRecord> childAccountsByParentId
+            AccountRecordId expectedOriginAccountId,
+            AccountRecordId expectedTargetAccountId
     ) {
         assertNotNull(child);
-        assertNotEquals(parent.transactionRecordId(), child.transactionRecordId());
-        assertEquals(childContextId,
-                child.transactionRecordId().financialContextId());
         assertEquals(parent.transactionRecordId(),
-                child.parentTransactionRecordId());
-        assertEquals(childAccountId(parent.originAccountId(),
-                        childAccountsByParentId),
-                child.originAccountId());
-        assertEquals(childAccountId(parent.targetAccountId(),
-                        childAccountsByParentId),
-                child.targetAccountId());
+                child.transactionRecordId());
+        assertEquals(expectedOriginAccountId, child.originAccountId());
+        assertEquals(expectedTargetAccountId, child.targetAccountId());
         assertEquals(parent.dateTime(), child.dateTime());
         assertEquals(parent.value(), child.value());
-        assertEquals(0, child.overriddenAttributes());
-        assertTrue(child.inherits(TransactionRecord.Attribute.ORIGIN_ACCOUNT));
-        assertTrue(child.inherits(TransactionRecord.Attribute.TARGET_ACCOUNT));
-        assertTrue(child.inherits(TransactionRecord.Attribute.DATE_TIME));
-        assertTrue(child.inherits(TransactionRecord.Attribute.VALUE));
     }
 
-    private AccountRecordId childAccountId(
-            AccountRecordId parentAccountId,
-            Map<AccountRecordId, AccountRecord> childAccountsByParentId
-    ) {
-        return parentAccountId == null
-                ? null
-                : childAccountsByParentId.get(parentAccountId).accountRecordId();
-    }
 }

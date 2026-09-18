@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { errorMessage } from "../../../shared/api/api-error";
 import { asDecimal, formatAmount } from "../../../shared/lib/format";
 import { TransactionDialog } from "../components/TransactionDialog";
@@ -13,6 +13,7 @@ function QueryFailure({ error }: { error: unknown }) {
 export function AccountDetailsPage() {
   const { financialContextId, accountId } = useParams();
   const details = useFinancialContext(financialContextId);
+  const navigate = useNavigate();
 
   if (details.isPending) {
     return <section className="panel loading-panel" aria-live="polite">Loading account…</section>;
@@ -67,7 +68,17 @@ export function AccountDetailsPage() {
         <section className="panel transaction-action-panel" aria-label="Add a transaction for this account">
           <h3>Record activity</h3>
           <p className="field-hint">Income and expense start with this account selected. Transfers can move money to or from another account.</p>
-          <TransactionDialog financialContextId={financialContext.financialContextId} accounts={accounts} defaultAccountId={account.accountId} />
+          <TransactionDialog
+            financialContextId={financialContext.financialContextId}
+            accounts={accounts}
+            defaultAccountId={account.accountId}
+            onTransactionSaved={(clonedAccountIds) => {
+              const clonedAccountId = clonedAccountIds.get(account.accountId);
+              if (clonedAccountId) {
+                navigate(`/contexts/${financialContext.financialContextId}/accounts/${clonedAccountId}`, { replace: true });
+              }
+            }}
+          />
         </section>
       </section>
     </div>

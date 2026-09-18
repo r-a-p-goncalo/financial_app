@@ -104,10 +104,17 @@ TransactionRecord
 transaction explicit, which is also the authorization boundary for that
 record.
 
-`FinancialContextRecord`, `AccountRecord`, and `TransactionRecord` support
-lazy cloning. A cloned record retains a link to its parent record and a bit
-mask describing which attributes the child overrides. Effective values are
-resolved without altering the stored rows.
+`FinancialContextRecord` and `AccountRecord` support lazy cloning. Cloning
+persists only the child context and its ownership; no accounts or transactions
+are copied. Effective-context resolution returns explicitly stored child
+accounts and transactions first, then appends only parent objects that the
+child has not explicitly defined. An inherited account retains its source
+context ID in the response, making it virtual from the child's perspective.
+Before the client writes a transaction using it, the client explicitly creates
+a real child account copy and uses its returned child identity in the
+transaction request. This makes a clone a live branch: accounts and
+transactions subsequently added to a parent are visible to the child without
+writing copies into it.
 
 SQLite repositories map these records explicitly to the database schema.
 
@@ -191,8 +198,8 @@ the financial context containing it.
 Each context membership has one of the following permissions:
 
 ```text
-READ  → view the context, its accounts, and its transactions
-WRITE → READ plus create accounts and transactions, and clone the context
+READ  → view the context, its accounts, and its transactions, and clone it
+WRITE → READ plus create accounts, child account copies, and transactions
 OWNER → WRITE plus grant or change other users' context permissions
 ```
 
@@ -202,7 +209,7 @@ An access failure raises `AccessDeniedException` before the application use
 case reads or writes the protected financial data.
 
 Creating a financial context grants its creator `OWNER`. Cloning a context
-requires `WRITE` on the parent and grants `OWNER` on the new child. Changing a
+requires `READ` on the parent and grants `OWNER` on the new child. Changing a
 member's role cannot demote the final owner of a context.
 
 Cloned contexts remain linked to their parent data. Resolving the effective
@@ -314,14 +321,19 @@ GET  /api/v1/financial-contexts/{financialContextId}/children
 POST /api/v1/financial-contexts/{financialContextId}/clones
 GET  /api/v1/financial-contexts/{financialContextId}/accounts
 POST /api/v1/financial-contexts/{financialContextId}/accounts
+POST /api/v1/financial-contexts/{financialContextId}/accounts/clones
 GET  /api/v1/financial-contexts/{financialContextId}/transactions
 POST /api/v1/financial-contexts/{financialContextId}/transactions
 ```
 
 Loading a financial context returns its effective context, accounts, and
-transactions, including values inherited from a parent clone. User responses
-exclude password hashes and all client requests derive the acting user from
-the authenticated session.
+transactions. A clone receives child-local objects first, followed by the
+current unshadowed objects from its parent. Each account response includes the
+context that owns it, allowing the client to recognize virtual inherited
+accounts. Before creating a transaction with a virtual account, the client
+creates a real child account through the account-clone endpoint and uses that
+returned ID. User responses exclude password hashes and all client requests
+derive the acting user from the authenticated session.
 
 ---
 

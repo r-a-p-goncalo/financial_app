@@ -24,12 +24,24 @@ describe("API client", () => {
       name: "Current account",
       initialAmount: "12.50",
     });
+    await client.financialContexts.cloneAccount("ctx-1", {
+      sourceAccountId: "account-1",
+      sourceFinancialContextId: "parent-ctx",
+    });
 
     expect(calls).toEqual([
       {
         method: "POST",
         path: "/financial-contexts/ctx-1/accounts",
         body: { name: "Current account", initialAmount: "12.50" },
+      },
+      {
+        method: "POST",
+        path: "/financial-contexts/ctx-1/accounts/clones",
+        body: {
+          sourceAccountId: "account-1",
+          sourceFinancialContextId: "parent-ctx",
+        },
       },
     ]);
   });

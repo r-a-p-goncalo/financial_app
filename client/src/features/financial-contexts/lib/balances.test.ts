@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Account, Transaction } from "../../../shared/api/contracts";
-import { accountBalances, contextTotal, transactionRunningTotals, transactionsNewestFirst } from "./balances";
+import {
+  accountBalances,
+  accountTransactionRunningTotals,
+  contextTotal,
+  transactionsNewestFirst,
+} from "./balances";
 
 const accounts: Account[] = [
   { accountId: "cash", name: "Cash", initialAmount: "100" },
@@ -22,15 +27,18 @@ describe("financial context balances", () => {
     expect(contextTotal(accounts, transactions).toString()).toBe("180");
   });
 
-  it("records a total after each transaction without changing the input order", () => {
-    const totals = transactionRunningTotals(accounts, transactions);
-
-    expect(totals.get("income")?.toString()).toBe("190");
-    expect(totals.get("transfer")?.toString()).toBe("190");
-    expect(totals.get("expense")?.toString()).toBe("180");
+  it("orders transaction history without changing the input order", () => {
     expect(transactionsNewestFirst(transactions).map((transaction) => transaction.transactionId))
       .toEqual(["expense", "transfer", "income"]);
     expect(transactions.map((transaction) => transaction.transactionId))
       .toEqual(["income", "transfer", "expense"]);
+  });
+
+  it("records a running total only for the selected account", () => {
+    const totals = accountTransactionRunningTotals(accounts[1], transactions);
+
+    expect(totals.has("income")).toBe(false);
+    expect(totals.get("transfer")?.toString()).toBe("75");
+    expect(totals.get("expense")?.toString()).toBe("65");
   });
 });

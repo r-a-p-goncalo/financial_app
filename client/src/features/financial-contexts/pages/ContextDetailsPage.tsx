@@ -3,7 +3,7 @@ import { errorMessage } from "../../../shared/api/api-error";
 import { formatAmount } from "../../../shared/lib/format";
 import { AccountBalances } from "../components/AccountBalances";
 import { AccountForm } from "../components/AccountForm";
-import { TransactionForm } from "../components/TransactionForm";
+import { TransactionDialog } from "../components/TransactionDialog";
 import { TransactionList } from "../components/TransactionList";
 import { contextTotal } from "../lib/balances";
 import { useCloneFinancialContext, useFinancialContext } from "../queries";
@@ -62,7 +62,7 @@ export function ContextDetailsPage() {
       <section className="content-grid" aria-label="Accounts">
         <section className="panel main-panel" aria-labelledby="accounts-heading">
           <div className="section-heading"><div><p className="eyebrow">Accounts</p><h2 id="accounts-heading">Balances</h2></div></div>
-          <AccountBalances accounts={accounts} transactions={transactions} />
+          <AccountBalances accounts={accounts} transactions={transactions} financialContextId={financialContext.financialContextId} />
         </section>
         <section className="panel" aria-label="Add an account"><AccountForm financialContextId={financialContext.financialContextId} /></section>
       </section>
@@ -72,7 +72,11 @@ export function ContextDetailsPage() {
           <div className="section-heading"><div><p className="eyebrow">Activity</p><h2 id="transactions-heading">Transactions</h2></div></div>
           <TransactionList accounts={accounts} transactions={transactions} />
         </section>
-        <section className="panel" aria-label="Record a transaction"><TransactionForm financialContextId={financialContext.financialContextId} accounts={accounts} /></section>
+        <section className="panel transaction-action-panel" aria-label="Add a transaction">
+          <h3>Record activity</h3>
+          <p className="field-hint">Choose income, expense, or a transfer between accounts.</p>
+          <TransactionDialog financialContextId={financialContext.financialContextId} accounts={accounts} />
+        </section>
       </section>
     </div>
   );

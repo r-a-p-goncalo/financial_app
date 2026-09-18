@@ -47,12 +47,6 @@ export function formatDateTime(instant: string): string {
   }).format(date);
 }
 
-export function currentDateTimeInputValue(): string {
-  const now = new Date();
-  const adjusted = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
-  return adjusted.toISOString().slice(0, 16);
-}
-
 export function dateTimeInputToInstant(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

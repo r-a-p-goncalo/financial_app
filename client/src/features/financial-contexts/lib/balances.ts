@@ -29,25 +29,21 @@ export function transactionsNewestFirst(transactions: Transaction[]) {
   });
 }
 
-/**
- * Returns the context-wide total immediately after each transaction. Internal
- * account transfers leave the total unchanged; only external money changes it.
- */
-export function transactionRunningTotals(accounts: Account[], transactions: Transaction[]) {
-  let total = accounts.reduce((sum, account) => sum.plus(asDecimal(account.initialAmount)), asDecimal(0));
+/** Returns the account balance immediately after each transaction affecting it. */
+export function accountTransactionRunningTotals(account: Account, transactions: Transaction[]) {
+  let total = asDecimal(account.initialAmount);
   const totals = new Map<string, ReturnType<typeof asDecimal>>();
-  const chronologicalTransactions = [...transactions].sort((left, right) => {
-    const dateComparison = left.dateTime.localeCompare(right.dateTime);
-    return dateComparison || left.transactionId.localeCompare(right.transactionId);
-  });
+  const chronologicalTransactions = transactions
+    .filter((transaction) => transaction.originAccountId === account.accountId || transaction.targetAccountId === account.accountId)
+    .sort((left, right) => {
+      const dateComparison = left.dateTime.localeCompare(right.dateTime);
+      return dateComparison || left.transactionId.localeCompare(right.transactionId);
+    });
 
   for (const transaction of chronologicalTransactions) {
     const value = asDecimal(transaction.value);
-    if (!transaction.originAccountId && transaction.targetAccountId) {
-      total = total.plus(value);
-    } else if (transaction.originAccountId && !transaction.targetAccountId) {
-      total = total.minus(value);
-    }
+    if (transaction.originAccountId === account.accountId) total = total.minus(value);
+    if (transaction.targetAccountId === account.accountId) total = total.plus(value);
     totals.set(transaction.transactionId, total);
   }
 

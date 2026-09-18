@@ -55,6 +55,7 @@ label { display: grid; gap: 0.4rem; color: #3c4d58; font-size: 0.875rem; font-we
 .stack-form { display: grid; gap: 0.9rem; }
 .compact-form { align-content: start; }
 .field-hint { margin: -0.3rem 0 0; color: #74808a; font-size: 0.8rem; line-height: 1.45; }
+.label-optional { color: #74808a; font-size: 0.8rem; font-weight: 500; }
 .form-error { margin: 0; color: #a33636; font-size: 0.875rem; line-height: 1.4; }
 .form-success { margin: 0; color: #1c6957; font-size: 0.875rem; line-height: 1.4; }
 
@@ -76,6 +77,8 @@ label { display: grid; gap: 0.4rem; color: #3c4d58; font-size: 0.875rem; font-we
 .hero-amount { margin: 0; font-size: clamp(2rem, 4vw, 3.25rem); font-variant-numeric: tabular-nums; font-weight: 750; letter-spacing: -0.05em; }
 .hero-actions { display: grid; justify-items: end; gap: 0.75rem; }
 .hero-error { max-width: 260px; color: #ffd3d3; text-align: right; }
+.account-amounts { display: grid; gap: 0.25rem; color: #d3e7df; text-align: right; }
+.account-amounts strong { color: #fff; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 .context-hero .button-quiet { border-color: #5d8379; background: transparent; color: #fff; }
 .context-hero .button-quiet:hover:not(:disabled) { background: #315d53; }
 .content-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(270px, 0.8fr); gap: 1rem; align-items: start; }
@@ -87,8 +90,25 @@ table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 th, td { padding: 0.8rem 0.55rem; border-bottom: 1px solid #edf0f2; text-align: left; }
 th { color: #64737d; font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; }
 tbody tr:last-child td { border-bottom: 0; }
+.table-link { color: #214f44; font-weight: 750; text-decoration: none; }
+.table-link:hover { text-decoration: underline; }
 .amount { color: #1f6d5a; font-variant-numeric: tabular-nums; font-weight: 750; }
 .negative { color: #b23d3d; font-variant-numeric: tabular-nums; font-weight: 750; }
+
+.transaction-action-panel { display: grid; align-content: start; gap: 0.9rem; }
+.transaction-action-panel .field-hint { margin: 0; }
+.transaction-dialog { width: min(100% - 2rem, 520px); max-height: min(700px, calc(100vh - 2rem)); padding: 1.5rem; border: 1px solid #dfe5e8; border-radius: 14px; color: #17222c; box-shadow: 0 24px 64px rgb(23 34 44 / 22%); }
+.transaction-dialog::backdrop { background: rgb(23 34 44 / 48%); }
+.dialog-header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.dialog-close { display: grid; width: 36px; height: 36px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: #edf3f0; color: #345348; font-size: 1.5rem; line-height: 1; }
+.dialog-close:hover { background: #d9eae3; }
+.transaction-type-grid { display: grid; gap: 0.75rem; }
+.transaction-type-option { display: grid; gap: 0.35rem; padding: 1rem; border: 1px solid #cfdbd7; border-radius: 10px; background: #fff; color: #174c40; text-align: left; }
+.transaction-type-option:hover { border-color: #6e978b; background: #f5faf8; }
+.transaction-type-option span { font-weight: 750; }
+.transaction-type-option small { color: #62707d; font-size: 0.825rem; line-height: 1.4; }
+.transaction-form { min-width: 0; }
+.dialog-actions { display: flex; justify-content: end; gap: 0.65rem; margin-top: 0.25rem; }
 
 .auth-page { display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; background: radial-gradient(circle at 10% 10%, #e1f0ea 0, transparent 40%), #f5f7f8; }
 .auth-card { width: min(100%, 420px); padding: 2.25rem; border: 1px solid #dfe5e8; border-radius: 15px; background: #fff; box-shadow: 0 18px 48px rgb(23 34 44 / 10%); }
@@ -115,6 +135,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .context-hero { padding: 1.4rem; }
   .hero-actions { justify-items: start; }
   .hero-error { text-align: left; }
+  .account-amounts { text-align: left; }
 }
 
 @media (max-width: 440px) {

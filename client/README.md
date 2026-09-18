@@ -48,8 +48,10 @@ The client implements the REST API's currently available part of the product
 design: authenticated users can create independent financial contexts (or
 clone one for a scenario), add accounts, and record dated transfers. A
 transaction may have one external side, which represents income or an expense.
-The account table and the transaction running total are derived from the same
-decimal-safe financial rules.
+The account table and each account's transaction running balance are derived
+from the same decimal-safe financial rules. Transactions are recorded through
+an income, expense, or transfer workflow; leaving the optional date empty uses
+the date and time at which the transaction is saved.
 
 The broader product design also calls for tags, category analysis, dated
 simulations, recurring rules, currency units, and shared-context permissions.

@@ -21,3 +21,4 @@ data/*.db-wal
 data/financial-app.log
 data/financial-app.log
 data/financial-app.log
+/client/.vite

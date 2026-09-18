@@ -13,6 +13,19 @@ export function asDecimal(value: Decimal): DecimalJs {
   }
 }
 
+export function isValidDecimal(value: string): boolean {
+  if (!value.trim()) return false;
+  try {
+    return new DecimalJs(value).isFinite();
+  } catch {
+    return false;
+  }
+}
+
+export function isPositiveDecimal(value: string): boolean {
+  return isValidDecimal(value) && new DecimalJs(value).greaterThan(0);
+}
+
 /** Currency is not yet modelled by the API, so this intentionally shows a neutral amount. */
 export function formatAmount(value: Decimal | DecimalJs): string {
   const decimal = value instanceof DecimalJs ? value : asDecimal(value);

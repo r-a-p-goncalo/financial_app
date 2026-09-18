@@ -25,8 +25,12 @@ function AuthPage({ mode }: AuthPageProps) {
     event.preventDefault();
     if (!name.trim() || !password) return;
 
-    await mutation.mutateAsync({ name: name.trim(), password });
-    navigate("/contexts", { replace: true });
+    try {
+      await mutation.mutateAsync({ name: name.trim(), password });
+      navigate("/contexts", { replace: true });
+    } catch {
+      // Mutation state provides the server error.
+    }
   }
 
   return (

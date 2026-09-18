@@ -14,6 +14,7 @@ button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: wait; opacity: 0.65; }
 a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid #247360; outline-offset: 3px; }
 
 h1, h2, h3, p { margin-top: 0; }
 h1 { max-width: 760px; margin-bottom: 0.5rem; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -0.045em; line-height: 1.08; }
@@ -55,6 +56,7 @@ label { display: grid; gap: 0.4rem; color: #3c4d58; font-size: 0.875rem; font-we
 .compact-form { align-content: start; }
 .field-hint { margin: -0.3rem 0 0; color: #74808a; font-size: 0.8rem; line-height: 1.45; }
 .form-error { margin: 0; color: #a33636; font-size: 0.875rem; line-height: 1.4; }
+.form-success { margin: 0; color: #1c6957; font-size: 0.875rem; line-height: 1.4; }
 
 .panel { padding: 1.4rem; border: 1px solid #dfe5e8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgb(23 34 44 / 3%); }
 .loading-panel { color: #62707d; }
@@ -72,6 +74,8 @@ label { display: grid; gap: 0.4rem; color: #3c4d58; font-size: 0.875rem; font-we
 .context-hero .muted { color: #d3e7df; }
 .context-hero h1 { margin-bottom: 0.5rem; }
 .hero-amount { margin: 0; font-size: clamp(2rem, 4vw, 3.25rem); font-variant-numeric: tabular-nums; font-weight: 750; letter-spacing: -0.05em; }
+.hero-actions { display: grid; justify-items: end; gap: 0.75rem; }
+.hero-error { max-width: 260px; color: #ffd3d3; text-align: right; }
 .context-hero .button-quiet { border-color: #5d8379; background: transparent; color: #fff; }
 .context-hero .button-quiet:hover:not(:disabled) { background: #315d53; }
 .content-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(270px, 0.8fr); gap: 1rem; align-items: start; }
@@ -94,6 +98,10 @@ tbody tr:last-child td { border-bottom: 0; }
 .auth-switch a { color: #1c6957; font-weight: 700; }
 .centered-status, .route-error { display: grid; min-height: 55vh; place-content: center; padding: 2rem; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto; transition-duration: 0.01ms !important; }
+}
+
 @media (max-width: 760px) {
   .content-width { width: min(100% - 2rem, 1180px); }
   .page-content { padding-block: 2rem 3rem; }
@@ -105,6 +113,8 @@ tbody tr:last-child td { border-bottom: 0; }
   .inline-form .button { flex: 1 0 auto; }
   .content-grid { grid-template-columns: 1fr; }
   .context-hero { padding: 1.4rem; }
+  .hero-actions { justify-items: start; }
+  .hero-error { text-align: left; }
 }
 
 @media (max-width: 440px) {

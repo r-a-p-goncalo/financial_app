@@ -28,13 +28,33 @@ fall back to `index.html` for client-side routes such as `/contexts/:id`.
 - `src/shared/api/api-client.ts` contains platform-independent operations.
 - `src/shared/api/browser-transport.ts` adds the browser session, cookie, and
   CSRF behavior required by the current Spring Security setup.
-- `src/features` owns screens, mutations, and query invalidation by product
-  feature.
+- `src/features` owns pages, UI components, mutations, and query invalidation
+  by product feature.
+- `src/features/financial-contexts/pages` coordinates routing, loading and
+  error states; `components` renders the account and transaction workflows;
+  `lib/balances.ts` holds the tested, framework-independent financial
+  calculations.
+- `src/shared/lib/format.ts` owns decimal validation and presentation so the
+  UI never performs money calculations with JavaScript floating-point values.
 
 When the API publishes an OpenAPI contract, replace `contracts.ts` and the
 operation layer with generated code without changing feature screens. A future
 React Native client can reuse those generated types and operations but supply a
 native transport and mobile authentication flow.
+
+## Current product scope
+
+The client implements the REST API's currently available part of the product
+design: authenticated users can create independent financial contexts (or
+clone one for a scenario), add accounts, and record dated transfers. A
+transaction may have one external side, which represents income or an expense.
+The account table and the transaction running total are derived from the same
+decimal-safe financial rules.
+
+The broader product design also calls for tags, category analysis, dated
+simulations, recurring rules, currency units, and shared-context permissions.
+Those are deliberately not represented in the client until the REST API makes
+the corresponding domain data and operations available.
 
 ## Validation
 

@@ -8,8 +8,12 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigate = useNavigate();
 
   async function handleLogout() {
-    await logout.mutateAsync();
-    navigate("/login", { replace: true });
+    try {
+      await logout.mutateAsync();
+      navigate("/login", { replace: true });
+    } catch {
+      // Mutation state provides the server error.
+    }
   }
 
   return (
@@ -22,6 +26,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <nav className="topbar-actions" aria-label="Primary navigation">
           <NavLink className="nav-link" to="/contexts">Contexts</NavLink>
           <span className="user-name">{session.data?.name}</span>
+          {logout.isError && <span className="form-error" role="alert">Could not sign out.</span>}
           <button className="button button-quiet" type="button" onClick={handleLogout} disabled={logout.isPending}>
             {logout.isPending ? "Signing out…" : "Sign out"}
           </button>

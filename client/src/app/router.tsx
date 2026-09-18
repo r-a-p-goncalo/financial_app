@@ -2,7 +2,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ProtectedLayout, RouteErrorBoundary } from "./route-layouts";
 import { LoginPage, RegisterPage } from "../features/auth/auth-pages";
 import { PublicOnly } from "../features/auth/route-guards";
-import { ContextDetailsPage, ContextsPage } from "../features/financial-contexts/context-pages";
+import { ContextDetailsPage } from "../features/financial-contexts/pages/ContextDetailsPage";
+import { ContextsPage } from "../features/financial-contexts/pages/ContextsPage";
 
 export const router = createBrowserRouter([
   {

@@ -12,12 +12,12 @@ This document describes the data we expect to have without making assumptions ab
     password : str
 
 
-### Role: 
+### Role:
 
     one of [READ, REFERENCE, WRITE, OWN]
 
 ### UserPermission
-    
+
     "represents an access a user has to a financial object"
 
     user : User
@@ -35,9 +35,9 @@ This document describes the data we expect to have without making assumptions ab
     "represents common logic accross all other defined objects"
 
 	notes : Collection<str>
-	
+
 	date_of_creation : DateTime
-	
+
 	id : str
 
     creator : User
@@ -50,7 +50,7 @@ This document describes the data we expect to have without making assumptions ab
 
     deep_copy() : FinancialObject, returns an whole copy of this financial object, changes to the original won't affect it. This includes dependent objects
 
-    loose_copy() : FinancialObject, returns a loose copy of this financial object, changes to the original will reflect on it, except for the manual changes done in the copy, which will be prioritized over changes done to the original 
+    loose_copy() : FinancialObject, returns a loose copy of this financial object, changes to the original will reflect on it, except for the manual changes done in the copy, which will be prioritized over changes done to the original
 
 # Context
 
@@ -86,32 +86,32 @@ This document describes the data we expect to have without making assumptions ab
 ### Entity  (extends Financial Object)
 
 	"represents an entity that has accounts, may owe another entity money, and so on"
-	
+
 
 ### Company (extends Entity)
 
     "represents a company, which may have multiple establishments and more"
-	
+
 ### Group (extends Entity)
 
     "describres a group, such as a family"
-	
+
 ### Individual (extends Entity)
 
     "describes a single individual"
-	
+
 
 # Money
 
-	
+
 ### Unit (extends Financial Object)
 
     "describes a monetary unit, such as euro"
-	
+
 ### UnitConversion (extends Financial Object)
 
     "for two different units, their conversion value, for each different day"
-	
+
 ### MonetaryValue (extends Financial Object)
 
     "represents a static monetary value, such as one found in a transaction"
@@ -125,7 +125,7 @@ This document describes the data we expect to have without making assumptions ab
 ### DynamicValue (extends Financial Object)
 
     "represents a changeable value, such as the value of any property"
-	
+
 	get_value() : Collection<Pair<Date, MonetaryValue>>, value in unit for each different day
 
     get_value(date : Date) : MonetaryValue, value for specific date
@@ -133,7 +133,7 @@ This document describes the data we expect to have without making assumptions ab
 ### DiscreteDynamicValue(extends Value)
 
     "represents a value that has registered its initial value and changes at dates to it, without using any specific rule to calculate its changes"
-	
+
 
 # Property
 
@@ -175,7 +175,7 @@ This document describes the data we expect to have without making assumptions ab
 
     get_value() : DynamicValue
 
-    
+
 
 # Accounts
 
@@ -190,7 +190,7 @@ This document describes the data we expect to have without making assumptions ab
 
     type : One of [owns, manages], owning is for the owner, managing is for the bank or other entities that may use it
 
-	
+
 ### Account (extends Financial Object)
 
     "represents an account"
@@ -210,7 +210,7 @@ This document describes the data we expect to have without making assumptions ab
 
     accounts : Collection<Account>
 
-	
+
 # Transactions
 
 
@@ -240,7 +240,7 @@ This document describes the data we expect to have without making assumptions ab
 ### Composite Transaction (extends Transaction)
 
     "represents a group of transactions"
-	
+
     transactions : Collection<Transaction>
 
     unidentified_value : MonetaryValue
@@ -248,8 +248,8 @@ This document describes the data we expect to have without making assumptions ab
     ----------------------------------------
 
     get_value() : MonetaryValue, the sum of the values of the transactions and the unidentified value
-    
-    
+
+
 
 
 ### Tag (extends FinancialObject)
@@ -277,7 +277,7 @@ This document describes the data we expect to have without making assumptions ab
 
     transaction_in_date(context : UserContext, date : Date) : Transaction
     delete_created_transactions()
-	
+
 
 ### Filter (extends FinancialObject)
 

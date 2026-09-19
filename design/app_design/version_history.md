@@ -56,6 +56,3 @@ The application will be implemented in Java.
 The database will be implemented in sqlite.
 
 # App Version 0.2
-
-
-

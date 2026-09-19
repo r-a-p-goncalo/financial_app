@@ -1,6 +1,6 @@
 
 
-# Personas 
+# Personas
 
 ## Accountant
 
@@ -8,7 +8,7 @@ An accountant
 
 ## Common Individual (personal finances manager)
 
-An individual managing his finances, without a lot of expertise in finances, only wants a simple UI and 
+An individual managing his finances, without a lot of expertise in finances, only wants a simple UI and
 
 ## Families wanting to manage finances
 

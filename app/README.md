@@ -134,13 +134,13 @@ The layer is divided by domain concern:
 ```text
 application
 ├── account
-│   ├── 
+│   ├──
 ├── financialcontext
-│   ├── 
+│   ├──
 ├── transaction
-│   ├── 
+│   ├──
 ├── user
-│   ├── 
+│   ├──
 └── security
     └──
 ```

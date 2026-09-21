@@ -461,9 +461,22 @@ records every time it runs, so use it only for disposable data.
 
 ## Logging
 
-The application writes logs to `data/financial-app.log`, next to its SQLite
-database. The log is cleared when the application starts and is not written to
-the console.
+The application writes structured application output to the console. A
+container runtime can collect that output and forward it to its log service;
+the SQLite data directory is reserved for durable application data rather than
+logs.
+
+---
+
+## Production package
+
+The repository includes a Docker production package that runs the Spring Boot
+application behind a static-client reverse proxy. The database path, browser
+origin, and secure cookie behavior are supplied as environment variables, so
+the runtime data directory stays outside the deployable image.
+
+See [`../deploy/README.md`](../deploy/README.md) for the Compose deployment,
+TLS boundary, persistent-storage, backup, and health-check requirements.
 
 ---
 

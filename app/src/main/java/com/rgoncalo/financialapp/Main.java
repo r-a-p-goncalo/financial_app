@@ -10,13 +10,13 @@ import com.rgoncalo.financialapp.application.user.UserRepository;
 import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
 import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
 import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
-import com.rgoncalo.financialapp.logging.ApplicationLogging;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import java.sql.Connection;
 import java.nio.file.Path;
+import java.sql.Connection;
 
 @SpringBootApplication
 public class Main {
@@ -24,13 +24,15 @@ public class Main {
     private static final Path DEFAULT_DATABASE_FILE =
             Path.of("data", "financial-app.db");
 
-    public static ApplicationConfiguration configureApplication(){
+    public static ApplicationConfiguration configureApplication() {
+        return configureApplication(DEFAULT_DATABASE_FILE);
+    }
 
-        configureLogging();
+    public static ApplicationConfiguration configureApplication(Path databaseFile) {
 
         SQLiteConnection sqliteConnection =
                 new SQLiteConnection(
-                        DEFAULT_DATABASE_FILE.toString()
+                        databaseFile.toString()
                 );
 
 
@@ -68,23 +70,19 @@ public class Main {
 
     }
 
-    public static Application createApplication(ApplicationConfiguration appConfig){
+    public static Application createApplication(ApplicationConfiguration appConfig) {
         return new Application(appConfig);
     }
 
     public static void main(String[] args) {
-        configureLogging();
         SpringApplication.run(Main.class, args);
     }
 
     @Bean
-    public Application financialApplication() {
-        return createApplication(configureApplication());
-    }
-
-    private static void configureLogging() {
-        if (System.getProperty(ApplicationLogging.LOG_FILE_PROPERTY) == null) {
-            ApplicationLogging.configureForDatabase(DEFAULT_DATABASE_FILE);
-        }
+    public Application financialApplication(
+            @Value("${financial-app.database.path:data/financial-app.db}")
+            String databasePath
+    ) {
+        return createApplication(configureApplication(Path.of(databasePath)));
     }
 }

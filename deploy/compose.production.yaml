@@ -1,0 +1,39 @@
+name: financial-app
+
+services:
+  app:
+    image: financial-app-api:${IMAGE_TAG:-local}
+    build:
+      context: ../app
+    restart: unless-stopped
+    environment:
+      FINANCIAL_APP_DATABASE_PATH: /var/lib/financial-app/financial-app.db
+      FINANCIAL_APP_CORS_ALLOWED_ORIGIN: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN in deploy/.env}
+      FINANCIAL_APP_SESSION_COOKIE_SECURE: "true"
+      FINANCIAL_APP_CSRF_COOKIE_SECURE: "true"
+    volumes:
+      - type: bind
+        source: ${DATA_DIRECTORY:?Set DATA_DIRECTORY in deploy/.env}
+        target: /var/lib/financial-app
+    expose:
+      - "8080"
+    networks:
+      - internal
+
+  frontend:
+    image: financial-app-frontend:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: client/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+    ports:
+      - "${FRONTEND_BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-8080}:8080"
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

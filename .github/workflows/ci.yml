@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - development
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify application, client, and packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify the Spring Boot application
+        run: docker build --target test --file app/Dockerfile app
+
+      - name: Verify the React client
+        run: docker build --target test --file client/Dockerfile .
+
+      - name: Build runtime images
+        run: docker compose --env-file deploy/.env.example -f deploy/compose.production.yaml build

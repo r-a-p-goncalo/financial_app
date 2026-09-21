@@ -281,29 +281,29 @@ ON transactions (financial_context_id, target_account_id)
 2026-09-17 17:08:03.436 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'requestMappingHandlerMapping' via factory method to bean named 'mvcContentNegotiationManager'
 2026-09-17 17:08:03.436 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'requestMappingHandlerMapping' via factory method to bean named 'mvcConversionService'
 2026-09-17 17:08:03.436 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'requestMappingHandlerMapping' via factory method to bean named 'mvcResourceUrlProvider'
-2026-09-17 17:08:03.462 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings - 
+2026-09-17 17:08:03.462 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings -
 	c.r.f.r.a.AuthenticationController:
 	{POST [/api/v1/auth/register]}: register(RegisterUserRequest,HttpServletRequest,HttpServletResponse)
 	{GET [/api/v1/auth/csrf]}: csrf(HttpServletRequest)
 	{POST [/api/v1/auth/logout]}: logout(HttpServletRequest)
 	{POST [/api/v1/auth/login]}: login(LoginRequest,HttpServletRequest,HttpServletResponse)
 	{GET [/api/v1/auth/me]}: currentUser(Authentication)
-2026-09-17 17:08:03.467 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings - 
+2026-09-17 17:08:03.467 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings -
 	c.r.f.r.f.AccountController:
 	{GET [/api/v1/financial-contexts/{financialContextId}/accounts]}: list(String,Authentication)
 	{POST [/api/v1/financial-contexts/{financialContextId}/accounts]}: create(String,CreateAccountHttpRequest,Authentication)
-2026-09-17 17:08:03.470 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings - 
+2026-09-17 17:08:03.470 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings -
 	c.r.f.r.f.FinancialContextController:
 	{POST [/api/v1/financial-contexts/{financialContextId}/clones]}: clone(String,CloneFinancialContextHttpRequest,Authentication)
 	{GET [/api/v1/financial-contexts/{financialContextId}]}: load(String,Authentication)
 	{GET [/api/v1/financial-contexts]}: list(Authentication)
 	{POST [/api/v1/financial-contexts]}: create(CreateFinancialContextHttpRequest,Authentication)
 	{GET [/api/v1/financial-contexts/{financialContextId}/children]}: children(String,Authentication)
-2026-09-17 17:08:03.471 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings - 
+2026-09-17 17:08:03.471 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings -
 	c.r.f.r.f.TransactionController:
 	{GET [/api/v1/financial-contexts/{financialContextId}/transactions]}: list(String,Authentication)
 	{POST [/api/v1/financial-contexts/{financialContextId}/transactions]}: create(String,CreateTransactionHttpRequest,Authentication)
-2026-09-17 17:08:03.474 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings - 
+2026-09-17 17:08:03.474 [main] DEBUG _.s.web.servlet.HandlerMapping.Mappings -
 	o.s.b.a.w.s.e.BasicErrorController:
 	{ [/error]}: error(HttpServletRequest)
 	{ [/error], produces [text/html]}: errorHtml(HttpServletRequest,HttpServletResponse)
@@ -359,7 +359,7 @@ ON transactions (financial_context_id, target_account_id)
 2026-09-17 17:08:03.535 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'inMemoryUserDetailsManager'
 2026-09-17 17:08:03.535 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration'
 2026-09-17 17:08:03.536 [main] DEBUG o.s.b.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'inMemoryUserDetailsManager' via factory method to bean named 'spring.security-org.springframework.boot.autoconfigure.security.SecurityProperties'
-2026-09-17 17:08:03.538 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+2026-09-17 17:08:03.538 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration -
 
 Using generated security password: 48cd2cb3-0659-4eee-a6b3-011c080bb843
 
@@ -491,7 +491,7 @@ This generated password is for development use only. Your security configuration
 2026-09-17 17:08:03.721 [main] DEBUG o.s.context.support.DefaultLifecycleProcessor - Successfully started bean 'webServerStartStop'
 2026-09-17 17:08:03.721 [main] DEBUG o.s.context.support.DefaultLifecycleProcessor - Starting beans in phase 2147482623
 2026-09-17 17:08:03.721 [main] DEBUG o.s.context.support.DefaultLifecycleProcessor - Successfully started bean 'webServerGracefulShutdown'
-2026-09-17 17:08:03.729 [main] DEBUG o.s.b.a.logging.ConditionEvaluationReportLogger - 
+2026-09-17 17:08:03.729 [main] DEBUG o.s.b.a.logging.ConditionEvaluationReportLogger -
 
 
 ============================

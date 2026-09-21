@@ -33,14 +33,28 @@ public class ApiSecurityConfiguration {
     }
 
     @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository(
+            @Value("${financial-app.csrf.cookie-secure:false}")
+            boolean csrfCookieSecure
+    ) {
+        CookieCsrfTokenRepository repository =
+                CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> cookie
+                .path("/")
+                .secure(csrfCookieSecure)
+                .sameSite("Lax")
+        );
+        return repository;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            SecurityContextRepository securityContextRepository
+            SecurityContextRepository securityContextRepository,
+            CookieCsrfTokenRepository csrfTokenRepository
     ) throws Exception {
         return http
-                .csrf(csrf -> csrf.csrfTokenRepository(
-                        CookieCsrfTokenRepository.withHttpOnlyFalse()
-                ))
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .cors(Customizer.withDefaults())
                 .securityContext(context -> context
                         .securityContextRepository(securityContextRepository)
@@ -49,7 +63,9 @@ public class ApiSecurityConfiguration {
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
-                                "/api/v1/auth/csrf"
+                                "/api/v1/auth/csrf",
+                                "/actuator/health",
+                                "/actuator/health/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()

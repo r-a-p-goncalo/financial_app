@@ -1,0 +1,10 @@
+.git
+.idea
+app/target
+app/data
+app/app.zip
+client/node_modules
+client/dist
+client/.vite
+data
+deploy/.env

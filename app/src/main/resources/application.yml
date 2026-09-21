@@ -1,0 +1,26 @@
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: ${FINANCIAL_APP_SESSION_COOKIE_SECURE:false}
+        same-site: lax
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+financial-app:
+  database:
+    path: ${FINANCIAL_APP_DATABASE_PATH:data/financial-app.db}
+  cors:
+    allowed-origin: ${FINANCIAL_APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  csrf:
+    cookie-secure: ${FINANCIAL_APP_CSRF_COOKIE_SECURE:false}

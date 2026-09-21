@@ -7,7 +7,7 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRe
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.application.user.UserRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.sqlite.*;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.*;
 import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
 import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import java.nio.file.Path;
-import java.sql.Connection;
+import javax.sql.DataSource;
 
 @SpringBootApplication
 public class Main {
@@ -29,33 +29,37 @@ public class Main {
     }
 
     public static ApplicationConfiguration configureApplication(Path databaseFile) {
+        DataSource dataSource = DatabaseDataSourceFactory.create(
+                DatabaseDialect.SQLITE,
+                "jdbc:sqlite:" + databaseFile,
+                "",
+                "",
+                1
+        );
+        return configureApplication(dataSource, DatabaseDialect.SQLITE);
+    }
 
-        SQLiteConnection sqliteConnection =
-                new SQLiteConnection(
-                        databaseFile.toString()
-                );
+    public static ApplicationConfiguration configureApplication(
+            DataSource dataSource,
+            DatabaseDialect dialect
+    ) {
+        DatabaseMigrator.migrate(dataSource, dialect);
 
-
-        Connection connection =
-                sqliteConnection.getConnection();
-
-        SQLiteSchema.initialize(connection);
-
-        AccountRepository accountRepository = new SQLiteAccountRepository(
-                connection
+        AccountRepository accountRepository = new JdbcAccountRepository(
+                dataSource
         );
 
-        FinancialContextRepository financialContextRepository = new SQLiteFinancialContextRepository(
-                connection
+        FinancialContextRepository financialContextRepository = new JdbcFinancialContextRepository(
+                dataSource
         );
 
-        TransactionRepository transactionRepository = new SQLiteTransactionRepository(
-                connection
+        TransactionRepository transactionRepository = new JdbcTransactionRepository(
+                dataSource
         );
 
-        UserRepository userRepository = new SQLiteUserRepository(connection);
+        UserRepository userRepository = new JdbcUserRepository(dataSource);
         FinancialContextPermissionRepository permissionRepository =
-                new SQLiteFinancialContextPermissionRepository(connection);
+                new JdbcFinancialContextPermissionRepository(dataSource);
 
         return new ApplicationConfiguration(
                 accountRepository,
@@ -79,10 +83,36 @@ public class Main {
     }
 
     @Bean
-    public Application financialApplication(
-            @Value("${financial-app.database.path:data/financial-app.db}")
-            String databasePath
+    public DataSource financialAppDataSource(
+            @Value("${financial-app.database.dialect:sqlite}")
+            String dialectValue,
+            @Value("${financial-app.database.jdbc-url:jdbc:sqlite:data/financial-app.db}")
+            String jdbcUrl,
+            @Value("${financial-app.database.username:}")
+            String username,
+            @Value("${financial-app.database.password:}")
+            String password,
+            @Value("${financial-app.database.maximum-pool-size:10}")
+            int maximumPoolSize
     ) {
-        return createApplication(configureApplication(Path.of(databasePath)));
+        return DatabaseDataSourceFactory.create(
+                DatabaseDialect.fromConfiguration(dialectValue),
+                jdbcUrl,
+                username,
+                password,
+                maximumPoolSize
+        );
+    }
+
+    @Bean
+    public Application financialApplication(
+            DataSource financialAppDataSource,
+            @Value("${financial-app.database.dialect:sqlite}")
+            String dialectValue
+    ) {
+        return createApplication(configureApplication(
+                financialAppDataSource,
+                DatabaseDialect.fromConfiguration(dialectValue)
+        ));
     }
 }

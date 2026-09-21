@@ -1,9 +1,10 @@
-package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
+package com.rgoncalo.financialapp.infrastructure.persistence.jdbc;
 
 import com.rgoncalo.financialapp.infrastructure.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,50 +16,40 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Small JDBC helper shared by SQLite-backed application repositories.
+ * Small JDBC helper shared by dialect-neutral repository implementations.
  *
- * <p>Each application repository owns its SQL and row mapping. This class
- * centralizes resource handling, prepared-statement binding, and conversion of
- * JDBC failures into {@link PersistenceException}; it deliberately does not
- * derive table names, column names, or schemas from application records.</p>
+ * <p>Every operation borrows a connection from the data source, which makes
+ * the same repositories safe for pooled PostgreSQL connections and SQLite.</p>
  */
-public final class SQLiteRepository<T> {
+public final class JdbcRepository<T> {
 
     @FunctionalInterface
     public interface RowMapper<T> {
         T map(ResultSet resultSet) throws SQLException;
     }
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(SQLiteRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(
+            JdbcRepository.class
+    );
 
-    private final Connection connection;
+    private final DataSource dataSource;
     private final RowMapper<T> rowMapper;
 
-    public SQLiteRepository(
-            Connection connection,
-            RowMapper<T> rowMapper
-    ) {
-        this.connection = Objects.requireNonNull(connection);
+    public JdbcRepository(DataSource dataSource, RowMapper<T> rowMapper) {
+        this.dataSource = Objects.requireNonNull(dataSource);
         this.rowMapper = Objects.requireNonNull(rowMapper);
     }
 
-    public T save(
-            String sql,
-            T record,
-            Object... parameters
-    ) {
+    public T save(String sql, T record, Object... parameters) {
         executeUpdate(sql, parameters);
         return record;
     }
 
-    public void executeUpdate(
-            String sql,
-            Object... parameters
-    ) {
+    public void executeUpdate(String sql, Object... parameters) {
         logger.info("Executing update query:\n{}", sql);
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             bind(statement, parameters);
             statement.executeUpdate();
         } catch (SQLException exception) {
@@ -69,13 +60,11 @@ public final class SQLiteRepository<T> {
         }
     }
 
-    public Collection<T> find(
-            String sql,
-            Object... parameters
-    ) {
+    public Collection<T> find(String sql, Object... parameters) {
         logger.info("Executing find query:\n{}", sql);
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             bind(statement, parameters);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -95,10 +84,7 @@ public final class SQLiteRepository<T> {
         }
     }
 
-    public Optional<T> findSingle(
-            String sql,
-            Object... parameters
-    ) {
+    public Optional<T> findSingle(String sql, Object... parameters) {
         Collection<T> records = find(sql, parameters);
 
         if (records.size() > 1) {
@@ -110,10 +96,8 @@ public final class SQLiteRepository<T> {
         return records.stream().findFirst();
     }
 
-    private void bind(
-            PreparedStatement statement,
-            Object... parameters
-    ) throws SQLException {
+    private static void bind(PreparedStatement statement, Object... parameters)
+            throws SQLException {
         for (int index = 0; index < parameters.length; index++) {
             statement.setObject(index + 1, parameters[index]);
         }

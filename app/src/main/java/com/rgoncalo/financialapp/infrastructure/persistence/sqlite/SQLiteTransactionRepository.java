@@ -6,8 +6,9 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcRepository;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -66,11 +67,11 @@ public class SQLiteTransactionRepository
             WHERE financial_context_id = ? AND transaction_id = ?
             """;
 
-    private final SQLiteRepository<TransactionRecord> sqliteRepository;
+    private final JdbcRepository<TransactionRecord> jdbcRepository;
 
-    public SQLiteTransactionRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<>(
-                connection,
+    public SQLiteTransactionRepository(DataSource dataSource) {
+        this.jdbcRepository = new JdbcRepository<>(
+                dataSource,
                 SQLiteTransactionRepository::mapTransaction
         );
     }
@@ -82,7 +83,7 @@ public class SQLiteTransactionRepository
 
         TransactionRecordId id = transaction.transactionRecordId();
 
-        return sqliteRepository.save(
+        return jdbcRepository.save(
                 INSERT,
                 transaction,
                 id.financialContextId().financialContextId(),
@@ -102,7 +103,7 @@ public class SQLiteTransactionRepository
             FinancialContextId financialContextId
     ) {
 
-        return sqliteRepository.find(
+        return jdbcRepository.find(
                 SELECT_BY_CONTEXT,
                 financialContextId.financialContextId()
         );
@@ -114,7 +115,7 @@ public class SQLiteTransactionRepository
             AccountRecordId accountRecordId
     ) {
 
-        return sqliteRepository.find(
+        return jdbcRepository.find(
                 SELECT_BY_ACCOUNT,
                 accountRecordId.financialContextId().financialContextId(),
                 accountRecordId.accountRecordId(),
@@ -127,7 +128,7 @@ public class SQLiteTransactionRepository
             TransactionRecordId id
     ) {
 
-        return sqliteRepository.findSingle(
+        return jdbcRepository.findSingle(
                 SELECT_BY_ID,
                 id.financialContextId().financialContextId(),
                 id.transactionRecordId()

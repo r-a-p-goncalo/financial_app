@@ -5,8 +5,9 @@ import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermission;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextPermissionRecord;
 import com.rgoncalo.financialapp.commondata.user.UserId;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcRepository;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -47,12 +48,12 @@ public class SQLiteFinancialContextPermissionRepository
             WHERE financial_context_id = ?
             """;
 
-    private final SQLiteRepository<FinancialContextPermissionRecord>
-            sqliteRepository;
+    private final JdbcRepository<FinancialContextPermissionRecord>
+            jdbcRepository;
 
-    public SQLiteFinancialContextPermissionRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<>(
-                connection,
+    public SQLiteFinancialContextPermissionRepository(DataSource dataSource) {
+        this.jdbcRepository = new JdbcRepository<>(
+                dataSource,
                 SQLiteFinancialContextPermissionRepository::mapPermission
         );
     }
@@ -61,7 +62,7 @@ public class SQLiteFinancialContextPermissionRepository
     public FinancialContextPermissionRecord save(
             FinancialContextPermissionRecord permission
     ) {
-        return sqliteRepository.save(
+        return jdbcRepository.save(
                 INSERT,
                 permission,
                 permission.financialContextId().financialContextId(),
@@ -77,7 +78,7 @@ public class SQLiteFinancialContextPermissionRepository
             UserId userId,
             FinancialContextId financialContextId
     ) {
-        return sqliteRepository.findSingle(
+        return jdbcRepository.findSingle(
                 SELECT_BY_USER_AND_CONTEXT,
                 userId.userId(),
                 financialContextId.financialContextId()
@@ -88,13 +89,13 @@ public class SQLiteFinancialContextPermissionRepository
     public Collection<FinancialContextPermissionRecord> listByUserId(
             UserId userId
     ) {
-        return sqliteRepository.find(SELECT_BY_USER, userId.userId());
+        return jdbcRepository.find(SELECT_BY_USER, userId.userId());
     }
 
     @Override
     public Collection<FinancialContextPermissionRecord>
     listByFinancialContextId(FinancialContextId financialContextId) {
-        return sqliteRepository.find(
+        return jdbcRepository.find(
                 SELECT_BY_CONTEXT,
                 financialContextId.financialContextId()
         );

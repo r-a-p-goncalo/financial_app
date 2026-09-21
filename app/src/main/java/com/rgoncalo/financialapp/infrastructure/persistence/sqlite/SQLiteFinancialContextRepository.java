@@ -3,8 +3,9 @@ package com.rgoncalo.financialapp.infrastructure.persistence.sqlite;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcRepository;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -50,11 +51,11 @@ public class SQLiteFinancialContextRepository
             WHERE financial_context_id = ?
             """;
 
-    private final SQLiteRepository<FinancialContextRecord> sqliteRepository;
+    private final JdbcRepository<FinancialContextRecord> jdbcRepository;
 
-    public SQLiteFinancialContextRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<>(
-                connection,
+    public SQLiteFinancialContextRepository(DataSource dataSource) {
+        this.jdbcRepository = new JdbcRepository<>(
+                dataSource,
                 SQLiteFinancialContextRepository::mapFinancialContext
         );
     }
@@ -63,7 +64,7 @@ public class SQLiteFinancialContextRepository
     public FinancialContextRecord save(
             FinancialContextRecord financialContext) {
 
-        return sqliteRepository.save(
+        return jdbcRepository.save(
                 INSERT,
                 financialContext,
                 financialContext.financialContextId().financialContextId(),
@@ -79,14 +80,14 @@ public class SQLiteFinancialContextRepository
     public Collection<FinancialContextRecord>
     listFinancialContextsSummary() {
 
-        return sqliteRepository.find(SELECT_ALL);
+        return jdbcRepository.find(SELECT_ALL);
     }
 
     @Override
     public Collection<FinancialContextRecord> listChildren(
             FinancialContextId parentFinancialContextId
     ) {
-        return sqliteRepository.find(
+        return jdbcRepository.find(
                 SELECT_CHILDREN,
                 parentFinancialContextId.financialContextId()
         );
@@ -96,7 +97,7 @@ public class SQLiteFinancialContextRepository
     public Optional<FinancialContextRecord> findById(
             FinancialContextId id) {
 
-        return sqliteRepository.findSingle(
+        return jdbcRepository.findSingle(
                 SELECT_BY_ID,
                 id.financialContextId()
         );

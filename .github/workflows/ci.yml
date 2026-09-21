@@ -18,8 +18,16 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Verify the Spring Boot application
-        run: docker build --target test --file app/Dockerfile app
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify the Spring Boot application against local PostgreSQL
+        working-directory: app
+        run: mvn -B -ntp verify
 
       - name: Verify the React client
         run: docker build --target test --file client/Dockerfile .

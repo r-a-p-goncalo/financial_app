@@ -4,8 +4,9 @@ import com.rgoncalo.financialapp.application.user.UserRepository;
 import com.rgoncalo.financialapp.commondata.user.UserId;
 import com.rgoncalo.financialapp.commondata.user.PasswordHash;
 import com.rgoncalo.financialapp.commondata.user.UserRecord;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcRepository;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -40,18 +41,18 @@ public class SQLiteUserRepository implements UserRepository {
             WHERE name = ?
             """;
 
-    private final SQLiteRepository<UserRecord> sqliteRepository;
+    private final JdbcRepository<UserRecord> jdbcRepository;
 
-    public SQLiteUserRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<>(
-                connection,
+    public SQLiteUserRepository(DataSource dataSource) {
+        this.jdbcRepository = new JdbcRepository<>(
+                dataSource,
                 SQLiteUserRepository::mapUser
         );
     }
 
     @Override
     public UserRecord save(UserRecord user) {
-        return sqliteRepository.save(
+        return jdbcRepository.save(
                 INSERT,
                 user,
                 user.userId().userId(),
@@ -63,17 +64,17 @@ public class SQLiteUserRepository implements UserRepository {
 
     @Override
     public Collection<UserRecord> listUsersSummary() {
-        return sqliteRepository.find(SELECT_ALL);
+        return jdbcRepository.find(SELECT_ALL);
     }
 
     @Override
     public Optional<UserRecord> findById(UserId userId) {
-        return sqliteRepository.findSingle(SELECT_BY_ID, userId.userId());
+        return jdbcRepository.findSingle(SELECT_BY_ID, userId.userId());
     }
 
     @Override
     public Optional<UserRecord> findByName(String name) {
-        return sqliteRepository.findSingle(SELECT_BY_NAME, name);
+        return jdbcRepository.findSingle(SELECT_BY_NAME, name);
     }
 
     private static UserRecord mapUser(ResultSet resultSet)

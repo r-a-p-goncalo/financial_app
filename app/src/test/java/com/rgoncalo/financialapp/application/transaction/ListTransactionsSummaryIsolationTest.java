@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.application.transaction;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
@@ -61,6 +62,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         AccountRecordId account3Id = new AccountRecordId("account-3", context2);
         AccountRecordId account4Id = new AccountRecordId("account-4", context2);
 
+        saveAccount(configuration, account1Id);
+        saveAccount(configuration, account2Id);
+        saveAccount(configuration, account3Id);
+        saveAccount(configuration, account4Id);
 
         TransactionRecord transaction1 =
                 new TransactionRecord(
@@ -121,5 +126,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                         transaction1
                 )
         );
+    }
+
+    private void saveAccount(
+            RepositoryTestConfiguration configuration,
+            AccountRecordId accountId
+    ) {
+        configuration.createAccountRepository().save(new AccountRecord(
+                accountId,
+                accountId.accountRecordId(),
+                new MonetaryValue(BigDecimal.ZERO)
+        ));
     }
 }

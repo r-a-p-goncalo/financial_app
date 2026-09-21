@@ -20,8 +20,9 @@ The current implementation supports:
 * transactions, including a transfer with one unknown or irrelevant side;
 * bootstrap data loaded through application use cases;
 * interchangeable repository implementations;
-* in-memory and SQLite persistence; and
-* explicit SQLite schema and repository mappings.
+* in-memory, SQLite, and PostgreSQL persistence configurations;
+* versioned Flyway schema migrations per SQL dialect; and
+* local PostgreSQL repository-contract tests using Testcontainers.
 
 ---
 
@@ -32,8 +33,8 @@ The current implementation supports:
 * Add REST endpoints for user management and context-permission grants.
 * Add password-hash migration when a current hashing strategy is replaced.
 * Extend financial-context views with generated and recurring transactions.
-* Introduce versioned database migrations before schema changes need to
-  preserve deployed user data.
+* Add application-level database transaction boundaries for multi-repository
+  writes before horizontally scaling the API.
 
 ---
 
@@ -116,7 +117,8 @@ transaction request. This makes a clone a live branch: accounts and
 transactions subsequently added to a parent are visible to the child without
 writing copies into it.
 
-SQLite repositories map these records explicitly to the database schema.
+JDBC repositories map these records explicitly to the configured database
+dialect's schema.
 
 ---
 
@@ -147,7 +149,7 @@ application
 
 The application depends on repository interfaces rather than concrete
 persistence implementations. The same use cases can therefore run with
-in-memory or SQLite repositories.
+in-memory, PostgreSQL, or SQLite repositories.
 
 Every use case that reads or changes financial data receives an acting
 `UserId` in its request. The application layer, rather than the CLI or
@@ -384,15 +386,15 @@ normal operations.
 
 Contains concrete implementations of external concerns.
 
-Persistence implementations currently include one implementation per
-repository contract:
+Persistence implementations use repository contracts with a JDBC data source
+selected by an explicit database dialect:
 
 ```text
 Repository Interface
         │
         ├── In-Memory Repository
         │
-        └── SQLite Repository
+        └── JDBC Repository → PostgreSQL / SQLite
 ```
 
 The repository contracts currently cover users, financial contexts, context
@@ -405,14 +407,15 @@ outside the application layer.
 
 `Main` is the composition root.
 
-It creates the SQLite connection, initializes the schema, creates the SQLite
-repositories and password-hashing strategy registry, and wires them into
+It validates the configured dialect and JDBC URL, creates a data source,
+applies that dialect's Flyway migrations, creates the JDBC repositories and
+password-hashing strategy registry, and wires them into
 `ApplicationConfiguration` and `Application`.
 
 ```text
-SQLite connection
+Configured JDBC data source
    ↓
-SQLite schema
+Flyway migrations for PostgreSQL or SQLite
    ↓
 Repository implementations
    ↓
@@ -430,8 +433,8 @@ until their existing user name is registered with a password. Registration
 then preserves that user's identity and any context permissions already
 assigned to it.
 
-The application layer does not need to know that SQLite is the current
-runtime implementation.
+The application layer does not need to know the active SQL dialect. Production
+uses `postgresql` with Aurora; `sqlite` remains an explicit local option.
 
 Start the API from the `app` directory with:
 
@@ -462,9 +465,8 @@ records every time it runs, so use it only for disposable data.
 ## Logging
 
 The application writes structured application output to the console. A
-container runtime can collect that output and forward it to its log service;
-the SQLite data directory is reserved for durable application data rather than
-logs.
+container runtime can collect that output and forward it to its log service.
+Aurora, rather than the application host, stores durable application data.
 
 ---
 
@@ -513,7 +515,7 @@ WRITE permission check
  ↓
 AccountRepository
  ↓
-SQLite / In-Memory Repository
+JDBC / In-Memory Repository
 ```
 
 Context creation is slightly different because it creates both the context and
@@ -546,18 +548,19 @@ Application
 Repository Interface
       ↓
 ┌───────────────────┐
-│ In-Memory │ SQLite │
+│ In-Memory │ JDBC │
 └───────────────────┘
 ```
 
 The in-memory implementation is useful for lightweight execution and tests,
-while SQLite provides relational persistence for the local API application.
+while the JDBC implementation provides relational persistence for PostgreSQL
+and SQLite.
 
 ---
 
-## SQLite Schema and Repository Mapping
+## JDBC Schema and Repository Mapping
 
-`SQLiteSchema` creates the application's explicit tables and indexes:
+Flyway migrations create the application's explicit tables and indexes:
 
 ```text
 users
@@ -573,32 +576,31 @@ composite primary key prevents duplicate memberships for the same user and
 context.
 
 The `users` table stores each user's name, password-hashing strategy ID, and
-password hash. The schema initialization adds the two password columns when
-opening a database created before password support.
+password hash. The V1 migration represents the existing prototype schema;
+later schema changes must be new versioned migrations.
 
 Accounts and transactions use a composite identity of financial-context ID
 and record ID. Parent columns retain the links used by lazy clone resolution.
 
 The table and column names are deliberately defined in SQL rather than
-generated from Java records. `SQLiteConnection` enables SQLite foreign keys
-for the application connection, and `SQLiteSchema` defines the relevant
-relationships and indexes explicitly.
+generated from Java records. Each dialect has its own migration location, and
+SQLite data sources enable foreign keys on every borrowed connection.
 
-Each SQLite application repository owns the SQL for its aggregate and maps
-each `ResultSet` row to an application record. For example,
-`SQLiteAccountRepository` defines its account `INSERT` and `SELECT`
-statements alongside the code that builds an `AccountRecord`.
+Each JDBC application repository owns the SQL for its aggregate and maps each
+`ResultSet` row to an application record. The current upsert and query syntax
+is shared by PostgreSQL and SQLite; future dialect-specific SQL belongs behind
+the explicit dialect boundary.
 
-`SQLiteRepository<T>` remains the shared JDBC helper. It handles prepared
+`JdbcRepository<T>` remains the shared JDBC helper. It handles
 statement binding, result-set iteration, resource cleanup, logging, and
 persistence exceptions, but it does not derive schema or query information.
 
 ```text
-SQLiteAccountRepository
+JdbcAccountRepository
         ↓ explicit SQL and row mapper
-SQLiteRepository<AccountRecord>
+JdbcRepository<AccountRecord>
         ↓ prepared statements and JDBC resource handling
-SQLite
+PostgreSQL / SQLite
 ```
 
 Monetary values and timestamps are converted explicitly in the repository
@@ -617,6 +619,7 @@ The same test is executed for:
 ```text
 InMemory
 SQLite
+PostgreSQL
 ```
 
 This is implemented using JUnit's `@TestTemplate` mechanism and
@@ -635,6 +638,10 @@ One Test
    └── SQLite configuration
            ↓
         Execute same test
+   │
+   └── PostgreSQL configuration
+           ↓
+        Execute same test against a disposable local database
 ```
 
 Each configuration supplies repositories for users, financial contexts,
@@ -648,15 +655,24 @@ These provide fast execution without requiring a database connection.
 
 ### SQLite Tests
 
-Create an isolated SQLite in-memory database:
+Create an isolated named SQLite in-memory database. It stays alive only for
+the test and has foreign-key checks enabled on every connection:
 
 ```text
-jdbc:sqlite::memory:
+jdbc:sqlite:file:repository-test-...?mode=memory&cache=shared
 ```
 
-The explicit SQLite schema is initialized before the repositories are
-created. This verifies the same repository contracts and application behavior
-against SQLite mappings.
+The SQLite Flyway migrations are applied before the repositories are created.
+This verifies the same repository contracts and application behavior against
+the SQLite dialect.
+
+### PostgreSQL Tests
+
+Testcontainers starts PostgreSQL 16 locally. Each repository-contract test
+receives a newly created database, applies the PostgreSQL Flyway migrations,
+and removes that database after the test. Docker must be available for this
+required production-parity test. In CI it runs directly on the GitHub runner,
+not inside a Docker build stage.
 
 The tests currently cover operations such as:
 
@@ -690,19 +706,19 @@ Repository interfaces
  ↓
 Infrastructure
  ↓
-In-Memory / SQLite
+In-Memory / JDBC (PostgreSQL or SQLite)
 ```
 
-The SQLite implementation has an explicit persistence boundary:
+The JDBC implementation has an explicit persistence boundary:
 
 ```text
-SQLiteSchema
+Flyway migrations selected by dialect
       ↓ explicit tables, foreign keys, and indexes
-SQLite application repositories
+JDBC application repositories
       ↓ explicit SQL and row mapping
-SQLiteRepository<T>
+JdbcRepository<T>
       ↓ JDBC resource handling
-SQLite
+PostgreSQL / SQLite
 ```
 
 This makes relational constraints, access rules, joins, and future schema
@@ -720,8 +736,6 @@ migrations clearer as the data model becomes more sophisticated.
   scaling are not implemented.
 * The REST API does not yet expose user-management or context-permission
   endpoints.
-* The schema is initialized with `CREATE TABLE IF NOT EXISTS`; it does not yet
-  provide versioned migrations.
 * Context creation, initial permission creation, and user registration are
   separate persistence operations; they are not yet wrapped in a database
   transaction.

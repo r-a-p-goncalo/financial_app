@@ -5,8 +5,9 @@ import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcRepository;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -50,11 +51,11 @@ public class SQLiteAccountRepository implements AccountRepository {
             WHERE financial_context_id = ? AND account_id = ?
             """;
 
-    private final SQLiteRepository<AccountRecord> sqliteRepository;
+    private final JdbcRepository<AccountRecord> jdbcRepository;
 
-    public SQLiteAccountRepository(Connection connection) {
-        this.sqliteRepository = new SQLiteRepository<>(
-                connection,
+    public SQLiteAccountRepository(DataSource dataSource) {
+        this.jdbcRepository = new JdbcRepository<>(
+                dataSource,
                 SQLiteAccountRepository::mapAccount
         );
     }
@@ -63,7 +64,7 @@ public class SQLiteAccountRepository implements AccountRepository {
     public AccountRecord save(AccountRecord account) {
         AccountRecordId id = account.accountRecordId();
 
-        return sqliteRepository.save(
+        return jdbcRepository.save(
                 INSERT,
                 account,
                 id.financialContextId().financialContextId(),
@@ -80,7 +81,7 @@ public class SQLiteAccountRepository implements AccountRepository {
     public Collection<AccountRecord> listAccountsSummary(
             FinancialContextId financialContextId) {
 
-        return sqliteRepository.find(
+        return jdbcRepository.find(
                 SELECT_BY_CONTEXT,
                 financialContextId.financialContextId()
         );
@@ -90,7 +91,7 @@ public class SQLiteAccountRepository implements AccountRepository {
     @Override
     public Optional<AccountRecord> findById(AccountRecordId id) {
 
-        return sqliteRepository.findSingle(
+        return jdbcRepository.findSingle(
                 SELECT_BY_ID,
                 id.financialContextId().financialContextId(),
                 id.accountRecordId()

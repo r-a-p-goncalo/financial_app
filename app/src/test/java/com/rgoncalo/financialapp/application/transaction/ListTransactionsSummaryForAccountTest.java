@@ -1,6 +1,7 @@
 package com.rgoncalo.financialapp.application.transaction;
 
 import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.account.AccountRecord;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
 import com.rgoncalo.financialapp.commondata.transaction.TransactionRecord;
@@ -53,6 +54,17 @@ class ListTransactionsSummaryForAccountTest {
                 "account",
                 context2
         );
+        AccountRecordId another = new AccountRecordId("another", context1);
+        AccountRecordId otherContextOther = new AccountRecordId(
+                "other",
+                context2
+        );
+
+        saveAccount(configuration, account);
+        saveAccount(configuration, other);
+        saveAccount(configuration, another);
+        saveAccount(configuration, sameAccountInOtherContext);
+        saveAccount(configuration, otherContextOther);
 
         TransactionRecord outgoing = transaction(
                 "outgoing",
@@ -72,14 +84,14 @@ class ListTransactionsSummaryForAccountTest {
                 "unrelated",
                 context1,
                 other,
-                new AccountRecordId("another", context1),
+                another,
                 "30"
         );
         TransactionRecord otherContext = transaction(
                 "other-context",
                 context2,
                 sameAccountInOtherContext,
-                new AccountRecordId("other", context2),
+                otherContextOther,
                 "40"
         );
 
@@ -119,5 +131,16 @@ class ListTransactionsSummaryForAccountTest {
                 Instant.parse("2026-01-01T00:00:00Z"),
                 new MonetaryValue(new BigDecimal(value))
         );
+    }
+
+    private void saveAccount(
+            RepositoryTestConfiguration configuration,
+            AccountRecordId accountId
+    ) {
+        configuration.createAccountRepository().save(new AccountRecord(
+                accountId,
+                accountId.accountRecordId(),
+                new MonetaryValue(BigDecimal.ZERO)
+        ));
     }
 }

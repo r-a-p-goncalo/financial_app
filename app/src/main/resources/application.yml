@@ -7,6 +7,12 @@ server:
         secure: ${FINANCIAL_APP_SESSION_COOKIE_SECURE:false}
         same-site: lax
 
+spring:
+  flyway:
+    # Migrations are started explicitly after the configured dialect has
+    # selected its database-specific migration location.
+    enabled: false
+
 management:
   endpoints:
     web:
@@ -19,7 +25,13 @@ management:
 
 financial-app:
   database:
-    path: ${FINANCIAL_APP_DATABASE_PATH:data/financial-app.db}
+    # Supported values are postgresql (Aurora/RDS) and sqlite (local use).
+    # The dialect and JDBC URL are validated together during startup.
+    dialect: ${FINANCIAL_APP_DATABASE_DIALECT:sqlite}
+    jdbc-url: ${FINANCIAL_APP_DATABASE_JDBC_URL:jdbc:sqlite:${FINANCIAL_APP_DATABASE_PATH:data/financial-app.db}}
+    username: ${FINANCIAL_APP_DATABASE_USERNAME:}
+    password: ${FINANCIAL_APP_DATABASE_PASSWORD:}
+    maximum-pool-size: ${FINANCIAL_APP_DATABASE_MAXIMUM_POOL_SIZE:10}
   cors:
     allowed-origin: ${FINANCIAL_APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
   csrf:

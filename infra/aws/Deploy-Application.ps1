@@ -234,18 +234,35 @@ exit 1
     $remoteScript = $remoteScript.Replace("__CONFIGURATION_BASE64__", $deploymentConfigurationBase64)
     $remoteScriptBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($remoteScript))
     $remoteCommand = "printf '%s' '$remoteScriptBase64' | base64 --decode | sudo bash"
+    $ssmParametersFile = Join-Path ([System.IO.Path]::GetTempPath()) "financial-app-ssm-$([Guid]::NewGuid().ToString('N')).json"
+    $ssmParameters = @{ commands = @($remoteCommand) } | ConvertTo-Json -Compress
+
+    # Passing this large shell command as AWS CLI shorthand breaks on Windows
+    # PowerShell because its quotes are parsed as shorthand syntax. A temporary
+    # JSON parameter file preserves it as the one command expected by
+    # AWS-RunShellScript. It contains no database password and is removed below.
+    [System.IO.File]::WriteAllText(
+        $ssmParametersFile,
+        $ssmParameters,
+        [System.Text.UTF8Encoding]::new($false)
+    )
 
     Write-Host "Deploying the API through Systems Manager; no SSH port or SSH key is used."
-    $commandId = (& aws --no-cli-pager ssm send-command `
-        --region $Region `
-        --document-name "AWS-RunShellScript" `
-        --instance-ids $apiInstanceId `
-        --timeout-seconds 600 `
-        --parameters "commands=$remoteCommand" `
-        --query "Command.CommandId" `
-        --output text).Trim()
-    if ($LASTEXITCODE -ne 0 -or -not $commandId) {
-        throw "Could not start the Systems Manager deployment command. Ensure the instance is online in Systems Manager."
+    try {
+        $commandId = (& aws --no-cli-pager ssm send-command `
+            --region $Region `
+            --document-name "AWS-RunShellScript" `
+            --instance-ids $apiInstanceId `
+            --timeout-seconds 600 `
+            --parameters "file://$ssmParametersFile" `
+            --query "Command.CommandId" `
+            --output text).Trim()
+        if ($LASTEXITCODE -ne 0 -or -not $commandId) {
+            throw "Could not start the Systems Manager deployment command. Ensure the instance is online in Systems Manager."
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $ssmParametersFile -Force -ErrorAction SilentlyContinue
     }
     Wait-ForSsmCommand -CommandId $commandId -InstanceId $apiInstanceId -CommandRegion $Region
 

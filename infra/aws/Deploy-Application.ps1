@@ -138,8 +138,21 @@ try {
     }
 
     $repositoryName = $apiRepositoryUri.Split("/")[-1]
-    & aws --no-cli-pager ecr describe-images --region $Region --repository-name $repositoryName --image-ids "imageTag=$ImageTag" *> $null
-    if ($LASTEXITCODE -ne 0) {
+    # A missing immutable tag is the normal first-deployment case. In Windows
+    # PowerShell, stderr from that expected nonzero AWS CLI exit otherwise
+    # becomes a terminating NativeCommandError under $ErrorActionPreference.
+    $previousErrorActionPreference = $ErrorActionPreference
+    $imageTagExists = $false
+    try {
+        $ErrorActionPreference = "Continue"
+        & aws --no-cli-pager ecr describe-images --region $Region --repository-name $repositoryName --image-ids "imageTag=$ImageTag" *> $null
+        $imageTagExists = $LASTEXITCODE -eq 0
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if (-not $imageTagExists) {
         Write-Host "Pushing API image to ECR."
         & docker push $imageUri
         if ($LASTEXITCODE -ne 0) {

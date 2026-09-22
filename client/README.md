@@ -18,9 +18,9 @@ at another API host, set `VITE_API_BASE_URL`, for example:
 VITE_API_BASE_URL=https://api.example.com/api/v1
 ```
 
-For deployment, prefer a same-origin route such as `/api/*` forwarded to the
-Spring service by the reverse proxy or CloudFront. Configure the static host to
-fall back to `index.html` for client-side routes such as `/contexts/:id`.
+The AWS deployment serves the client through CloudFront and forwards the
+same-origin `/api/*` route to the Spring service. CloudFront rewrites
+client-side routes such as `/contexts/:id` to `index.html`.
 
 ## Architecture
 

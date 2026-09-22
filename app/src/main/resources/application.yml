@@ -25,7 +25,7 @@ management:
 
 financial-app:
   database:
-    # Supported values are postgresql (Aurora/RDS) and sqlite (local use).
+    # Supported values are postgresql (RDS) and sqlite (local use).
     # The dialect and JDBC URL are validated together during startup.
     dialect: ${FINANCIAL_APP_DATABASE_DIALECT:sqlite}
     jdbc-url: ${FINANCIAL_APP_DATABASE_JDBC_URL:jdbc:sqlite:${FINANCIAL_APP_DATABASE_PATH:data/financial-app.db}}

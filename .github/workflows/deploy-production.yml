@@ -36,8 +36,8 @@ jobs:
       - name: Verify the React client
         run: docker build --target test --file client/Dockerfile .
 
-      - name: Build runtime images
-        run: docker compose --env-file deploy/.env.example -f deploy/compose.production.yaml build
+      - name: Build the API runtime image
+        run: docker build --file app/Dockerfile --tag financial-app-api:ci app
 
   deploy:
     name: Deploy the verified main commit

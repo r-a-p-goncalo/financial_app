@@ -32,17 +32,5 @@ COPY client ./
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
-#creates static files for the web server to serve
+#creates static files for the private S3 client bucket
 RUN pnpm build
-
-#uses Nginx as a small production web server for the built static files
-FROM nginx:1.27-alpine
-
-#copies the reverse-proxy and static-file server configuration
-COPY deploy/nginx/default.conf /etc/nginx/conf.d/default.conf
-
-#copies only the built frontend files into Nginx's public directory
-COPY --from=build /workspace/client/dist /usr/share/nginx/html
-
-#documents the port on which Nginx listens inside the container
-EXPOSE 8080

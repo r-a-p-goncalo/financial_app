@@ -94,7 +94,7 @@
             <version>3.50.3.0</version>
         </dependency>
 
-        <!-- Aurora PostgreSQL uses the standard PostgreSQL JDBC driver. -->
+        <!-- RDS PostgreSQL uses the standard PostgreSQL JDBC driver. -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>

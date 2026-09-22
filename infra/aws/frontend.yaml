@@ -19,6 +19,7 @@ Resources:
     Type: AWS::CloudFront::Function
     Properties:
       AutoPublish: true
+      Name: !Sub "${AWS::StackName}-route-rewrite"
       FunctionCode: |
         function handler(event) {
           var request = event.request;

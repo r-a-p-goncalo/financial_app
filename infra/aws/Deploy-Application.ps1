@@ -29,22 +29,22 @@ function Get-StackOutput {
         [string]$OutputRegion
     )
 
-    $outputs = & aws --no-cli-pager cloudformation describe-stacks `
+    $outputQuery = "Stacks[0].Outputs[?OutputKey=='$OutputKey'].OutputValue | [0]"
+    $output = (& aws --no-cli-pager cloudformation describe-stacks `
         --region $OutputRegion `
         --stack-name $StackName `
-        --query "Stacks[0].Outputs" `
-        --output json
+        --query $outputQuery `
+        --output text).Trim()
 
     if ($LASTEXITCODE -ne 0) {
         throw "Could not read outputs from CloudFormation stack '$StackName'. Run Deploy-Infrastructure.ps1 -Apply first."
     }
 
-    $output = $outputs | ConvertFrom-Json | Where-Object { $_.OutputKey -eq $OutputKey }
-    if (-not $output) {
+    if (-not $output -or $output -eq "None") {
         throw "CloudFormation stack '$StackName' has no '$OutputKey' output."
     }
 
-    return $output.OutputValue
+    return $output
 }
 
 function Wait-ForSsmCommand {

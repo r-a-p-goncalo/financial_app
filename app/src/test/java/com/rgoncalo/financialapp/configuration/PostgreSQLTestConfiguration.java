@@ -28,7 +28,7 @@ import java.util.UUID;
  *
  * <p>The container is local to the developer or CI worker. Each test
  * invocation receives a fresh database, migrated with the same PostgreSQL
- * scripts used by Aurora deployments.</p>
+ * scripts used by RDS deployments.</p>
  */
 public class PostgreSQLTestConfiguration
         implements RepositoryTestConfiguration {

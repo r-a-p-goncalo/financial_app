@@ -32,6 +32,14 @@ Parameters:
       - db.t3.micro
       - db.t4g.micro
     Description: Use a small single-AZ instance for the first learning environment.
+  DatabaseBackupRetentionDays:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 35
+    Description: >-
+      Days to retain automated RDS backups. The AWS Free Plan supports only
+      one day; increase this only after upgrading the account plan.
   ApiInstanceType:
     Type: String
     Default: t3.micro
@@ -185,7 +193,7 @@ Resources:
       AllocatedStorage: 20
       StorageType: gp3
       StorageEncrypted: true
-      BackupRetentionPeriod: 7
+      BackupRetentionPeriod: !Ref DatabaseBackupRetentionDays
       CopyTagsToSnapshot: true
       DBName: !Ref DatabaseName
       DBSubnetGroupName: !Ref DatabaseSubnetGroup

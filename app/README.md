@@ -434,7 +434,7 @@ then preserves that user's identity and any context permissions already
 assigned to it.
 
 The application layer does not need to know the active SQL dialect. Production
-uses `postgresql` with Aurora; `sqlite` remains an explicit local option.
+uses `postgresql` with RDS; `sqlite` remains an explicit local option.
 
 Start the API from the `app` directory with:
 
@@ -466,19 +466,20 @@ records every time it runs, so use it only for disposable data.
 
 The application writes structured application output to the console. A
 container runtime can collect that output and forward it to its log service.
-Aurora, rather than the application host, stores durable application data.
+RDS, rather than the application host, stores durable application data.
 
 ---
 
-## Production package
+## Production deployment
 
-The repository includes a Docker production package that runs the Spring Boot
-application behind a static-client reverse proxy. The database path, browser
-origin, and secure cookie behavior are supplied as environment variables, so
-the runtime data directory stays outside the deployable image.
+The AWS deployment builds an immutable Spring Boot image for the EC2 API host
+and builds the React client as static files for a private S3 bucket. CloudFront
+serves the client and forwards the same-origin API route to the API host. The
+database connection, browser origin, and secure-cookie behavior are supplied
+only to the API container at deployment time.
 
-See [`../deploy/README.md`](../deploy/README.md) for the Compose deployment,
-TLS boundary, persistent-storage, backup, and health-check requirements.
+See [`../infra/aws/README.md`](../infra/aws/README.md) for the infrastructure,
+release procedure, health checks, and backup requirements.
 
 ---
 

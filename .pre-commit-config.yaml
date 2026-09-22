@@ -5,6 +5,11 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        exclude: ^infra/aws/
+      - id: check-yaml
+        name: check CloudFormation YAML
+        args: [--unsafe]
+        files: ^infra/aws/.*\.ya?ml$
       - id: check-added-large-files
       - id: detect-private-key
 

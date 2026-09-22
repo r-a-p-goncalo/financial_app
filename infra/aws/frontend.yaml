@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Financial App global frontend: CloudFront's generated HTTPS endpoint, a
+  private S3 client origin, and a CloudFront-only EC2 API origin.
+
+Parameters:
+  ClientBucketName:
+    Type: String
+    Description: Name of the private client bucket from the regional foundation stack.
+  ClientBucketRegionalDomainName:
+    Type: String
+    Description: Regional S3 endpoint output by the regional foundation stack.
+  ApiOriginDomainName:
+    Type: String
+    Description: Public EC2 DNS name from the foundation stack, used only by CloudFront.
+
+Resources:
+  ClientRouteRewriteFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      AutoPublish: true
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+
+          if (uri.indexOf(".") !== -1) {
+            return request;
+          }
+
+          request.uri = "/index.html";
+          return request;
+        }
+      FunctionConfig:
+        Comment: Serve the React SPA for client-side routes without rewriting API responses.
+        Runtime: cloudfront-js-2.0
+
+  ClientOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Signed CloudFront access to the private Financial App S3 origin.
+        Name: !Sub "${AWS::StackName}-client"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  ClientDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Financial App React client
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt ClientRouteRewriteFunction.FunctionARN
+          TargetOriginId: client-s3-origin
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        CacheBehaviors:
+          - PathPattern: /api/*
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - PATCH
+              - POST
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            Compress: true
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+            TargetOriginId: api-ec2-origin
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: /actuator/*
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            Compress: true
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+            TargetOriginId: api-ec2-origin
+            ViewerProtocolPolicy: redirect-to-https
+        Origins:
+          - DomainName: !Ref ClientBucketRegionalDomainName
+            Id: client-s3-origin
+            OriginAccessControlId: !GetAtt ClientOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+          - DomainName: !Ref ApiOriginDomainName
+            Id: api-ec2-origin
+            CustomOriginConfig:
+              HTTPPort: 8080
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2021
+
+  ClientBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ClientBucketName
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipalReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${ClientBucketName}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${ClientDistribution}"
+
+Outputs:
+  ClientDistributionId:
+    Description: Use this ID when invalidating the static client after a manual release.
+    Value: !Ref ClientDistribution
+  ClientEndpoint:
+    Description: Public HTTPS frontend URL, provided by CloudFront without a custom domain.
+    Value: !Sub "https://${ClientDistribution.DomainName}"

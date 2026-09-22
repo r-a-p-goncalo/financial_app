@@ -1,0 +1,63 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+
+# A database migration must never be interrupted by a newer push.
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify before deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify the Spring Boot application against local PostgreSQL
+        working-directory: app
+        run: mvn -B -ntp verify
+
+      - name: Verify the React client
+        run: docker build --target test --file client/Dockerfile .
+
+      - name: Build runtime images
+        run: docker compose --env-file deploy/.env.example -f deploy/compose.production.yaml build
+
+  deploy:
+    name: Deploy the verified main commit
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the verified commit
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials from repository secrets
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Publish and deploy
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: >-
+          pwsh ./infra/aws/Deploy-Application.ps1
+          -Region "$AWS_REGION"

@@ -28,6 +28,10 @@ FROM dependencies AS build
 #copies the frontend source code into the production build workspace
 COPY client ./
 
+#the API origin is compiled into the static browser bundle for deployments
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 #creates static files for the web server to serve
 RUN pnpm build
 

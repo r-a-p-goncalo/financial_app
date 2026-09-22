@@ -1,5 +1,11 @@
 # Production package
 
+For the manually operated AWS deployment that separates CloudFront/client
+hosting, the API server, and private RDS PostgreSQL without requiring a public
+domain or Route 53, see
+[`../infra/aws/README.md`](../infra/aws/README.md). This Compose package
+remains useful for a single-host deployment or local production rehearsal.
+
 This Compose stack runs one Spring Boot instance connected to an external
 Aurora PostgreSQL cluster. The frontend container serves the React build and
 forwards `/api/*` and `/actuator/health` internally to the application

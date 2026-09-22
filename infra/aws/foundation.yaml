@@ -1,0 +1,387 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Financial App regional foundation: CloudFront-only API origin, private
+  PostgreSQL, private client bucket, ECR, and deployment identities.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: financial-app
+    AllowedPattern: "[a-z][a-z0-9-]{2,30}"
+    ConstraintDescription: Use 3-31 lowercase letters, numbers, and hyphens.
+  CloudFrontOriginPrefixListId:
+    Type: String
+    Description: >-
+      Regional ID of the AWS-managed CloudFront origin-facing prefix list.
+      Deploy-Infrastructure.ps1 discovers this value automatically.
+  DatabaseName:
+    Type: String
+    Default: financialapp
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]{0,62}"
+    Description: Initial PostgreSQL database name. Changing it later replaces the database.
+  DatabaseMasterUsername:
+    Type: String
+    Default: financialapp
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_]{0,62}"
+    NoEcho: true
+    Description: RDS master user. RDS stores its generated password in Secrets Manager.
+  DatabaseInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    AllowedValues:
+      - db.t3.micro
+      - db.t4g.micro
+    Description: Use a small single-AZ instance for the first learning environment.
+  ApiInstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+    Description: The API host is intentionally one small x86 EC2 instance.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.24.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-vpc"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-igw"
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref Vpc
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public"
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.24.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-a"
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.24.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-b"
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  DatabaseSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.24.10.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-database-a"
+
+  DatabaseSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.24.11.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-database-b"
+
+  ApiSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Permit only CloudFront origin traffic to the API; administration uses SSM, not SSH.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - Description: CloudFront to the containerized API origin
+          IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourcePrefixListId: !Ref CloudFrontOriginPrefixListId
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-api"
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Permit PostgreSQL only from the API security group.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - Description: API to private PostgreSQL
+          IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ApiSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-database"
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for Financial App PostgreSQL.
+      SubnetIds:
+        - !Ref DatabaseSubnetA
+        - !Ref DatabaseSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-database"
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub "${ProjectName}-postgres"
+      DBInstanceClass: !Ref DatabaseInstanceClass
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      DBName: !Ref DatabaseName
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      EnableCloudwatchLogsExports:
+        - postgresql
+      Engine: postgres
+      ManageMasterUserPassword: true
+      MasterUsername: !Ref DatabaseMasterUsername
+      MultiAZ: false
+      Port: 5432
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-postgres"
+
+  ClientBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-client"
+
+  ApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: IMMUTABLE
+      RepositoryName: !Sub "${ProjectName}-api"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep the most recent 20 deployed images.",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 20
+                },
+                "action": {"type": "expire"}
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-api"
+
+  GitHubActionsDeploymentUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub "${ProjectName}-github-deploy"
+      Policies:
+        - PolicyName: PublishApiImage
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt ApiRepository.Arn
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+        - PolicyName: DeployApiAndClient
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: cloudformation:DescribeStacks
+                Resource: "*"
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ApiInstance}"
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript"
+              - Effect: Allow
+                Action: ssm:GetCommandInvocation
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource: !GetAtt ClientBucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:DeleteObject
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub "${ClientBucket.Arn}/*"
+              - Effect: Allow
+                Action: cloudfront:CreateInvalidation
+                Resource: "*"
+
+  ApiInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: ReadDatabaseCredentials
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !GetAtt Database.MasterUserSecret.SecretArn
+
+  ApiInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref ApiInstanceRole
+
+  ApiInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      ImageId: "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      InstanceType: !Ref ApiInstanceType
+      IamInstanceProfile: !Ref ApiInstanceProfile
+      SecurityGroupIds:
+        - !Ref ApiSecurityGroup
+      SubnetId: !Ref PublicSubnetA
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y docker jq
+          systemctl enable --now docker
+          mkdir -p /opt/financial-app/certificates
+          chmod 0750 /opt/financial-app
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-api"
+
+Outputs:
+  ApiInstanceId:
+    Description: SSM-managed EC2 instance that runs the API container.
+    Value: !Ref ApiInstance
+  ApiOriginDomainName:
+    Description: >-
+      Public EC2 DNS name used only as CloudFront's HTTP origin. It is not a
+      user-facing endpoint because its security group permits CloudFront only.
+    Value: !GetAtt ApiInstance.PublicDnsName
+  ApiRepositoryUri:
+    Description: Immutable-image ECR repository for the Spring Boot API.
+    Value: !GetAtt ApiRepository.RepositoryUri
+  GitHubActionsDeploymentUserName:
+    Description: Create an access key for this least-privilege IAM user and store it in GitHub Secrets.
+    Value: !Ref GitHubActionsDeploymentUser
+  GitHubActionsDeploymentUserArn:
+    Description: ARN of the least-privilege IAM user used by GitHub Actions.
+    Value: !GetAtt GitHubActionsDeploymentUser.Arn
+  ClientBucketName:
+    Description: Private static-client bucket; only CloudFront will receive read access.
+    Value: !Ref ClientBucket
+  ClientBucketRegionalDomainName:
+    Description: Pass this exact value to the global CloudFront stack.
+    Value: !GetAtt ClientBucket.RegionalDomainName
+  DatabaseEndpointAddress:
+    Description: Private RDS endpoint, usable only from the VPC.
+    Value: !GetAtt Database.Endpoint.Address
+  DatabaseMasterSecretArn:
+    Description: RDS-managed secret read only by the EC2 instance role.
+    Value: !GetAtt Database.MasterUserSecret.SecretArn

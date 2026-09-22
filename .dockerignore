@@ -1,10 +1,17 @@
 .git
 .idea
-app/target
-app/data
-app/app.zip
+# The client Dockerfile is built with the repository root as its context, but
+# it only copies client/. Keep unrelated source, documentation, and local
+# tooling out of that context.
+app
+infra
+.github
+.codex
+design
+methodology
 client/node_modules
 client/dist
 client/.vite
 data
-deploy/.env
+.env*
+**/.env*

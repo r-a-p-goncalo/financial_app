@@ -34,3 +34,8 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 #creates static files for the private S3 client bucket
 RUN pnpm build
+
+#exports only the Vite build output when Docker's local exporter is used;
+#the dependency store and TypeScript source never become deployment artifacts
+FROM scratch AS artifacts
+COPY --from=build /workspace/client/dist/ /

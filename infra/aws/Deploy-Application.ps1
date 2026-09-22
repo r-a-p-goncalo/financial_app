@@ -276,7 +276,7 @@ exit 1
         Write-Host "Building the React client for its same-origin /api/v1 endpoint"
         & docker build `
             --file "client/Dockerfile" `
-            --target build `
+            --target artifacts `
             --build-arg "VITE_API_BASE_URL=/api/v1" `
             --output "type=local,dest=$frontendOutput" `
             "."
@@ -300,7 +300,8 @@ exit 1
         }
     } finally {
         if (Test-Path -LiteralPath $frontendOutput) {
-            Remove-Item -LiteralPath $frontendOutput -Recurse -Force
+            # Cleanup must not hide an earlier build or upload failure.
+            Remove-Item -LiteralPath $frontendOutput -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
 

@@ -232,6 +232,10 @@ sudo docker logs financial-app-api --tail 100
 exit 1
 '@
     $remoteScript = $remoteScript.Replace("__CONFIGURATION_BASE64__", $deploymentConfigurationBase64)
+    # The deployment can be launched from Windows, but AWS-RunShellScript
+    # executes on Linux. Normalize CRLF before Base64 encoding so Bash does not
+    # receive option names such as "pipefail\r".
+    $remoteScript = $remoteScript.Replace("`r`n", "`n").Replace("`r", "`n")
     $remoteScriptBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($remoteScript))
     $remoteCommand = "printf '%s' '$remoteScriptBase64' | base64 --decode | sudo bash"
     $ssmParametersFile = Join-Path ([System.IO.Path]::GetTempPath()) "financial-app-ssm-$([Guid]::NewGuid().ToString('N')).json"

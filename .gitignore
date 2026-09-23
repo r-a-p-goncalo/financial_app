@@ -20,7 +20,4 @@ data/*.db-wal
 /client/.env.*
 !/client/.env.example
 data/financial-app.log
-data/financial-app.log
-data/financial-app.log
 /client/.vite
-data/financial-app.log

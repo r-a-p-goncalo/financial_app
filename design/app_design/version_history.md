@@ -1,6 +1,20 @@
 
 Here we have a log of previous versions and also a roadmap of future versions.
 
+## Current status
+
+The repository is preparing its first deployed learning release. The running
+implementation is ahead of the original 0.1 planning notes below: it has a
+Spring Boot REST API, a React client, authentication and permissions, database
+migrations, and AWS deployment automation. It remains **unreleased** until a
+release scope, version, limitations, migration evidence, and smoke-test result
+are recorded using the release procedure in
+[methodology.md](../../methodology/methodology.md).
+
+The entries below are retained as historical design intent. Update or replace
+them with completed release notes rather than treating every planned feature as
+already delivered.
+
 # App Version 0.1 (Architecture version 0.1)
 
 This version is meant to be a prototype. It is only used locally, testing the logic without any of the server-client relation meant to exist later. There is only a single app, which is interactable only through commands in the command-line.

@@ -1,20 +1,33 @@
 [CmdletBinding()]
 param(
+    # The common prefix for the two CloudFormation stack names. Keeping one
+    # name here lets a learner create a separate sandbox without editing YAML.
     [ValidatePattern("^[a-z][a-z0-9-]{2,30}$")]
     [string]$ProjectName = "financial-app",
 
+    # AWS Region for resources that are regional (VPC, EC2, RDS, S3, and ECR).
+    # CloudFront's companion stack is deliberately deployed in us-east-1 below.
     [ValidateSet("eu-west-1", "eu-central-1", "us-east-1")]
     [string]$Region = "eu-west-1",
 
+    # this was necessary due to free tier
+    # One day is the inexpensive learning-project setting. Choose a longer
+    # retention period before the database holds data that cannot be replaced.
     [ValidateRange(1, 35)]
     [int]$DatabaseBackupRetentionDays = 1,
 
+    # this can be run with -Apply
+    # Without this switch, the script validates only. This makes the default
+    # command safe to use when learning or reviewing template changes.
     [switch]$Apply
 )
 
 Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
+# Stop immediately when AWS rejects a command. Without this, a later command
+# could run with missing stack output and make the error harder to understand.
+$ErrorActionPreference = "Stop" #variable
 
+#to check if there is a command that the script needs and does not have access to
 function Require-Command {
     param([string]$Name)
 
@@ -23,6 +36,7 @@ function Require-Command {
     }
 }
 
+#calls aws cli
 function Invoke-Aws {
     param([string[]]$Arguments)
 
@@ -32,6 +46,9 @@ function Invoke-Aws {
     }
 }
 
+# Reads a value that CloudFormation produced after a successful stack
+# deployment. This is safer than copying bucket names or instance host names
+# into the script by hand.
 function Get-StackOutput {
     param(
         [string]$StackName,
@@ -57,6 +74,9 @@ function Get-StackOutput {
     return $output
 }
 
+# CloudFormation can fail before it creates a resource event. In that case the
+# failed change set, rather than normal stack events, contains the useful
+# template-property error.
 function Show-ChangeSetValidationFailures {
     param(
         [string]$StackName,
@@ -87,17 +107,25 @@ function Show-ChangeSetValidationFailures {
         --output table
 }
 
+# we first check if we have access to aws cli
 Require-Command aws
 
+# The foundation is regional because it contains VPC, EC2, RDS, S3, and ECR.
+# The frontend stack is in us-east-1 because CloudFront is a global service and
+# this project deliberately keeps its CloudFront resources in one fixed region.
 $foundationTemplate = Join-Path $PSScriptRoot "foundation.yaml"
 $frontendTemplate = Join-Path $PSScriptRoot "frontend.yaml"
 $foundationStack = "$ProjectName-foundation"
 $frontendStack = "$ProjectName-frontend"
 
-# Template validation is intentionally read-only and runs even without -Apply.
+# 1. Validate both templates first. This only asks AWS whether the YAML and
+# CloudFormation syntax are valid; it does not create, update, or delete any
+# resources.
+# Template validation is intentionally read-only and runs even without -Apply
 Invoke-Aws @("cloudformation", "validate-template", "--region", $Region, "--template-body", "file://$foundationTemplate")
 Invoke-Aws @("cloudformation", "validate-template", "--region", "us-east-1", "--template-body", "file://$frontendTemplate")
 
+#if we're not running apply, we stop at checking if the template is valid
 if (-not $Apply) {
     Write-Host "Templates are valid. No AWS resources were created or changed."
     Write-Host "Review the templates, then rerun with -Apply to create or update:"
@@ -107,6 +135,9 @@ if (-not $Apply) {
     return
 }
 
+# 2. The API security group needs AWS's managed list of CloudFront origin IP
+# ranges. Query it rather than copying a value, because AWS owns this list.
+#we get the cloud front prefix
 $cloudFrontPrefixListId = (& aws --no-cli-pager ec2 describe-managed-prefix-lists `
     --region $Region `
     --filters "Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing" `
@@ -115,6 +146,10 @@ $cloudFrontPrefixListId = (& aws --no-cli-pager ec2 describe-managed-prefix-list
 if ($LASTEXITCODE -ne 0 -or -not $cloudFrontPrefixListId -or $cloudFrontPrefixListId -eq "None") {
     throw "Could not find the AWS-managed CloudFront origin-facing prefix list in $Region."
 }
+
+# 3. Deploy the regional foundation. CAPABILITY_NAMED_IAM is required because
+# foundation.yaml creates named IAM roles and the GitHub deployment user.
+# we get the foundation parameters and deploy it
 
 $foundationParameters = @(
     "ProjectName=$ProjectName",
@@ -135,11 +170,16 @@ $foundationDeploymentArguments = @(
 )
 Invoke-Aws $foundationDeploymentArguments
 
+# 4. Read the foundation outputs needed by CloudFront. CloudFormation passes
+# these values to the frontend stack so the two templates stay independent.
 $bucketName = Get-StackOutput -StackName $foundationStack -OutputKey "ClientBucketName" -OutputRegion $Region
 $bucketDomain = Get-StackOutput -StackName $foundationStack -OutputKey "ClientBucketRegionalDomainName" -OutputRegion $Region
 $apiOriginDomainName = Get-StackOutput -StackName $foundationStack -OutputKey "ApiOriginDomainName" -OutputRegion $Region
 
 try {
+    # 5. Deploy the CloudFront/S3 frontend stack in us-east-1. It creates the
+    # public HTTPS endpoint, allows CloudFront to read the private bucket, and
+    # forwards /api/* to the EC2 API origin.
     Invoke-Aws @(
         "cloudformation", "deploy",
         "--region", "us-east-1",
@@ -158,6 +198,8 @@ catch {
     throw
 }
 
+# 6. Print only safe, useful next-step values. Database credentials are never
+# printed: RDS stores them in Secrets Manager for the EC2 role to retrieve.
 Write-Host "Infrastructure is ready. These outputs identify the next manual deployment target:"
 Write-Host "  Client: $(Get-StackOutput -StackName $frontendStack -OutputKey 'ClientEndpoint' -OutputRegion 'us-east-1')"
 Write-Host "  API:    served from the Client URL at /api/v1 (CloudFront only)"

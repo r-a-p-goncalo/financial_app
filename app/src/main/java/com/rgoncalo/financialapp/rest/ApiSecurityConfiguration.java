@@ -27,7 +27,13 @@ import java.util.List;
 @EnableWebSecurity
 public class ApiSecurityConfiguration {
 
-    @Bean //this means this method is called at startup to generate (by default a singleton)
+    /**
+     * Stores the authenticated user in the server-side HTTP session. Spring
+     * manages this bean as one shared configuration object; the per-user
+     * security context itself remains session-scoped rather than living in a
+     * controller field or a browser-supplied user ID.
+     */
+    @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
     }

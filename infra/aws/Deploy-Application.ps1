@@ -1,19 +1,33 @@
 [CmdletBinding()]
 param(
+    # This name must match the prefix used when the CloudFormation stacks were
+    # created. The default produces financial-app-foundation and
+    # financial-app-frontend.
     [ValidatePattern("^[a-z][a-z0-9-]{2,30}$")]
     [string]$ProjectName = "financial-app",
 
+    # The regional foundation stack, EC2 instance, RDS database, and ECR
+    # repository live here. CloudFront outputs are always read from us-east-1.
     [ValidateSet("eu-west-1", "eu-central-1", "us-east-1")]
     [string]$Region = "eu-west-1",
 
+    # Normally omitted. The script then uses the full SHA of HEAD so that an
+    # API image can always be traced back to one exact Git commit.
     [string]$ImageTag,
 
+    # A deliberate escape hatch for a local experiment. A normal release must
+    # be committed so the source, Docker image, and deployed version agree.
     [switch]$AllowDirtyWorktree
 )
 
+# Strict mode turns accidental misspellings and uninitialised variables into
+# immediate errors. Stop makes a failed command halt the deployment rather than
+# continuing with only part of a release completed.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# Checks that a command-line program required by this script is installed
+# before the script begins making AWS or Docker changes.
 function Require-Command {
     param([string]$Name)
 
@@ -22,6 +36,8 @@ function Require-Command {
     }
 }
 
+# Reads a named output from a CloudFormation stack. Outputs are used instead of
+# hard-coded AWS IDs so a recreated stack can still be deployed safely.
 function Get-StackOutput {
     param(
         [string]$StackName,
@@ -47,6 +63,8 @@ function Get-StackOutput {
     return $output
 }
 
+# SSM starts the remote command asynchronously. Poll its result until it either
+# succeeds, fails, or exceeds the six-minute deployment timeout.
 function Wait-ForSsmCommand {
     param(
         [string]$CommandId,
@@ -86,13 +104,19 @@ function Wait-ForSsmCommand {
     throw "Timed out while waiting for SSM command '$CommandId'. Inspect it in Systems Manager Run Command."
 }
 
+# 1. Check local prerequisites before touching AWS. Docker builds images, Git
+# provides the source revision, and AWS CLI communicates with AWS.
 Require-Command aws
 Require-Command docker
 Require-Command git
 
+# 2. Run from the repository root so Docker sees the expected app/ and client/
+# build contexts even when this script was launched from another directory.
 $repositoryRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Push-Location $repositoryRoot
 try {
+    # 3. A release normally starts from a clean commit. This avoids a Docker
+    # image containing local edits that cannot later be recreated from Git.
     $dirtyWorktree = git status --porcelain
     if ($LASTEXITCODE -ne 0) {
         throw "Could not inspect the current Git worktree."
@@ -109,6 +133,9 @@ try {
         }
     }
 
+    # 4. Discover the infrastructure created by Deploy-Infrastructure.ps1.
+    # No account IDs, bucket names, EC2 IDs, or database host names are stored
+    # in this script; CloudFormation remains their source of truth.
     $foundationStack = "$ProjectName-foundation"
     $frontendStack = "$ProjectName-frontend"
     $apiInstanceId = Get-StackOutput -StackName $foundationStack -OutputKey "ApiInstanceId" -OutputRegion $Region
@@ -122,6 +149,8 @@ try {
     $registry = $apiRepositoryUri.Split("/")[0]
     $imageUri = "$apiRepositoryUri`:$ImageTag"
 
+    # 5. Build the API image locally, authenticate Docker to ECR, and publish
+    # it only if this immutable commit-SHA tag is not already in the registry.
     Write-Host "Building immutable API image $imageUri"
     & docker build --file "app/Dockerfile" --tag $imageUri "app"
     if ($LASTEXITCODE -ne 0) {
@@ -162,6 +191,10 @@ try {
         Write-Host "The immutable ECR image tag already exists; reusing it."
     }
 
+    # 6. Give the EC2-side script only the non-secret deployment coordinates.
+    # The instance fetches its own RDS password from Secrets Manager using its
+    # IAM role, so the password does not pass through this local machine or
+    # GitHub Actions.
     $deploymentConfiguration = @{
         awsRegion = $Region
         clientEndpoint = $clientEndpoint
@@ -171,68 +204,22 @@ try {
     } | ConvertTo-Json -Compress
     $deploymentConfigurationBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($deploymentConfiguration))
 
-    $remoteScript = @'
-#!/usr/bin/env bash
-set -euo pipefail
+    # The EC2-side Bash is kept in its own file so a learner can read the
+    # Linux deployment steps without first decoding the SSM transport code.
+    $remoteScriptTemplate = Get-Content -Raw (
+        Join-Path $PSScriptRoot "Deploy-ApiOnEc2.sh"
+    )
+    if (-not $remoteScriptTemplate.Contains("__CONFIGURATION_BASE64__")) {
+        throw "Deploy-ApiOnEc2.sh does not contain its configuration placeholder."
+    }
 
-configuration="$(printf '%s' '__CONFIGURATION_BASE64__' | base64 --decode)"
-image_uri="$(jq -er '.imageUri' <<< "$configuration")"
-aws_region="$(jq -er '.awsRegion' <<< "$configuration")"
-client_endpoint="$(jq -er '.clientEndpoint' <<< "$configuration")"
-database_endpoint="$(jq -er '.databaseEndpoint' <<< "$configuration")"
-database_secret_arn="$(jq -er '.databaseSecretArn' <<< "$configuration")"
-
-sudo install -d -m 0750 /opt/financial-app/certificates
-
-curl --fail --silent --show-error --location \
-  https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
-  --output /tmp/aws-rds-global-bundle.pem
-sudo install -m 0644 /tmp/aws-rds-global-bundle.pem /opt/financial-app/certificates/aws-rds-ca.pem
-rm -f /tmp/aws-rds-global-bundle.pem
-
-database_credentials="$(aws secretsmanager get-secret-value --region "$aws_region" --secret-id "$database_secret_arn" --query SecretString --output text)"
-database_username="$(jq -er '.username' <<< "$database_credentials")"
-database_password="$(jq -er '.password' <<< "$database_credentials")"
-
-sudo tee /opt/financial-app/api.env >/dev/null <<EOF
-FINANCIAL_APP_DATABASE_DIALECT=postgresql
-FINANCIAL_APP_DATABASE_JDBC_URL=jdbc:postgresql://${database_endpoint}:5432/financialapp?sslmode=verify-full&sslrootcert=/run/certificates/aws-rds-ca.pem
-FINANCIAL_APP_DATABASE_USERNAME=${database_username}
-FINANCIAL_APP_DATABASE_PASSWORD=${database_password}
-FINANCIAL_APP_DATABASE_MAXIMUM_POOL_SIZE=5
-FINANCIAL_APP_CORS_ALLOWED_ORIGIN=${client_endpoint}
-FINANCIAL_APP_SESSION_COOKIE_SECURE=true
-FINANCIAL_APP_CSRF_COOKIE_SECURE=true
-EOF
-sudo chmod 0600 /opt/financial-app/api.env
-
-aws ecr get-login-password --region "$aws_region" | sudo docker login --username AWS --password-stdin "${image_uri%%/*}"
-sudo docker pull "$image_uri"
-
-sudo docker rm --force financial-app-api >/dev/null 2>&1 || true
-sudo docker run --detach \
-  --name financial-app-api \
-  --restart unless-stopped \
-  --publish 8080:8080 \
-  --env-file /opt/financial-app/api.env \
-  --volume /opt/financial-app/certificates/aws-rds-ca.pem:/run/certificates/aws-rds-ca.pem:ro \
-  "$image_uri"
-
-sudo docker rm --force financial-app-proxy >/dev/null 2>&1 || true
-
-for attempt in {1..45}; do
-  if curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health; then
-    echo "API deployment is healthy on its CloudFront-only origin."
-    exit 0
-  fi
-  sleep 4
-done
-
-sudo docker logs financial-app-api --tail 100
-exit 1
-'@
-    $remoteScript = $remoteScript.Replace("__CONFIGURATION_BASE64__", $deploymentConfigurationBase64)
-    # The deployment can be launched from Windows, but AWS-RunShellScript
+    # The JSON has no database password. The EC2 script retrieves that secret
+    # itself through its IAM role after SSM starts it.
+    $remoteScript = $remoteScriptTemplate.Replace(
+        "__CONFIGURATION_BASE64__",
+        $deploymentConfigurationBase64
+    )
+    # 7. The deployment can be launched from Windows, but AWS-RunShellScript
     # executes on Linux. Normalize CRLF before Base64 encoding so Bash does not
     # receive option names such as "pipefail\r".
     $remoteScript = $remoteScript.Replace("`r`n", "`n").Replace("`r", "`n")
@@ -251,6 +238,9 @@ exit 1
         [System.Text.UTF8Encoding]::new($false)
     )
 
+    # 8. Send the configured Linux script to EC2 through SSM. SSM uses the
+    # instance role and an outbound connection, so port 22 and SSH keys are not
+    # part of this deployment design.
     Write-Host "Deploying the API through Systems Manager; no SSH port or SSH key is used."
     try {
         $commandId = (& aws --no-cli-pager ssm send-command `
@@ -270,6 +260,8 @@ exit 1
     }
     Wait-ForSsmCommand -CommandId $commandId -InstanceId $apiInstanceId -CommandRegion $Region
 
+    # 9. Build the static React files for the same-origin /api/v1 path. The
+    # temporary output folder prevents build artifacts entering the repository.
     $frontendOutput = Join-Path ([System.IO.Path]::GetTempPath()) "financial-app-client-$([Guid]::NewGuid().ToString('N'))"
     New-Item -ItemType Directory -Path $frontendOutput | Out-Null
     try {
@@ -305,6 +297,9 @@ exit 1
         }
     }
 
+    # 10. CloudFront caches static files around the world. Invalidating after
+    # upload makes the new HTML and assets visible without waiting for cache
+    # expiry.
     & aws --no-cli-pager cloudfront create-invalidation --distribution-id $clientDistributionId --paths "/*" *> $null
     if ($LASTEXITCODE -ne 0) {
         throw "The client uploaded, but CloudFront invalidation could not be requested."
@@ -312,5 +307,6 @@ exit 1
 
     Write-Host "Deployment complete. Open $clientEndpoint and verify registration, login, and a transaction."
 } finally {
+    # Always restore the caller's original directory, even if deployment fails.
     Pop-Location
 }

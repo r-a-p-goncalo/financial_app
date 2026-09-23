@@ -139,6 +139,20 @@ Resources:
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${ClientDistribution}"
+          # Bucket policies are evaluated in addition to the account-level
+          # public-access block. This explicit deny prevents an accidental
+          # future policy from allowing plaintext HTTP requests to the client
+          # bucket; CloudFront's Origin Access Control uses HTTPS to S3.
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !Sub "arn:${AWS::Partition}:s3:::${ClientBucketName}"
+              - !Sub "arn:${AWS::Partition}:s3:::${ClientBucketName}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
 Outputs:
   ClientDistributionId:

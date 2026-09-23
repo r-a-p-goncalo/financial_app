@@ -2,6 +2,7 @@
   "name": "financial-app-client",
   "private": true,
   "version": "0.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"
@@ -13,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
+    "lint:commits": "commitlint",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -23,6 +25,8 @@
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.1",
     "@eslint/js": "^9.39.3",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",

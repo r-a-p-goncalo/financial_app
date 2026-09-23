@@ -7,7 +7,14 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRe
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
 import com.rgoncalo.financialapp.application.transaction.TransactionRepository;
 import com.rgoncalo.financialapp.application.user.UserRepository;
-import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.*;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.DatabaseDataSourceFactory;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.DatabaseDialect;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.DatabaseMigrator;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcAccountRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcFinancialContextPermissionRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcFinancialContextRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcTransactionRepository;
+import com.rgoncalo.financialapp.infrastructure.persistence.jdbc.JdbcUserRepository;
 import com.rgoncalo.financialapp.infrastructure.security.PasswordHashingStrategyRegistry;
 import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingStrategy;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +28,13 @@ import javax.sql.DataSource;
 @SpringBootApplication
 public class Main {
 
+    /**
+     * Spring Boot entry point and composition root. This is the only place
+     * where the HTTP application selects concrete JDBC repositories and a
+     * password-hashing implementation. Use cases depend on the interfaces,
+     * which keeps their behavior testable with in-memory, SQLite, or
+     * PostgreSQL implementations.
+     */
     private static final Path DEFAULT_DATABASE_FILE =
             Path.of("data", "financial-app.db");
 

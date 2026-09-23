@@ -10,6 +10,46 @@ permissions:
   contents: read
 
 jobs:
+  commit-message:
+    name: Verify commit messages
+    runs-on: ubuntu-latest
+
+    steps:
+      # Commitlint needs both ends of the range. The default shallow checkout
+      # contains only one commit and cannot compare a pull request to its base.
+      - name: Check out full Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js for commitlint
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Install the versioned commit-message checker
+        run: |
+          corepack enable
+          pnpm --dir client install --frozen-lockfile --ignore-scripts
+
+      - name: Select the commits introduced by this event
+        id: commit-range
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "from=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "to=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "from=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "to=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify Conventional Commit messages
+        working-directory: client
+        run: pnpm lint:commits --from "${{ steps.commit-range.outputs.from }}" --to "${{ steps.commit-range.outputs.to }}"
+
   verify:
     name: Verify application, client, and packages
     runs-on: ubuntu-latest

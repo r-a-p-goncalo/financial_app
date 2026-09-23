@@ -33,6 +33,19 @@ one EC2 instance and a single-AZ RDS instance. It avoids NAT gateways, an ALB,
 ECS, Aurora, and a custom domain until there is a concrete reason to learn or
 need them.
 
+## Script map
+
+- Deploy-Infrastructure.ps1 is the first entry point. Without -Apply, it only
+  validates the two CloudFormation templates; with -Apply, it creates or
+  updates the regional foundation and CloudFront frontend stacks.
+- Deploy-Application.ps1 is the release entry point. It checks the Git
+  worktree, builds and publishes the API image, deploys it through Systems
+  Manager, publishes the client, and invalidates CloudFront.
+- Deploy-ApiOnEc2.sh is the Linux helper that Systems Manager runs on the EC2
+  host. It is kept separately so the server-side steps are readable, but it is
+  **not** a manual entry point: Deploy-Application.ps1 supplies its
+  configuration and sends it automatically.
+
 ## Before creating resources
 
 1. Install AWS CLI v2, Docker Desktop/Engine, Git, and PowerShell 7

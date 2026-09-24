@@ -1,4 +1,8 @@
 {
+  "user": {
+    "name": "demo",
+    "password": "demo-password"
+  },
   "mode": "if-empty",
   "commands": [
     {

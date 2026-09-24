@@ -66,6 +66,12 @@ The Vite development server proxies /api to http://localhost:8080. Do not put
 real financial data, AWS credentials, RDS passwords, or production exports in
 the repository.
 
+For a known local UI-review state on Windows, run
+`./scripts/Start-LocalStack.ps1 -ResetDatabase`. It opens the local API and
+Vite client, recreates only `app/data/financial-app.db`, and loads the
+`demo` / `demo-password` bootstrap scenario. See [the backend guide](app/README.md)
+to select or add another JSON scenario.
+
 ## Delivery model
 
 Pull requests and pushes to development run CI. A push to main reruns the

@@ -56,9 +56,11 @@ client-side routes such as `/contexts/:id` to `index.html`.
 `../scripts/Start-LocalStack.ps1` opens two PowerShell 7 terminals: the API
 from `app` and the Vite client from `client`. The client uses the default Vite
 proxy to reach `http://localhost:8080`; the API uses the local SQLite database
-at `app/data/financial-app.db`, not the deployed database. Add
-`-InstallDependencies` on the first run if client dependencies are not already
-installed.
+at `app/data/financial-app.db`, not the deployed database. It loads the known
+`demo` / `demo-password` scenario by default. Add `-ResetDatabase` to recreate
+that local database and its demo data, or `-BootstrapConfigFile` to select
+another JSON scenario. Add `-InstallDependencies` on the first run if client
+dependencies are not already installed.
 
 ## Architecture
 

@@ -10,17 +10,55 @@ the Spring Boot API in `../app`.
 3. Run `pnpm dev` and open the URL printed by Vite (normally
    `http://localhost:5173`).
 
-Vite proxies `/api` to `http://localhost:8080`. This keeps browser session
-cookies and CSRF requests same-origin in development. To point the built client
-at another API host, set `VITE_API_BASE_URL`, for example:
+By default, Vite proxies `/api` to `http://localhost:8080`. This keeps browser
+session cookies and CSRF requests same-origin in development. The API uses its
+local SQLite database by default, so the local client and API can be used
+without accessing deployed data.
+
+## Run the local client against the deployed API
+
+The deployed API is available to browsers only through the CloudFront frontend
+endpoint. Do not set `VITE_API_BASE_URL` to that endpoint: direct browser
+requests would be cross-origin and would not have a usable production session.
+Instead, let Vite proxy the API requests.
+
+Create an untracked `client/.env.remote` file from `.env.example` and replace
+the example value with the CloudFront frontend URL:
 
 ```text
-VITE_API_BASE_URL=https://api.example.com/api/v1
+VITE_API_PROXY_TARGET=https://your-distribution.cloudfront.net
 ```
+
+Then start Vite in remote mode:
+
+```text
+pnpm dev -- --mode remote
+```
+
+On Windows, `../scripts/Start-ClientRemote.ps1` runs this mode. It accepts
+`-ApiProxyTarget` for a one-off CloudFront URL or reads the untracked
+`.env.remote` file. Add `-InstallDependencies` on its first run to install the
+locked client dependencies.
+
+The browser still calls same-origin `/api/v1` on the Vite server, which forwards
+the requests to CloudFront. The proxy presents CloudFront's origin to the API
+for its production CORS policy, while browser session and CSRF cookies remain
+local to the Vite origin. Remote mode reads and writes the deployed database,
+so use a dedicated test account. If a browser rejects the deployed API's
+secure cookies on HTTP localhost, run Vite over local HTTPS for this mode.
 
 The AWS deployment serves the client through CloudFront and forwards the
 same-origin `/api/*` route to the Spring service. CloudFront rewrites
 client-side routes such as `/contexts/:id` to `index.html`.
+
+## Run the complete local stack on Windows
+
+`../scripts/Start-LocalStack.ps1` opens two PowerShell 7 terminals: the API
+from `app` and the Vite client from `client`. The client uses the default Vite
+proxy to reach `http://localhost:8080`; the API uses the local SQLite database
+at `app/data/financial-app.db`, not the deployed database. Add
+`-InstallDependencies` on the first run if client dependencies are not already
+installed.
 
 ## Architecture
 

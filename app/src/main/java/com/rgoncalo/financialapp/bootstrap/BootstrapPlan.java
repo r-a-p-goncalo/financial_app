@@ -6,9 +6,17 @@ import java.util.List;
  * Deserialized contents of a bootstrap configuration file.
  */
 public record BootstrapPlan(
+        BootstrapUser user,
         BootstrapMode mode,
         List<BootstrapCommand> commands
 ) {
+
+    public BootstrapPlan(
+            BootstrapMode mode,
+            List<BootstrapCommand> commands
+    ) {
+        this(null, mode, commands);
+    }
 
     public BootstrapPlan {
         mode = mode == null ? BootstrapMode.IF_EMPTY : mode;

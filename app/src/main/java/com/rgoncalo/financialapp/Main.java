@@ -2,6 +2,7 @@ package com.rgoncalo.financialapp;
 
 import com.rgoncalo.financialapp.application.Application;
 import com.rgoncalo.financialapp.application.ApplicationConfiguration;
+import com.rgoncalo.financialapp.bootstrap.BootstrapProperties;
 import com.rgoncalo.financialapp.application.account.AccountRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextRepository;
 import com.rgoncalo.financialapp.application.financialcontext.FinancialContextPermissionRepository;
@@ -20,12 +21,14 @@ import com.rgoncalo.financialapp.infrastructure.security.Pbkdf2PasswordHashingSt
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 import java.nio.file.Path;
 import javax.sql.DataSource;
 
 @SpringBootApplication
+@EnableConfigurationProperties(BootstrapProperties.class)
 public class Main {
 
     /**

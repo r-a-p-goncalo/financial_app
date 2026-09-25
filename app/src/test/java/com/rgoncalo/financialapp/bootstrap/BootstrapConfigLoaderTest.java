@@ -22,6 +22,10 @@ class BootstrapConfigLoaderTest {
                 file,
                 """
                         {
+                          "user": {
+                            "name": "demo",
+                            "password": "demo-password"
+                          },
                           "mode": "if-empty",
                           "commands": [
                             {
@@ -36,6 +40,7 @@ class BootstrapConfigLoaderTest {
 
         BootstrapPlan result = new BootstrapConfigLoader().load(file);
 
+        assertEquals("demo", result.user().name());
         assertEquals(BootstrapMode.IF_EMPTY, result.mode());
         assertEquals(1, result.commands().size());
         assertInstanceOf(

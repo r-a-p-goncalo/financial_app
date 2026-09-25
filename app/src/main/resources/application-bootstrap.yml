@@ -1,0 +1,6 @@
+financial-app:
+  bootstrap:
+    # Both the bootstrap profile and this flag must be enabled before any
+    # scenario can change the configured database.
+    enabled: ${FINANCIAL_APP_BOOTSTRAP_ENABLED:false}
+    config-file: ${FINANCIAL_APP_BOOTSTRAP_CONFIG_FILE:config/bootstrap/financial-demo.json}

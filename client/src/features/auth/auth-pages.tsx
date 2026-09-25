@@ -1,10 +1,34 @@
-import { type FormEvent, useState } from "react";
+import { type CSSProperties, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import dollarBill from "../../assets/dollarbillpixelart.png";
 import { errorMessage } from "../../shared/api/api-error";
 import { useLogin, useRegister } from "./session";
 
 interface AuthPageProps {
   mode: "login" | "register";
+}
+
+const rainColumns = Array.from({ length: 8 }, (_, index) => index);
+const billsPerColumn = 4;
+
+function FallingBills() {
+  return (
+    <div className="money-rain" aria-hidden="true">
+      {rainColumns.map((column) => (
+        <div className="money-rain-column" key={column}>
+          {Array.from({ length: billsPerColumn }, (_, row) => (
+            <span
+              className="falling-bill"
+              key={row}
+              style={{ "--fall-delay": `${-(row * 3 + (column % 2) * 1.5)}s` } as CSSProperties}
+            >
+              <img src={dollarBill} alt="" />
+            </span>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function AuthPage({ mode }: AuthPageProps) {
@@ -35,6 +59,7 @@ function AuthPage({ mode }: AuthPageProps) {
 
   return (
     <main className="auth-page">
+      <FallingBills />
       <section className="auth-card">
         <div className="brand auth-brand"><span className="brand-mark" aria-hidden="true">F</span>Financial App</div>
         <p className="eyebrow">Your financial workspace</p>

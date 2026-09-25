@@ -374,11 +374,13 @@ to the HTTP session and is resolved separately for each request.
 
 Contains the model and runner for optional startup data.
 
-`BootstrapConfigLoader` parses `config/bootstrap.json` into a `BootstrapPlan`.
-`BootstrapRunner` executes that plan through the same application use cases
-used by the client. The runner receives the active user ID, so created
-contexts, accounts, and transactions follow the same permission rules as
-normal operations.
+`BootstrapConfigLoader` parses JSON scenario files from `config/bootstrap/`
+into a `BootstrapPlan`. Each scenario declares a local user, a mode, and its
+ordered commands. `BootstrapStartupRunner` creates or verifies that known user
+then delegates to `BootstrapRunner`, which executes the plan through the same
+application use cases used by the client. Contexts, accounts, and transactions
+therefore follow normal validation and permission rules rather than being
+inserted directly with SQL.
 
 ---
 
@@ -448,10 +450,34 @@ Spring Boot listens on port `8080` by default.
 
 ## Bootstrap Data
 
-`BootstrapConfigLoader` and `BootstrapRunner` remain available for creating
-sample data through application use cases. `Main` does not currently invoke a
-bootstrap plan when starting the REST API; a future protected administrative
-endpoint or development profile can decide when and for whom to run one.
+Bootstrap data is intended only for a local or otherwise isolated environment.
+It is disabled in the default application profile and is never enabled by the
+AWS deployment. Startup data requires both the `bootstrap` Spring profile and
+`financial-app.bootstrap.enabled=true`; this prevents a normal API start from
+changing its database.
+
+The versioned demo scenario is
+`config/bootstrap/financial-demo.json`. It creates a known `demo` user with
+password `demo-password` and populates the two financial contexts shown in the
+browser client. Run it manually from PowerShell with:
+
+```text
+$env:SPRING_PROFILES_ACTIVE = "bootstrap"
+$env:FINANCIAL_APP_BOOTSTRAP_ENABLED = "true"
+$env:FINANCIAL_APP_BOOTSTRAP_CONFIG_FILE = "config/bootstrap/financial-demo.json"
+mvn spring-boot:run
+```
+
+On Windows, `../scripts/Start-LocalStack.ps1` supplies those settings and opens
+the API and Vite terminals. Add `-ResetDatabase` to remove only the local
+SQLite database and recreate the exact known demo state. Stop a running API
+before using that option.
+
+To add a later scenario, create another JSON file in `config/bootstrap/` with
+a `user`, `mode`, and `commands` array, then select it with
+`FINANCIAL_APP_BOOTSTRAP_CONFIG_FILE` or the launcher's
+`-BootstrapConfigFile` option. The JSON loader rejects unknown fields, making
+scenario changes explicit and reviewable.
 
 Commands are executed in file order. The `ref` fields are configuration-local
 aliases that let later account and transaction commands refer to generated

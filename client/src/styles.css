@@ -110,16 +110,29 @@ tbody tr:last-child td { border-bottom: 0; }
 .transaction-form { min-width: 0; }
 .dialog-actions { display: flex; justify-content: end; gap: 0.65rem; margin-top: 0.25rem; }
 
-.auth-page { display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; background: radial-gradient(circle at 10% 10%, #e1f0ea 0, transparent 40%), #f5f7f8; }
-.auth-card { width: min(100%, 420px); padding: 2.25rem; border: 1px solid #dfe5e8; border-radius: 15px; background: #fff; box-shadow: 0 18px 48px rgb(23 34 44 / 10%); }
+.auth-page { position: relative; display: grid; min-height: 100vh; place-items: center; isolation: isolate; overflow: hidden; padding: 1.5rem; background: radial-gradient(circle at 10% 10%, #e1f0ea 0, transparent 40%), #f5f7f8; }
+.auth-card { position: relative; z-index: 1; width: min(100%, 420px); padding: 2.25rem; border: 1px solid #dfe5e8; border-radius: 15px; background: #fff; box-shadow: 0 18px 48px rgb(23 34 44 / 10%); }
 .auth-brand { margin-bottom: 2.8rem; }
 .auth-card h1 { font-size: 2rem; }
 .auth-switch { margin: 1.5rem 0 0; color: #62707d; font-size: 0.9rem; }
 .auth-switch a { color: #1c6957; font-weight: 700; }
+.money-rain { position: absolute; z-index: 0; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); overflow: hidden; pointer-events: none; }
+.money-rain-column { position: relative; }
+.falling-bill { position: absolute; top: 0; left: 50%; width: clamp(54px, 8vw, 104px); opacity: 0.42; animation: money-fall 12s linear infinite; animation-delay: var(--fall-delay); }
+.falling-bill img { display: block; width: 100%; image-rendering: pixelated; filter: drop-shadow(0 5px 5px rgb(23 34 44 / 12%)); }
+.money-rain-column:nth-child(odd) .falling-bill { margin-left: -20%; }
+.money-rain-column:nth-child(3n) .falling-bill img { transform: rotate(-7deg); }
+.money-rain-column:nth-child(3n + 1) .falling-bill img { transform: rotate(6deg); }
+
+@keyframes money-fall {
+  from { transform: translate(-50%, -10rem); }
+  to { transform: translate(-50%, calc(100vh + 10rem)); }
+}
 .centered-status, .route-error { display: grid; min-height: 55vh; place-content: center; padding: 2rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto; transition-duration: 0.01ms !important; }
+  .money-rain { display: none; }
 }
 
 @media (max-width: 760px) {
@@ -136,6 +149,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .hero-actions { justify-items: start; }
   .hero-error { text-align: left; }
   .account-amounts { text-align: left; }
+  .money-rain { grid-template-columns: repeat(5, 1fr); }
 }
 
 @media (max-width: 440px) {

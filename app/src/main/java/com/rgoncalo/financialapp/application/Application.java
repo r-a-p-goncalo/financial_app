@@ -18,6 +18,7 @@ import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummary
 import com.rgoncalo.financialapp.application.user.CreateUser;
 import com.rgoncalo.financialapp.application.user.AuthenticateUser;
 import com.rgoncalo.financialapp.application.user.GetUser;
+import com.rgoncalo.financialapp.application.user.GetUserByName;
 import com.rgoncalo.financialapp.application.user.ListUsersSummary;
 
 /**
@@ -227,6 +228,15 @@ public class Application {
      */
     public GetUser getUserById() {
         return new GetUser(appConfig.userRepository());
+    }
+
+    /**
+     * Finds a user by its unique name.
+     *
+     * @return {@link GetUserByName}
+     */
+    public GetUserByName getUserByName() {
+        return new GetUserByName(appConfig.userRepository());
     }
 
     /**

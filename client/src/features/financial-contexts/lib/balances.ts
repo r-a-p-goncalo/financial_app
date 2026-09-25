@@ -97,8 +97,10 @@ export function accountTransactionRunningTotals(account: Account, transactions: 
   //here we store the total for each transaction
   const totals = new Map<string, ReturnType<typeof asDecimal>>();
 
-  //we filter for the target account and sort the transactions
-  const chronologicalTransactions = inplaceTransactionsNewestFirst(filterTransactionsAffectingAccount(account, transactions));
+  // Start from the initial amount, so running totals must be calculated from
+  // oldest to newest even though the transaction table is displayed newest first.
+  const chronologicalTransactions = filterTransactionsAffectingAccount(account, transactions)
+    .sort((left, right) => left.dateTime.localeCompare(right.dateTime) || left.transactionId.localeCompare(right.transactionId));
 
   //we then compute, for each transaction, the
   for (const transaction of chronologicalTransactions) {

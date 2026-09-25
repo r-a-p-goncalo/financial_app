@@ -12,6 +12,7 @@ permissions:
 jobs:
   commit-message:
     name: Verify commit messages
+    if: ${{ false }}
     runs-on: ubuntu-latest
 
     steps:

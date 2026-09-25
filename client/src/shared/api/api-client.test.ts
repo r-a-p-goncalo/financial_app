@@ -1,9 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { createApiClient, type ApiTransport } from "./api-client";
 
+
+//describe serves to group related tests
 describe("API client", () => {
-  it("keeps API paths and request payloads in the shared operation layer", async () => {
+
+  //it and Test mean the same in vit, defining a set of related expectations
+  test("keeps API paths and request payloads in the shared operation layer", async () => {
+
+    //the array where we'll store the generated calls
     const calls: Array<{ method: string; path: string; body?: unknown }> = [];
+
+
     const transport: ApiTransport = {
       get: async <T>(path: string) => {
         calls.push({ method: "GET", path });

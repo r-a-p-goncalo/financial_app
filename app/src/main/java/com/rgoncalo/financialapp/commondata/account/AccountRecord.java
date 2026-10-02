@@ -14,7 +14,8 @@ public record AccountRecord(
         String name,
         MonetaryValue initialAmount,
         AccountRecordId parentAccountRecordId,
-        int overriddenAttributes
+        int overriddenAttributes,
+        boolean live
 ) {
 
     public enum Attribute {
@@ -30,6 +31,17 @@ public record AccountRecord(
         public int mask() {
             return mask;
         }
+    }
+
+    public AccountRecord(
+            AccountRecordId accountRecordId,
+            String name,
+            MonetaryValue initialAmount,
+            AccountRecordId parentAccountRecordId,
+            int overriddenAttributes
+    ) {
+        this(accountRecordId, name, initialAmount, parentAccountRecordId,
+                overriddenAttributes, true);
     }
 
     public AccountRecord(

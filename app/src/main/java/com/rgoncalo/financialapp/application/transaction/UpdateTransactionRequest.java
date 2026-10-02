@@ -1,0 +1,20 @@
+package com.rgoncalo.financialapp.application.transaction;
+
+import com.rgoncalo.financialapp.commondata.account.AccountRecordId;
+import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
+import com.rgoncalo.financialapp.commondata.money.MonetaryValue;
+import com.rgoncalo.financialapp.commondata.transaction.TransactionRecordId;
+import com.rgoncalo.financialapp.commondata.user.UserId;
+
+import java.time.Instant;
+
+public record UpdateTransactionRequest(
+        FinancialContextId financialContextId,
+        TransactionRecordId transactionRecordId,
+        AccountRecordId originAccountId,
+        AccountRecordId targetAccountId,
+        Instant dateTime,
+        MonetaryValue value,
+        UserId userId
+) {
+}

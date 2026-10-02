@@ -13,9 +13,9 @@ const accounts: Account[] = [
 ];
 
 const transactions: Transaction[] = [
-  { transactionId: "income", originAccountId: null, targetAccountId: "cash", dateTime: "2026-01-01T10:00:00Z", value: "40" },
-  { transactionId: "transfer", originAccountId: "cash", targetAccountId: "savings", dateTime: "2026-01-02T10:00:00Z", value: "25" },
-  { transactionId: "expense", originAccountId: "savings", targetAccountId: null, dateTime: "2026-01-03T10:00:00Z", value: "10" },
+  { transactionId: "income", financialContextId: "context", originAccountId: null, targetAccountId: "cash", dateTime: "2026-01-01T10:00:00Z", value: "40" },
+  { transactionId: "transfer", financialContextId: "context", originAccountId: "cash", targetAccountId: "savings", dateTime: "2026-01-02T10:00:00Z", value: "25" },
+  { transactionId: "expense", financialContextId: "context", originAccountId: "savings", targetAccountId: null, dateTime: "2026-01-03T10:00:00Z", value: "10" },
 ];
 
 describe("financial context balances", () => {

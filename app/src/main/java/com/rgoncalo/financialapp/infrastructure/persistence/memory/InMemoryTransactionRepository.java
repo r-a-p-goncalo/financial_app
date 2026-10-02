@@ -35,7 +35,15 @@ public class InMemoryTransactionRepository
     public Collection<TransactionRecord> listTransactionsSummary(
             FinancialContextId financialContextId
     ) {
+        return listStoredTransactions(financialContextId).stream()
+                .filter(TransactionRecord::live)
+                .toList();
+    }
 
+    @Override
+    public Collection<TransactionRecord> listStoredTransactions(
+            FinancialContextId financialContextId
+    ) {
         return transactions
                 .values()
                 .stream()
@@ -49,6 +57,17 @@ public class InMemoryTransactionRepository
     }
 
     @Override
+    public Collection<TransactionRecord> listChildren(
+            TransactionRecordId parentTransactionRecordId
+    ) {
+        return transactions.values().stream()
+                .filter(transaction -> parentTransactionRecordId.equals(
+                        transaction.parentTransactionRecordId()
+                ))
+                .toList();
+    }
+
+    @Override
     public Collection<TransactionRecord> listTransactionsSummaryForAccount(
             AccountRecordId accountRecordId
     ) {
@@ -57,12 +76,12 @@ public class InMemoryTransactionRepository
                 .values()
                 .stream()
                 .filter(transaction ->
-                        accountRecordId.equals(
+                        transaction.live() && (accountRecordId.equals(
                                 transaction.originAccountId()
                         )
                                 || accountRecordId.equals(
                                 transaction.targetAccountId()
-                        )
+                        ))
                 )
                 .toList();
     }
@@ -72,9 +91,13 @@ public class InMemoryTransactionRepository
             TransactionRecordId id
     ) {
 
-        return Optional.ofNullable(
-                transactions.get(id)
-        );
+        return Optional.ofNullable(transactions.get(id))
+                .filter(TransactionRecord::live);
+    }
+
+    @Override
+    public void deletePermanently(TransactionRecordId id) {
+        transactions.remove(id);
     }
 
     public int size() {

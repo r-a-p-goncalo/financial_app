@@ -28,4 +28,7 @@ public interface FinancialContextPermissionRepository {
     Collection<FinancialContextPermissionRecord> listByFinancialContextId(
             FinancialContextId financialContextId
     );
+
+    /** Removes permissions as part of an internal permanent context deletion. */
+    void deleteByFinancialContextId(FinancialContextId financialContextId);
 }

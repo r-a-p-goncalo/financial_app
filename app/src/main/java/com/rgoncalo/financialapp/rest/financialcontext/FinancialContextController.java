@@ -7,6 +7,8 @@ import com.rgoncalo.financialapp.application.financialcontext.CreateFinancialCon
 import com.rgoncalo.financialapp.application.financialcontext.GetEffectiveFinancialContextRequest;
 import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextChildrenRequest;
 import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextSummaryRequest;
+import com.rgoncalo.financialapp.application.financialcontext.SoftDeleteFinancialContextRequest;
+import com.rgoncalo.financialapp.application.financialcontext.UpdateFinancialContextRequest;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextId;
 import com.rgoncalo.financialapp.commondata.financialcontext.FinancialContextRecord;
 import com.rgoncalo.financialapp.commondata.user.UserId;
@@ -16,10 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -68,6 +72,33 @@ public class FinancialContextController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(FinancialContextResponse.from(context));
+    }
+
+    @PutMapping("/{financialContextId}")
+    public FinancialContextResponse update(
+            @PathVariable String financialContextId,
+            @Valid @RequestBody UpdateFinancialContextHttpRequest request,
+            Authentication authentication
+    ) {
+        return FinancialContextResponse.from(application.updateFinancialContext()
+                .execute(new UpdateFinancialContextRequest(
+                        new FinancialContextId(financialContextId), request.name(),
+                        currentUser.userId(authentication)
+                )));
+    }
+
+    @DeleteMapping("/{financialContextId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable String financialContextId,
+            Authentication authentication
+    ) {
+        application.softDeleteFinancialContext().execute(
+                new SoftDeleteFinancialContextRequest(
+                        new FinancialContextId(financialContextId),
+                        currentUser.userId(authentication)
+                )
+        );
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{financialContextId}")

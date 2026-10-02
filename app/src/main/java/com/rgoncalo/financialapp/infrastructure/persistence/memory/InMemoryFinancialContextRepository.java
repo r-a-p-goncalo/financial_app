@@ -18,7 +18,9 @@ public class InMemoryFinancialContextRepository implements FinancialContextRepos
 
     @Override
     public Collection<FinancialContextRecord> listFinancialContextsSummary() {
-        return financialContexts.values();
+        return financialContexts.values().stream()
+                .filter(FinancialContextRecord::live)
+                .toList();
     }
 
     @Override
@@ -30,12 +32,18 @@ public class InMemoryFinancialContextRepository implements FinancialContextRepos
                 .filter(context -> Objects.equals(
                         context.parentFinancialContextId(),
                         parentFinancialContextId
-                ))
+                ) && context.live())
                 .toList();
     }
 
     @Override
     public Optional<FinancialContextRecord> findById(FinancialContextId id) {
-        return Optional.ofNullable(financialContexts.get(id));
+        return Optional.ofNullable(financialContexts.get(id))
+                .filter(FinancialContextRecord::live);
+    }
+
+    @Override
+    public void deletePermanently(FinancialContextId id) {
+        financialContexts.remove(id);
     }
 }

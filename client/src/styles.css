@@ -92,6 +92,8 @@ th { color: #64737d; font-size: 0.72rem; letter-spacing: 0.07em; text-transform:
 tbody tr:last-child td { border-bottom: 0; }
 .table-link { color: #214f44; font-weight: 750; text-decoration: none; }
 .table-link:hover { text-decoration: underline; }
+.table-actions { display: flex; gap: 0.4rem; align-items: start; }
+.table-actions .button { min-height: 34px; padding: 0.35rem 0.55rem; font-size: 0.8rem; }
 .amount { color: #1f6d5a; font-variant-numeric: tabular-nums; font-weight: 750; }
 .negative { color: #b23d3d; font-variant-numeric: tabular-nums; font-weight: 750; }
 

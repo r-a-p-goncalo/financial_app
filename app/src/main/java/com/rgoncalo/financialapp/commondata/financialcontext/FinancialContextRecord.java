@@ -10,7 +10,8 @@ public record FinancialContextRecord(
         FinancialContextId financialContextId,
         String name,
         FinancialContextId parentFinancialContextId,
-        int overriddenAttributes
+        int overriddenAttributes,
+        boolean live
 ) {
 
     public enum Attribute {
@@ -29,9 +30,19 @@ public record FinancialContextRecord(
 
     public FinancialContextRecord(
             FinancialContextId financialContextId,
+            String name,
+            FinancialContextId parentFinancialContextId,
+            int overriddenAttributes
+    ) {
+        this(financialContextId, name, parentFinancialContextId,
+                overriddenAttributes, true);
+    }
+
+    public FinancialContextRecord(
+            FinancialContextId financialContextId,
             String name
     ) {
-        this(financialContextId, name, null, 0);
+        this(financialContextId, name, null, 0, true);
     }
 
     public boolean overrides(Attribute attribute) {

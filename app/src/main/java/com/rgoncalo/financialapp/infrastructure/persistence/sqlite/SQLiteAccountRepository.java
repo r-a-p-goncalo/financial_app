@@ -25,29 +25,51 @@ public class SQLiteAccountRepository implements AccountRepository {
             INSERT INTO accounts (
                 financial_context_id, account_id, name, initial_amount,
                 parent_financial_context_id, parent_account_id,
-                overridden_attributes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                overridden_attributes, is_live
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(financial_context_id, account_id) DO UPDATE SET
                 name = excluded.name,
                 initial_amount = excluded.initial_amount,
                 parent_financial_context_id = excluded.parent_financial_context_id,
                 parent_account_id = excluded.parent_account_id,
-                overridden_attributes = excluded.overridden_attributes
+                overridden_attributes = excluded.overridden_attributes,
+                is_live = excluded.is_live
             """;
 
     private static final String SELECT_BY_CONTEXT = """
             SELECT financial_context_id, account_id, name, initial_amount,
                    parent_financial_context_id, parent_account_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
+            FROM accounts
+            WHERE financial_context_id = ? AND is_live = 1
+            """;
+
+    private static final String SELECT_STORED_BY_CONTEXT = """
+            SELECT financial_context_id, account_id, name, initial_amount,
+                   parent_financial_context_id, parent_account_id,
+                   overridden_attributes, is_live
             FROM accounts
             WHERE financial_context_id = ?
+            """;
+
+    private static final String SELECT_CHILDREN = """
+            SELECT financial_context_id, account_id, name, initial_amount,
+                   parent_financial_context_id, parent_account_id,
+                   overridden_attributes, is_live
+            FROM accounts
+            WHERE parent_financial_context_id = ? AND parent_account_id = ?
             """;
 
     private static final String SELECT_BY_ID = """
             SELECT financial_context_id, account_id, name, initial_amount,
                    parent_financial_context_id, parent_account_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM accounts
+            WHERE financial_context_id = ? AND account_id = ? AND is_live = 1
+            """;
+
+    private static final String DELETE = """
+            DELETE FROM accounts
             WHERE financial_context_id = ? AND account_id = ?
             """;
 
@@ -73,7 +95,8 @@ public class SQLiteAccountRepository implements AccountRepository {
                 account.initialAmount().toString(),
                 parentFinancialContextId(account),
                 parentAccountId(account),
-                account.overriddenAttributes()
+                account.overriddenAttributes(),
+                account.live() ? 1 : 0
         );
     }
 
@@ -99,6 +122,36 @@ public class SQLiteAccountRepository implements AccountRepository {
 
     }
 
+    @Override
+    public Collection<AccountRecord> listStoredAccounts(
+            FinancialContextId financialContextId
+    ) {
+        return jdbcRepository.find(
+                SELECT_STORED_BY_CONTEXT,
+                financialContextId.financialContextId()
+        );
+    }
+
+    @Override
+    public Collection<AccountRecord> listChildren(
+            AccountRecordId parentAccountRecordId
+    ) {
+        return jdbcRepository.find(
+                SELECT_CHILDREN,
+                parentAccountRecordId.financialContextId().financialContextId(),
+                parentAccountRecordId.accountRecordId()
+        );
+    }
+
+    @Override
+    public void deletePermanently(AccountRecordId id) {
+        jdbcRepository.executeUpdate(
+                DELETE,
+                id.financialContextId().financialContextId(),
+                id.accountRecordId()
+        );
+    }
+
     private static AccountRecord mapAccount(ResultSet resultSet)
             throws SQLException {
         FinancialContextId financialContextId = new FinancialContextId(
@@ -113,7 +166,8 @@ public class SQLiteAccountRepository implements AccountRepository {
                 resultSet.getString("name"),
                 MonetaryValue.parse(resultSet.getString("initial_amount")),
                 parentAccountRecordId(resultSet),
-                resultSet.getInt("overridden_attributes")
+                resultSet.getInt("overridden_attributes"),
+                resultSet.getInt("is_live") != 0
         );
     }
 

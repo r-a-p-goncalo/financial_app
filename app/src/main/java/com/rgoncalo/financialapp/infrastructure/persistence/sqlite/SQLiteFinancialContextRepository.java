@@ -23,31 +23,38 @@ public class SQLiteFinancialContextRepository
     private static final String INSERT = """
             INSERT INTO financial_contexts (
                 financial_context_id, name, parent_financial_context_id,
-                overridden_attributes
-            ) VALUES (?, ?, ?, ?)
+                overridden_attributes, is_live
+            ) VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(financial_context_id) DO UPDATE SET
                 name = excluded.name,
                 parent_financial_context_id = excluded.parent_financial_context_id,
-                overridden_attributes = excluded.overridden_attributes
+                overridden_attributes = excluded.overridden_attributes,
+                is_live = excluded.is_live
             """;
 
     private static final String SELECT_ALL = """
             SELECT financial_context_id, name, parent_financial_context_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM financial_contexts
+            WHERE is_live = 1
             """;
 
     private static final String SELECT_CHILDREN = """
             SELECT financial_context_id, name, parent_financial_context_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM financial_contexts
-            WHERE parent_financial_context_id = ?
+            WHERE parent_financial_context_id = ? AND is_live = 1
             """;
 
     private static final String SELECT_BY_ID = """
             SELECT financial_context_id, name, parent_financial_context_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM financial_contexts
+            WHERE financial_context_id = ? AND is_live = 1
+            """;
+
+    private static final String DELETE = """
+            DELETE FROM financial_contexts
             WHERE financial_context_id = ?
             """;
 
@@ -73,6 +80,7 @@ public class SQLiteFinancialContextRepository
                         : financialContext.parentFinancialContextId()
                         .financialContextId(),
                 financialContext.overriddenAttributes()
+                , financialContext.live() ? 1 : 0
         );
     }
 
@@ -104,6 +112,11 @@ public class SQLiteFinancialContextRepository
 
     }
 
+    @Override
+    public void deletePermanently(FinancialContextId id) {
+        jdbcRepository.executeUpdate(DELETE, id.financialContextId());
+    }
+
     private static FinancialContextRecord mapFinancialContext(
             ResultSet resultSet
     ) throws SQLException {
@@ -115,7 +128,8 @@ public class SQLiteFinancialContextRepository
                 financialContextId(
                         resultSet.getString("parent_financial_context_id")
                 ),
-                resultSet.getInt("overridden_attributes")
+                resultSet.getInt("overridden_attributes"),
+                resultSet.getInt("is_live") != 0
         );
     }
 

@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { errorMessage } from "../../../shared/api/api-error";
 import { asDecimal, formatAmount } from "../../../shared/lib/format";
 import { TransactionDialog } from "../components/TransactionDialog";
+import { AccountActions } from "../components/AccountActions";
 import { TransactionList } from "../components/TransactionList";
 import { accountBalances } from "../lib/balances";
 import { useFinancialContext } from "../queries";
@@ -63,9 +64,16 @@ export function AccountDetailsPage() {
               <h2 id="account-transactions-heading">Transactions and running balance</h2>
             </div>
           </div>
-          <TransactionList accounts={accounts} transactions={transactions} account={account} />
+          <TransactionList accounts={accounts} transactions={transactions} account={account} financialContextId={financialContext.financialContextId} />
         </section>
-        <section className="panel transaction-action-panel" aria-label="Add a transaction for this account">
+        <section className="transaction-action-panel" aria-label="Account actions">
+          <AccountActions
+            financialContextId={financialContext.financialContextId}
+            account={account}
+            onDeleted={() => navigate(`/contexts/${financialContext.financialContextId}`)}
+            onSaved={(saved) => navigate(`/contexts/${financialContext.financialContextId}/accounts/${saved.accountId}`, { replace: true })}
+          />
+          <div className="panel">
           <h3>Record activity</h3>
           <p className="field-hint">Income and expense start with this account selected. Transfers can move money to or from another account.</p>
           <TransactionDialog
@@ -79,6 +87,7 @@ export function AccountDetailsPage() {
               }
             }}
           />
+          </div>
         </section>
       </section>
     </div>

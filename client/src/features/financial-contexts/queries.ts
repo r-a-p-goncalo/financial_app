@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../shared/api/browser-transport";
 import type {
+  Account,
   CloneAccountInput,
   CreateAccountInput,
   CreateFinancialContextInput,
   CreateTransactionInput,
+  Transaction,
+  UpdateAccountInput,
 } from "../../shared/api/contracts";
 
 export const financialContextKeys = {
@@ -46,6 +49,24 @@ export function useCloneFinancialContext() {
   });
 }
 
+export function useUpdateFinancialContext(financialContextId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => api.financialContexts.update(financialContextId, { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
+  });
+}
+
+export function useDeleteFinancialContext() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (financialContextId: string) => api.financialContexts.delete(financialContextId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
+  });
+}
+
 export function useCreateAccount(financialContextId: string) {
   const queryClient = useQueryClient();
 
@@ -66,6 +87,25 @@ export function useCloneAccount(financialContextId: string) {
   });
 }
 
+export function useUpdateAccount(financialContextId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ account, input }: { account: Account; input: UpdateAccountInput }) =>
+      api.financialContexts.updateAccount(financialContextId, account, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
+  });
+}
+
+export function useDeleteAccount(financialContextId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (account: Account) => api.financialContexts.deleteAccount(financialContextId, account),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
+  });
+}
+
 export function useCreateTransaction(financialContextId: string) {
   const queryClient = useQueryClient();
 
@@ -77,5 +117,25 @@ export function useCreateTransaction(financialContextId: string) {
     onSuccess: () => queryClient.invalidateQueries({
       queryKey: financialContextKeys.all,
     }),
+  });
+}
+
+export function useUpdateTransaction(financialContextId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ transaction, input }: { transaction: Transaction; input: CreateTransactionInput }) =>
+      api.financialContexts.updateTransaction(financialContextId, transaction, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
+  });
+}
+
+export function useDeleteTransaction(financialContextId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (transaction: Transaction) =>
+      api.financialContexts.deleteTransaction(financialContextId, transaction),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: financialContextKeys.all }),
   });
 }

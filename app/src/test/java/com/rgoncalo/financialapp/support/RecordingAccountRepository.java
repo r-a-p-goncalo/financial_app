@@ -34,8 +34,23 @@ public final class RecordingAccountRepository implements AccountRepository {
     }
 
     @Override
+    public Collection<AccountRecord> listStoredAccounts(FinancialContextId financialContextId) {
+        return accountRepository.listStoredAccounts(financialContextId);
+    }
+
+    @Override
+    public Collection<AccountRecord> listChildren(AccountRecordId parentAccountRecordId) {
+        return accountRepository.listChildren(parentAccountRecordId);
+    }
+
+    @Override
     public Optional<AccountRecord> findById(AccountRecordId id) {
         return accountRepository.findById(id);
+    }
+
+    @Override
+    public void deletePermanently(AccountRecordId id) {
+        accountRepository.deletePermanently(id);
     }
 
 

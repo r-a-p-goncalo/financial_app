@@ -27,8 +27,9 @@ public class SQLiteTransactionRepository
                 value,
                 parent_financial_context_id,
                 parent_transaction_id,
-                overridden_attributes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                overridden_attributes,
+                is_live
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(financial_context_id, transaction_id) DO UPDATE SET
                 origin_account_id = excluded.origin_account_id,
                 target_account_id = excluded.target_account_id,
@@ -36,34 +37,59 @@ public class SQLiteTransactionRepository
                 value = excluded.value,
                 parent_financial_context_id = excluded.parent_financial_context_id,
                 parent_transaction_id = excluded.parent_transaction_id,
-                overridden_attributes = excluded.overridden_attributes
+                overridden_attributes = excluded.overridden_attributes,
+                is_live = excluded.is_live
             """;
 
     private static final String SELECT_BY_CONTEXT = """
             SELECT financial_context_id, transaction_id, origin_account_id,
                    target_account_id, date_time, value,
                    parent_financial_context_id, parent_transaction_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
+            FROM transactions
+            WHERE financial_context_id = ? AND is_live = 1
+            """;
+
+    private static final String SELECT_STORED_BY_CONTEXT = """
+            SELECT financial_context_id, transaction_id, origin_account_id,
+                   target_account_id, date_time, value,
+                   parent_financial_context_id, parent_transaction_id,
+                   overridden_attributes, is_live
             FROM transactions
             WHERE financial_context_id = ?
+            """;
+
+    private static final String SELECT_CHILDREN = """
+            SELECT financial_context_id, transaction_id, origin_account_id,
+                   target_account_id, date_time, value,
+                   parent_financial_context_id, parent_transaction_id,
+                   overridden_attributes, is_live
+            FROM transactions
+            WHERE parent_financial_context_id = ? AND parent_transaction_id = ?
             """;
 
     private static final String SELECT_BY_ACCOUNT = """
             SELECT financial_context_id, transaction_id, origin_account_id,
                    target_account_id, date_time, value,
                    parent_financial_context_id, parent_transaction_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM transactions
             WHERE financial_context_id = ?
               AND (origin_account_id = ? OR target_account_id = ?)
+              AND is_live = 1
             """;
 
     private static final String SELECT_BY_ID = """
             SELECT financial_context_id, transaction_id, origin_account_id,
                    target_account_id, date_time, value,
                    parent_financial_context_id, parent_transaction_id,
-                   overridden_attributes
+                   overridden_attributes, is_live
             FROM transactions
+            WHERE financial_context_id = ? AND transaction_id = ? AND is_live = 1
+            """;
+
+    private static final String DELETE = """
+            DELETE FROM transactions
             WHERE financial_context_id = ? AND transaction_id = ?
             """;
 
@@ -94,7 +120,8 @@ public class SQLiteTransactionRepository
                 transaction.value().toString(),
                 parentFinancialContextId(transaction),
                 parentTransactionId(transaction),
-                transaction.overriddenAttributes()
+                transaction.overriddenAttributes(),
+                transaction.live() ? 1 : 0
         );
     }
 
@@ -135,6 +162,36 @@ public class SQLiteTransactionRepository
         );
     }
 
+    @Override
+    public Collection<TransactionRecord> listStoredTransactions(
+            FinancialContextId financialContextId
+    ) {
+        return jdbcRepository.find(
+                SELECT_STORED_BY_CONTEXT,
+                financialContextId.financialContextId()
+        );
+    }
+
+    @Override
+    public Collection<TransactionRecord> listChildren(
+            TransactionRecordId parentTransactionRecordId
+    ) {
+        return jdbcRepository.find(
+                SELECT_CHILDREN,
+                parentTransactionRecordId.financialContextId().financialContextId(),
+                parentTransactionRecordId.transactionRecordId()
+        );
+    }
+
+    @Override
+    public void deletePermanently(TransactionRecordId id) {
+        jdbcRepository.executeUpdate(
+                DELETE,
+                id.financialContextId().financialContextId(),
+                id.transactionRecordId()
+        );
+    }
+
     private static String accountId(AccountRecordId accountRecordId) {
         return accountRecordId == null ? null : accountRecordId.accountRecordId();
     }
@@ -161,7 +218,8 @@ public class SQLiteTransactionRepository
                 java.time.Instant.parse(resultSet.getString("date_time")),
                 MonetaryValue.parse(resultSet.getString("value")),
                 parentTransactionRecordId(resultSet),
-                resultSet.getInt("overridden_attributes")
+                resultSet.getInt("overridden_attributes"),
+                resultSet.getInt("is_live") != 0
         );
     }
 

@@ -53,6 +53,13 @@ public class InMemoryFinancialContextPermissionRepository
                 .toList();
     }
 
+    @Override
+    public void deleteByFinancialContextId(FinancialContextId financialContextId) {
+        permissions.keySet().removeIf(key -> key.financialContextId().equals(
+                financialContextId
+        ));
+    }
+
     private record PermissionKey(
             UserId userId,
             FinancialContextId financialContextId

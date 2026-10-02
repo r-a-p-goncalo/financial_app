@@ -82,16 +82,18 @@ public class GetEffectiveFinancialContext {
                 return Optional.empty();
             }
 
+            // Stored delete markers are needed here: a deleted child clone
+            // suppresses the inherited parent record without deleting it.
             Collection<AccountRecord> accounts = accountRepository
-                    .listAccountsSummary(financialContextId);
+                    .listStoredAccounts(financialContextId);
             Collection<TransactionRecord> transactions = transactionRepository
-                    .listTransactionsSummary(financialContextId);
+                    .listStoredTransactions(financialContextId);
 
             if (context.get().parentFinancialContextId() == null) {
                 return Optional.of(new EffectiveFinancialContext(
                         context.get(),
-                        accounts,
-                        transactions
+                        liveAccounts(accounts),
+                        liveTransactions(transactions)
                 ));
             }
 
@@ -170,6 +172,15 @@ public class GetEffectiveFinancialContext {
                     "account"
             );
 
+            if (!account.live()) {
+                if (account.parentAccountRecordId() != null) {
+                    explicitlyDefinedParentAccountIds.add(
+                            account.parentAccountRecordId()
+                    );
+                }
+                continue;
+            }
+
             //note that this clones the account if parentAccount is null
             effectiveAccounts.add(new AccountRecord(
                     account.accountRecordId(),
@@ -218,7 +229,7 @@ public class GetEffectiveFinancialContext {
             );
         }
         for (AccountRecord account : accounts) {
-            if (account.parentAccountRecordId() != null) {
+            if (account.live() && account.parentAccountRecordId() != null) {
                 childAccountIdsByParentId.put(
                         account.parentAccountRecordId(),
                         account.accountRecordId()
@@ -232,7 +243,9 @@ public class GetEffectiveFinancialContext {
 
         for (TransactionRecord transaction : transactions) {
             if (transaction.parentTransactionRecordId() == null) {
-                effectiveTransactions.add(transaction);
+                if (transaction.live()) {
+                    effectiveTransactions.add(transaction);
+                }
                 continue;
             }
 
@@ -247,6 +260,9 @@ public class GetEffectiveFinancialContext {
                 throw new IllegalStateException(
                         "A child context cannot override the same transaction twice."
                 );
+            }
+            if (!transaction.live()) {
+                continue;
             }
             effectiveTransactions.add(resolveChildTransaction(
                     transaction,
@@ -352,5 +368,17 @@ public class GetEffectiveFinancialContext {
                 parentAccountId,
                 parentAccountId
         );
+    }
+
+    private Collection<AccountRecord> liveAccounts(
+            Collection<AccountRecord> accounts
+    ) {
+        return accounts.stream().filter(AccountRecord::live).toList();
+    }
+
+    private Collection<TransactionRecord> liveTransactions(
+            Collection<TransactionRecord> transactions
+    ) {
+        return transactions.stream().filter(TransactionRecord::live).toList();
     }
 }

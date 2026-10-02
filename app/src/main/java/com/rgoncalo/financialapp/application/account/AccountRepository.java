@@ -32,6 +32,15 @@ public interface AccountRepository {
     Collection<AccountRecord> listAccountsSummary(FinancialContextId financialContextId);
 
     /**
+     * Returns every stored account, including delete markers. Effective
+     * context resolution uses these markers to hide inherited accounts.
+     */
+    Collection<AccountRecord> listStoredAccounts(FinancialContextId financialContextId);
+
+    /** Returns records directly derived from the supplied account. */
+    Collection<AccountRecord> listChildren(AccountRecordId parentAccountRecordId);
+
+    /**
      *
      * Queries a specific account
      *
@@ -39,5 +48,8 @@ public interface AccountRepository {
      * @return the account with the id, possibly null
      */
     Optional<AccountRecord> findById(AccountRecordId id);
+
+    /** Permanently removes a row. This is deliberately not exposed by HTTP. */
+    void deletePermanently(AccountRecordId id);
 
 }

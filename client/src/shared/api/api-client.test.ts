@@ -25,6 +25,14 @@ describe("API client", () => {
           parentFinancialContextId: null,
         } as T;
       },
+      put: async <T>(path: string, body: unknown) => {
+        calls.push({ method: "PUT", path, body });
+        return {} as T;
+      },
+      delete: async <T>(path: string) => {
+        calls.push({ method: "DELETE", path });
+        return undefined as T;
+      },
     };
 
     const client = createApiClient(transport);

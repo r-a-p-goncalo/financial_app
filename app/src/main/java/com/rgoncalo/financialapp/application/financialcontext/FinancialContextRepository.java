@@ -40,4 +40,7 @@ public interface FinancialContextRepository {
      */
     Optional<FinancialContextRecord> findById(FinancialContextId id);
 
+    /** Permanently removes a row. This is deliberately not exposed by HTTP. */
+    void deletePermanently(FinancialContextId id);
+
 }

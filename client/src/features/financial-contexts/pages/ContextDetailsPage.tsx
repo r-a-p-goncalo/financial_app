@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { errorMessage } from "../../../shared/api/api-error";
 import { formatAmount } from "../../../shared/lib/format";
 import { AccountBalances } from "../components/AccountBalances";
+import { ContextActions } from "../components/ContextActions";
 import { AccountForm } from "../components/AccountForm";
 import { TransactionDialog } from "../components/TransactionDialog";
 import { TransactionList } from "../components/TransactionList";
@@ -56,6 +57,7 @@ export function ContextDetailsPage() {
           <button className="button button-quiet" type="button" onClick={clone} disabled={cloneContext.isPending}>
             {cloneContext.isPending ? "Cloning…" : "Clone context"}
           </button>
+          <ContextActions financialContextId={financialContext.financialContextId} name={financialContext.name} onDeleted={() => navigate("/contexts")} />
         </div>
       </section>
 
@@ -70,7 +72,7 @@ export function ContextDetailsPage() {
       <section className="content-grid" aria-label="Transactions">
         <section className="panel main-panel" aria-labelledby="transactions-heading">
           <div className="section-heading"><div><p className="eyebrow">Activity</p><h2 id="transactions-heading">Transactions</h2></div></div>
-          <TransactionList accounts={accounts} transactions={transactions} />
+          <TransactionList accounts={accounts} transactions={transactions} financialContextId={financialContext.financialContextId} />
         </section>
         <section className="panel transaction-action-panel" aria-label="Add a transaction">
           <h3>Record activity</h3>

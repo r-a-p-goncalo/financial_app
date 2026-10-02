@@ -36,6 +36,7 @@ export interface Account {
 
 export interface Transaction {
   transactionId: string;
+  financialContextId: string;
   originAccountId: string | null;
   targetAccountId: string | null;
   dateTime: string;
@@ -72,4 +73,13 @@ export interface CreateTransactionInput {
   targetAccountId: string | null;
   dateTime: string;
   value: string;
+}
+
+export interface UpdateFinancialContextInput {
+  name: string;
+}
+
+export interface UpdateAccountInput {
+  name: string;
+  initialAmount: string;
 }

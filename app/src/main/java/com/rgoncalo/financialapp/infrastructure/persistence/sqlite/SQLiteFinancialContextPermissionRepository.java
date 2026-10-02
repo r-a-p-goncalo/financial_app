@@ -48,6 +48,11 @@ public class SQLiteFinancialContextPermissionRepository
             WHERE financial_context_id = ?
             """;
 
+    private static final String DELETE_BY_CONTEXT = """
+            DELETE FROM financial_context_permissions
+            WHERE financial_context_id = ?
+            """;
+
     private final JdbcRepository<FinancialContextPermissionRecord>
             jdbcRepository;
 
@@ -98,6 +103,13 @@ public class SQLiteFinancialContextPermissionRepository
         return jdbcRepository.find(
                 SELECT_BY_CONTEXT,
                 financialContextId.financialContextId()
+        );
+    }
+
+    @Override
+    public void deleteByFinancialContextId(FinancialContextId financialContextId) {
+        jdbcRepository.executeUpdate(
+                DELETE_BY_CONTEXT, financialContextId.financialContextId()
         );
     }
 

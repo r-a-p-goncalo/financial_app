@@ -46,6 +46,20 @@ public class RecordingTransactionRepository
     }
 
     @Override
+    public Collection<TransactionRecord> listStoredTransactions(
+            FinancialContextId financialContextId
+    ) {
+        return delegate.listStoredTransactions(financialContextId);
+    }
+
+    @Override
+    public Collection<TransactionRecord> listChildren(
+            TransactionRecordId parentTransactionRecordId
+    ) {
+        return delegate.listChildren(parentTransactionRecordId);
+    }
+
+    @Override
     public Collection<TransactionRecord> listTransactionsSummaryForAccount(
             AccountRecordId accountRecordId
     ) {
@@ -63,6 +77,11 @@ public class RecordingTransactionRepository
         return delegate.findById(
                 id
         );
+    }
+
+    @Override
+    public void deletePermanently(TransactionRecordId id) {
+        delegate.deletePermanently(id);
     }
 
     public int saveCalls() {

@@ -28,6 +28,16 @@ public interface TransactionRepository {
             FinancialContextId financialContextId
     );
 
+    /** Returns every stored transaction, including delete markers. */
+    Collection<TransactionRecord> listStoredTransactions(
+            FinancialContextId financialContextId
+    );
+
+    /** Returns records directly derived from the supplied transaction. */
+    Collection<TransactionRecord> listChildren(
+            TransactionRecordId parentTransactionRecordId
+    );
+
     /**
      * Returns transactions where the account is either the origin or target.
      *
@@ -45,4 +55,7 @@ public interface TransactionRepository {
      * @return the transaction, if present
      */
     Optional<TransactionRecord> findById(TransactionRecordId id);
+
+    /** Permanently removes a row. This is deliberately not exposed by HTTP. */
+    void deletePermanently(TransactionRecordId id);
 }

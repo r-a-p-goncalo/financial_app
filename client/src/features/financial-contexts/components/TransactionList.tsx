@@ -2,14 +2,17 @@ import { useMemo } from "react";
 import type { Account, Transaction } from "../../../shared/api/contracts";
 import { asDecimal, formatAmount, formatDateTime } from "../../../shared/lib/format";
 import { accountTransactionRunningTotals, transactionsNewestFirst } from "../lib/balances";
+import { DeleteTransactionButton } from "./DeleteTransactionButton";
+import { TransactionDialog } from "./TransactionDialog";
 
 interface TransactionListProps {
   accounts: Account[];
   transactions: Transaction[];
   account?: Account;
+  financialContextId: string;
 }
 
-export function TransactionList({ accounts, transactions, account }: TransactionListProps) {
+export function TransactionList({ accounts, transactions, account, financialContextId }: TransactionListProps) {
   const accountNames = useMemo(() => new Map(accounts.map((account) => [account.accountId, account.name])), [accounts]);
   const visibleTransactions = useMemo(
     () => account
@@ -31,7 +34,7 @@ export function TransactionList({ accounts, transactions, account }: Transaction
     <div className="table-wrap">
       <table>
         <caption className="sr-only">{account ? `${account.name} transactions and running balance` : "Transactions"}</caption>
-        <thead><tr><th>Date</th><th>From</th><th>To</th><th>Amount</th>{account && <th>Account balance</th>}</tr></thead>
+        <thead><tr><th>Date</th><th>From</th><th>To</th><th>Amount</th>{account && <th>Account balance</th>}<th>Actions</th></tr></thead>
         <tbody>
           {orderedTransactions.map((transaction) => {
             const runningTotal = runningTotals?.get(transaction.transactionId) ?? asDecimal(0);
@@ -42,6 +45,7 @@ export function TransactionList({ accounts, transactions, account }: Transaction
                 <td>{transaction.targetAccountId ? accountNames.get(transaction.targetAccountId) ?? "Unavailable account" : "External"}</td>
                 <td className="amount">{formatAmount(transaction.value)}</td>
                 {account && <td className={runningTotal.isNegative() ? "negative" : "amount"}>{formatAmount(runningTotal)}</td>}
+                <td><div className="table-actions"><TransactionDialog financialContextId={financialContextId} accounts={accounts} transaction={transaction} /><DeleteTransactionButton financialContextId={financialContextId} transaction={transaction} /></div></td>
               </tr>
             );
           })}

@@ -40,9 +40,21 @@ export class BrowserTransport implements ApiTransport {
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
+    return this.mutate<T>("POST", path, body);
+  }
+
+  async put<T>(path: string, body: unknown): Promise<T> {
+    return this.mutate<T>("PUT", path, body);
+  }
+
+  async delete<T>(path: string): Promise<T> {
+    return this.mutate<T>("DELETE", path);
+  }
+
+  private async mutate<T>(method: string, path: string, body?: unknown): Promise<T> {
     const csrfToken = await this.getCsrfToken();
     const response = await fetch(endpoint(path), {
-      method: "POST",
+      method,
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

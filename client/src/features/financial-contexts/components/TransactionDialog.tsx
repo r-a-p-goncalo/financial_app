@@ -1,8 +1,8 @@
 import { type FormEvent, useId, useRef, useState } from "react";
-import type { Account } from "../../../shared/api/contracts";
+import type { Account, Transaction } from "../../../shared/api/contracts";
 import { errorMessage } from "../../../shared/api/api-error";
 import { dateTimeInputToInstant, isPositiveDecimal } from "../../../shared/lib/format";
-import { useCloneAccount, useCreateTransaction } from "../queries";
+import { useCloneAccount, useCreateTransaction, useUpdateTransaction } from "../queries";
 
 type TransactionType = "income" | "expense" | "transfer";
 
@@ -17,6 +17,7 @@ interface TransactionDialogProps {
   financialContextId: string;
   defaultAccountId?: string;
   onTransactionSaved?: (clonedAccountIds: ReadonlyMap<string, string>) => void;
+  transaction?: Transaction;
 }
 
 export function TransactionDialog({
@@ -24,8 +25,10 @@ export function TransactionDialog({
   financialContextId,
   defaultAccountId,
   onTransactionSaved,
+  transaction,
 }: TransactionDialogProps) {
   const createTransaction = useCreateTransaction(financialContextId);
+  const updateTransaction = useUpdateTransaction(financialContextId);
   const cloneAccount = useCloneAccount(financialContextId);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingId = useId();
@@ -35,9 +38,11 @@ export function TransactionDialog({
   const [value, setValue] = useState("");
   const [dateTime, setDateTime] = useState("");
   const [localError, setLocalError] = useState<string>();
+  const isEdit = transaction !== undefined;
 
   function resetForm() {
     createTransaction.reset();
+    updateTransaction.reset();
     cloneAccount.reset();
     setTransactionType(undefined);
     setOriginAccountId("");
@@ -49,6 +54,13 @@ export function TransactionDialog({
 
   function open() {
     resetForm();
+    if (transaction) {
+      setTransactionType(transaction.originAccountId ? transaction.targetAccountId ? "transfer" : "expense" : "income");
+      setOriginAccountId(transaction.originAccountId ?? "");
+      setTargetAccountId(transaction.targetAccountId ?? "");
+      setValue(String(transaction.value));
+      setDateTime(localDateTime(transaction.dateTime));
+    }
     dialogRef.current?.showModal();
   }
 
@@ -93,12 +105,17 @@ export function TransactionDialog({
       const localOriginAccountId = await localAccountId(originId, clonedAccountIds);
       const localTargetAccountId = await localAccountId(targetId, clonedAccountIds);
 
-      await createTransaction.mutateAsync({
+      const input = {
         originAccountId: localOriginAccountId,
         targetAccountId: localTargetAccountId,
         dateTime: dateTime ? dateTimeInputToInstant(dateTime) : new Date().toISOString(),
         value,
-      });
+      };
+      if (transaction) {
+        await updateTransaction.mutateAsync({ transaction, input });
+      } else {
+        await createTransaction.mutateAsync(input);
+      }
       onTransactionSaved?.(clonedAccountIds);
       close();
     } catch (error) {
@@ -139,14 +156,14 @@ export function TransactionDialog({
   return (
     <>
       <button className="button button-secondary" type="button" onClick={open} disabled={accounts.length === 0}>
-        Add transaction
+        {isEdit ? "Edit" : "Add transaction"}
       </button>
-      {accounts.length === 0 && <p className="field-hint">Add an account before recording a transaction.</p>}
+      {accounts.length === 0 && !isEdit && <p className="field-hint">Add an account before recording a transaction.</p>}
       <dialog className="transaction-dialog" ref={dialogRef} aria-labelledby={headingId} onClose={resetForm}>
         <div className="dialog-header">
           <div>
             <p className="eyebrow">Transaction</p>
-            <h2 id={headingId}>{selectedType ? `Add ${selectedType.title}` : "Add a transaction"}</h2>
+            <h2 id={headingId}>{selectedType ? `${isEdit ? "Edit" : "Add"} ${selectedType.title}` : "Add a transaction"}</h2>
           </div>
           <button className="dialog-close" type="button" onClick={close} aria-label="Close transaction dialog">×</button>
         </div>
@@ -193,10 +210,11 @@ export function TransactionDialog({
             {localError && <p className="form-error" role="alert">{localError}</p>}
             {cloneAccount.isError && <p className="form-error" role="alert">{errorMessage(cloneAccount.error)}</p>}
             {createTransaction.isError && <p className="form-error" role="alert">{errorMessage(createTransaction.error)}</p>}
+            {updateTransaction.isError && <p className="form-error" role="alert">{errorMessage(updateTransaction.error)}</p>}
             <div className="dialog-actions">
-              <button className="button button-quiet" type="button" onClick={() => setTransactionType(undefined)}>Back</button>
-              <button className="button button-primary" type="submit" disabled={createTransaction.isPending || cloneAccount.isPending}>
-                {createTransaction.isPending || cloneAccount.isPending ? "Saving…" : `Add ${selectedType.title}`}
+              {!isEdit && <button className="button button-quiet" type="button" onClick={() => setTransactionType(undefined)}>Back</button>}
+              <button className="button button-primary" type="submit" disabled={createTransaction.isPending || updateTransaction.isPending || cloneAccount.isPending}>
+                {createTransaction.isPending || updateTransaction.isPending || cloneAccount.isPending ? "Saving…" : `${isEdit ? "Save" : "Add"} ${selectedType.title}`}
               </button>
             </div>
           </form>
@@ -204,4 +222,10 @@ export function TransactionDialog({
       </dialog>
     </>
   );
+}
+
+function localDateTime(instant: string): string {
+  const date = new Date(instant);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
 }

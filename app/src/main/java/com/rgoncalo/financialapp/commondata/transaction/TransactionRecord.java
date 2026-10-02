@@ -11,7 +11,8 @@ public record TransactionRecord (TransactionRecordId transactionRecordId,
                                  Instant dateTime,
                                  MonetaryValue value,
                                  TransactionRecordId parentTransactionRecordId,
-                                 int overriddenAttributes) {
+                                 int overriddenAttributes,
+                                 boolean live) {
 
     public enum Attribute {
         ORIGIN_ACCOUNT(1),
@@ -28,6 +29,19 @@ public record TransactionRecord (TransactionRecordId transactionRecordId,
         public int mask() {
             return mask;
         }
+    }
+
+    public TransactionRecord(
+            TransactionRecordId transactionRecordId,
+            AccountRecordId originAccountId,
+            AccountRecordId targetAccountId,
+            Instant dateTime,
+            MonetaryValue value,
+            TransactionRecordId parentTransactionRecordId,
+            int overriddenAttributes
+    ) {
+        this(transactionRecordId, originAccountId, targetAccountId, dateTime,
+                value, parentTransactionRecordId, overriddenAttributes, true);
     }
 
     public TransactionRecord(

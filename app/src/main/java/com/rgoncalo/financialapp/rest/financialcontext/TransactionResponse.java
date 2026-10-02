@@ -7,6 +7,7 @@ import java.time.Instant;
 
 public record TransactionResponse(
         String transactionId,
+        String financialContextId,
         String originAccountId,
         String targetAccountId,
         Instant dateTime,
@@ -16,6 +17,8 @@ public record TransactionResponse(
     public static TransactionResponse from(TransactionRecord transaction) {
         return new TransactionResponse(
                 transaction.transactionRecordId().transactionRecordId(),
+                transaction.transactionRecordId().financialContextId()
+                        .financialContextId(),
                 transaction.originAccountId() == null
                         ? null
                         : transaction.originAccountId().accountRecordId(),

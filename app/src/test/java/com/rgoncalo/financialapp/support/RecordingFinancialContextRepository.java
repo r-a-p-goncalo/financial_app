@@ -46,6 +46,11 @@ public final class RecordingFinancialContextRepository implements FinancialConte
         return financialContextRepository.findById(id);
     }
 
+    @Override
+    public void deletePermanently(FinancialContextId id) {
+        financialContextRepository.deletePermanently(id);
+    }
+
     public int saveCalls() {
         return saveCalls;
     }

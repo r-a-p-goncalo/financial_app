@@ -9,6 +9,8 @@ import type {
   FinancialContext,
   FinancialContextDetails,
   Transaction,
+  UpdateAccountInput,
+  UpdateFinancialContextInput,
   User,
 } from "./contracts";
 
@@ -16,6 +18,8 @@ import type {
 export interface ApiTransport {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body?: unknown): Promise<T>;
+  put<T>(path: string, body: unknown): Promise<T>;
+  delete<T>(path: string): Promise<T>;
 }
 
 /**
@@ -49,6 +53,12 @@ export function createApiClient(transport: ApiTransport) {
       create: (input: CreateFinancialContextInput) =>
         transport.post<FinancialContext>("/financial-contexts", input),
 
+      update: (financialContextId: string, input: UpdateFinancialContextInput) =>
+        transport.put<FinancialContext>(`/financial-contexts/${financialContextId}`, input),
+
+      delete: (financialContextId: string) =>
+        transport.delete<void>(`/financial-contexts/${financialContextId}`),
+
       get: (financialContextId: string) =>
         transport.get<FinancialContextDetails>(`/financial-contexts/${financialContextId}`),
 
@@ -61,11 +71,39 @@ export function createApiClient(transport: ApiTransport) {
       createAccount: (financialContextId: string, input: CreateAccountInput) =>
         transport.post<Account>(`/financial-contexts/${financialContextId}/accounts`, input),
 
+      updateAccount: (
+        financialContextId: string,
+        account: Account,
+        input: UpdateAccountInput,
+      ) => transport.put<Account>(
+        `/financial-contexts/${financialContextId}/accounts/${account.financialContextId}/${account.accountId}`,
+        input,
+      ),
+
+      deleteAccount: (financialContextId: string, account: Account) =>
+        transport.delete<void>(
+          `/financial-contexts/${financialContextId}/accounts/${account.financialContextId}/${account.accountId}`,
+        ),
+
       cloneAccount: (financialContextId: string, input: CloneAccountInput) =>
         transport.post<Account>(`/financial-contexts/${financialContextId}/accounts/clones`, input),
 
       createTransaction: (financialContextId: string, input: CreateTransactionInput) =>
         transport.post<Transaction>(`/financial-contexts/${financialContextId}/transactions`, input),
+
+      updateTransaction: (
+        financialContextId: string,
+        transaction: Transaction,
+        input: CreateTransactionInput,
+      ) => transport.put<Transaction>(
+        `/financial-contexts/${financialContextId}/transactions/${transaction.financialContextId}/${transaction.transactionId}`,
+        input,
+      ),
+
+      deleteTransaction: (financialContextId: string, transaction: Transaction) =>
+        transport.delete<void>(
+          `/financial-contexts/${financialContextId}/transactions/${transaction.financialContextId}/${transaction.transactionId}`,
+        ),
     },
   };
 }

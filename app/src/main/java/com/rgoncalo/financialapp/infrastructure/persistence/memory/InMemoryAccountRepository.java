@@ -23,6 +23,13 @@ public class InMemoryAccountRepository implements AccountRepository {
 
     @Override
     public Collection<AccountRecord> listAccountsSummary(FinancialContextId financialContextId) {
+        return listStoredAccounts(financialContextId).stream()
+                .filter(AccountRecord::live)
+                .toList();
+    }
+
+    @Override
+    public Collection<AccountRecord> listStoredAccounts(FinancialContextId financialContextId) {
         return accounts.values()
                 .stream()
                 .filter(account ->
@@ -33,11 +40,25 @@ public class InMemoryAccountRepository implements AccountRepository {
                 .toList();
     }
 
+    @Override
+    public Collection<AccountRecord> listChildren(AccountRecordId parentAccountRecordId) {
+        return accounts.values().stream()
+                .filter(account -> parentAccountRecordId.equals(
+                        account.parentAccountRecordId()
+                ))
+                .toList();
+    }
+
 
 
     @Override
     public Optional<AccountRecord> findById(AccountRecordId id) {
-        return Optional.ofNullable(accounts.get(id));
+        return Optional.ofNullable(accounts.get(id)).filter(AccountRecord::live);
+    }
+
+    @Override
+    public void deletePermanently(AccountRecordId id) {
+        accounts.remove(id);
     }
 
     public int size() {

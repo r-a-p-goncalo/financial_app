@@ -4,6 +4,9 @@ import com.rgoncalo.financialapp.application.account.CloneAccount;
 import com.rgoncalo.financialapp.application.account.CreateAccount;
 import com.rgoncalo.financialapp.application.account.GetAccount;
 import com.rgoncalo.financialapp.application.account.ListAccountsSummary;
+import com.rgoncalo.financialapp.application.account.PermanentlyDeleteAccount;
+import com.rgoncalo.financialapp.application.account.SoftDeleteAccount;
+import com.rgoncalo.financialapp.application.account.UpdateAccount;
 import com.rgoncalo.financialapp.application.financialcontext.CreateFinancialContext;
 import com.rgoncalo.financialapp.application.financialcontext.CloneFinancialContext;
 import com.rgoncalo.financialapp.application.financialcontext.GetEffectiveFinancialContext;
@@ -12,9 +15,15 @@ import com.rgoncalo.financialapp.application.financialcontext.FinancialContextAu
 import com.rgoncalo.financialapp.application.financialcontext.GrantFinancialContextPermission;
 import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextChildren;
 import com.rgoncalo.financialapp.application.financialcontext.ListFinancialContextSummary;
+import com.rgoncalo.financialapp.application.financialcontext.PermanentlyDeleteFinancialContext;
+import com.rgoncalo.financialapp.application.financialcontext.SoftDeleteFinancialContext;
+import com.rgoncalo.financialapp.application.financialcontext.UpdateFinancialContext;
 import com.rgoncalo.financialapp.application.transaction.CreateTransaction;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummary;
 import com.rgoncalo.financialapp.application.transaction.ListTransactionsSummaryForAccount;
+import com.rgoncalo.financialapp.application.transaction.PermanentlyDeleteTransaction;
+import com.rgoncalo.financialapp.application.transaction.SoftDeleteTransaction;
+import com.rgoncalo.financialapp.application.transaction.UpdateTransaction;
 import com.rgoncalo.financialapp.application.user.CreateUser;
 import com.rgoncalo.financialapp.application.user.AuthenticateUser;
 import com.rgoncalo.financialapp.application.user.GetUser;
@@ -41,6 +50,32 @@ public class Application {
         return new CreateAccount(
                 appConfig.accountRepository(),
                 authorization()
+        );
+    }
+
+    public UpdateAccount updateAccount() {
+        return new UpdateAccount(
+                appConfig.accountRepository(),
+                appConfig.financialContextRepository(),
+                appConfig.transactionRepository(),
+                authorization()
+        );
+    }
+
+    public SoftDeleteAccount softDeleteAccount() {
+        return new SoftDeleteAccount(
+                appConfig.accountRepository(),
+                appConfig.financialContextRepository(),
+                appConfig.transactionRepository(),
+                authorization()
+        );
+    }
+
+    /** Internal-only destructive operation; no REST controller exposes it. */
+    public PermanentlyDeleteAccount permanentlyDeleteAccount() {
+        return new PermanentlyDeleteAccount(
+                softDeleteAccount(), appConfig.accountRepository(),
+                appConfig.transactionRepository(), permanentlyDeleteTransaction()
         );
     }
 
@@ -93,6 +128,30 @@ public class Application {
                 appConfig.financialContextRepository(),
                 appConfig.financialContextPermissionRepository(),
                 appConfig.userRepository()
+        );
+    }
+
+    public UpdateFinancialContext updateFinancialContext() {
+        return new UpdateFinancialContext(
+                appConfig.financialContextRepository(), authorization()
+        );
+    }
+
+    public SoftDeleteFinancialContext softDeleteFinancialContext() {
+        return new SoftDeleteFinancialContext(
+                appConfig.financialContextRepository(),
+                appConfig.accountRepository(),
+                appConfig.transactionRepository(),
+                authorization()
+        );
+    }
+
+    /** Internal-only destructive operation; no REST controller exposes it. */
+    public PermanentlyDeleteFinancialContext permanentlyDeleteFinancialContext() {
+        return new PermanentlyDeleteFinancialContext(
+                softDeleteFinancialContext(), appConfig.financialContextRepository(),
+                appConfig.financialContextPermissionRepository(),
+                appConfig.accountRepository(), appConfig.transactionRepository()
         );
     }
 
@@ -170,6 +229,31 @@ public class Application {
                 appConfig.transactionRepository(),
                 appConfig.accountRepository(),
                 authorization()
+        );
+    }
+
+    public UpdateTransaction updateTransaction() {
+        return new UpdateTransaction(
+                appConfig.transactionRepository(),
+                appConfig.accountRepository(),
+                appConfig.financialContextRepository(),
+                authorization()
+        );
+    }
+
+    public SoftDeleteTransaction softDeleteTransaction() {
+        return new SoftDeleteTransaction(
+                appConfig.transactionRepository(),
+                appConfig.accountRepository(),
+                appConfig.financialContextRepository(),
+                authorization()
+        );
+    }
+
+    /** Internal-only destructive operation; no REST controller exposes it. */
+    public PermanentlyDeleteTransaction permanentlyDeleteTransaction() {
+        return new PermanentlyDeleteTransaction(
+                softDeleteTransaction(), appConfig.transactionRepository()
         );
     }
 
